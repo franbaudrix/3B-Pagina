@@ -59,7 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             console.log("Cargando productos..."); // Debug
             const response = await fetch('http://localhost:3000/api/productos', {
-                headers: { 'Authorization': '3BGOD' } // ¡Falta esto!
+                headers: { 'Authorization': '3BGOD' } 
             });
 
             console.log("Respuesta:", response); // Debug
