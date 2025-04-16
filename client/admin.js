@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': '3BGOD' // Asegúrate que coincida con tu backend
+                    'Authorization': '3BGOD'
                 },
                 body: JSON.stringify(producto)
             });
@@ -77,6 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Renderizar lista de productos
     function renderProductos(productos) {
         console.log("Renderizando:", productos); // Debug
+        productos.forEach(p => console.log("ID del producto:", p._id));
         listaProductos.innerHTML = productos.map(producto => `
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
@@ -87,10 +88,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p class="card-text text-muted small">${producto.descripcion || 'Sin descripción'}</p>
                     </div>
                     <div class="card-footer bg-transparent">
-                        <button onclick="editarProducto('${producto._id}')" class="btn btn-sm btn-warning me-2">
+                        <button onclick="editarProducto('${producto._id.toString()}')" class="btn btn-sm btn-warning me-2">
                             <i class="bi bi-pencil"></i> Editar
                         </button>
-                        <button onclick="eliminarProducto('${producto._id}')" class="btn btn-sm btn-danger">
+                        <button onclick="eliminarProducto('${producto._id.toString()}')" class="btn btn-sm btn-danger">
                             <i class="bi bi-trash"></i> Eliminar
                         </button>
                     </div>
