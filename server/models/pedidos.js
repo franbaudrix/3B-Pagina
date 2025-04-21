@@ -1,12 +1,13 @@
 const mongoose = require('mongoose');
 
 const ItemSchema = new mongoose.Schema({
-  producto: { type: mongoose.Schema.Types.ObjectId, ref: 'Producto', required: true },
-  nombre: { type: String, required: true },
-  cantidad: { type: Number, required: true },
-  precioUnitario: { type: Number, required: true },
-  peso: { type: String, required: true },
-  subtotal: { type: Number, required: true }
+    producto: { type: mongoose.Schema.Types.ObjectId, ref: 'Producto', required: true },
+    nombre: { type: String, required: true },
+    precioUnitario: { type: Number, required: true },
+    subtotal: { type: Number, required: true },  
+    peso: { type: String, required: true },
+    cantidad: { type: Number, required: true },  
+    precioTotal: { type: Number, required: true }
 });
 
 const PedidoSchema = new mongoose.Schema({

@@ -15,7 +15,7 @@ const autenticar = (req, res, next) => {
 };
 
 // Ruta para obtener un producto por ID
-app.get('/api/productos/:id', async (req, res) => {
+router.get('/productos/:id', async (req, res) => {
     try {
         const producto = await Producto.findById(req.params.id); // Usa mongoose
         if (!producto) return res.status(404).json({ error: "Producto no encontrado" });

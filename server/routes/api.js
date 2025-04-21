@@ -3,7 +3,7 @@ const router = express.Router();
 const Producto = require('../models/producto');
 
 // GET: Obtener todos los productos
-router.get('/productos', async (req, res) => {
+router.get('/producto', async (req, res) => {
   try {
     const productos = await Producto.find();
     res.json(productos);

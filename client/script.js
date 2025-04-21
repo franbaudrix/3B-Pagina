@@ -29,21 +29,26 @@ const weightOptions = {
 // Función para guardar el pedido en la base de datos
 async function guardarPedido() {
     try {
-        // Obtener todos los items del carrito
         const items = [];
         const filas = document.querySelectorAll('#tablaCarrito tbody tr:not(.table-header)');
         
         filas.forEach(fila => {
+            const celdas = fila.cells;
             items.push({
                 producto: fila.dataset.productId,
-                precioUnitario: parseFloat(fila.cells[1].textContent.replace('$', '')),
-                peso: fila.cells[2].textContent,
-                cantidad: parseInt(fila.cells[3].textContent),
-                precioTotal: parseFloat(fila.cells[4].textContent.replace('$', ''))
+                nombre: celdas[0].textContent.trim(),
+                precioUnitario: parseFloat(celdas[1].textContent.replace('$', '')),
+                subtotal: parseFloat(celdas[1].textContent.replace('$', '')), // Añadido
+                peso: celdas[2].textContent.trim(),
+                cantidad: parseInt(celdas[3].textContent),
+                precioTotal: parseFloat(celdas[4].textContent.replace('$', ''))
             });
         });
 
-        // Datos del pedido
+        if (items.length === 0) {
+            throw new Error('El carrito está vacío');
+        }
+
         const pedido = {
             fecha: new Date().toISOString(),
             items: items,
@@ -51,7 +56,8 @@ async function guardarPedido() {
             estado: 'pendiente'
         };
 
-        // Enviar al backend
+        console.log('Enviando pedido:', pedido); // Para depuración
+
         const response = await fetch('http://localhost:3000/api/pedidos', {
             method: 'POST',
             headers: {
@@ -60,19 +66,25 @@ async function guardarPedido() {
             body: JSON.stringify(pedido)
         });
 
-        const data = await response.json();
-        
-        if (response.ok) {
-            alert('Pedido guardado correctamente! ID: ' + data.id);
-            // Limpiar carrito
-            document.getElementById('tablaCarrito').innerHTML = '';
-            totalPrice = 0;
-            totalDisplay.textContent = '$0.00';
-            cartItemCount = 0;
-            cartCountDisplay.textContent = '0';
-        } else {
-            throw new Error(data.message || 'Error al guardar el pedido');
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al guardar el pedido');
         }
+
+        const data = await response.json();
+        alert(`Pedido guardado correctamente! ID: ${data.id}`);
+        
+        // Limpiar carrito
+        document.querySelector('#tablaCarrito tbody').innerHTML = '';
+        totalPrice = 0;
+        totalDisplay.textContent = '$0.00';
+        cartItemCount = 0;
+        cartCountDisplay.textContent = '0';
+        
+        // Eliminar botón de guardar
+        const saveBtn = document.querySelector('#save-order-btn');
+        if (saveBtn) saveBtn.remove();
+        
     } catch (error) {
         console.error('Error:', error);
         alert('Error al guardar el pedido: ' + error.message);
@@ -87,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const container = document.getElementById('productos-container');
         container.innerHTML = productos.map(producto => `
-            <div class="col-md-4 product-card" data-base-price="${producto.precio}" data-product-name="${producto.nombre}">
+            <div class="col-md-4 product-card" data-product-id="${producto._id}" data-base-price="${producto.precio}" data-product-name="${producto.nombre}">
                 <div class="card h-100">
                     <img src="${producto.imagen.toString()}" class="img-fluid" style="max-height: 250px;" alt="${producto.nombre}">
                     <div class="card-body">
@@ -186,63 +198,99 @@ function initializeProductCards() {
         }
 
         // Función para añadir producto al carrito
-        function addToCart() {
-            const selectedWeightText = weightSelect.options[weightSelect.selectedIndex].text;
-            const selectedAmount = amountSelect.value;
-            const currentPrice = calculateCurrentPrice();
-            const subtotal = calculateSubtotal();
-            const personalizedWeight = customWeightInput.value;
-            
-            let table = document.getElementById('tablaCarrito');
-            
-            if (totalPrice == 0 && iterations_agregar_button == 0) {
-                iterations_agregar_button++;
-                let nombresColumnas = table.insertRow(-1);
-                nombresColumnas.className = 'table-header';
-                let columna1 = nombresColumnas.insertCell(0);
-                let columna2 = nombresColumnas.insertCell(1);
-                let columna3 = nombresColumnas.insertCell(2);
-                let columna4 = nombresColumnas.insertCell(3);
-                let columna5 = nombresColumnas.insertCell(4);
-                columna1.innerHTML = "<strong>Producto</strong>";
-                columna2.innerHTML = "<strong>Precio unitario</strong>";
-                columna3.innerHTML = "<strong>Peso</strong>";
-                columna4.innerHTML = "<strong>Cantidad</strong>";
-                columna5.innerHTML = "<strong>Precio total</strong>";
+        function addToCart(button) {
+            // Obtener el elemento padre product-card
+            const productCard = button.closest('.product-card');
+            if (!productCard) {
+                console.error('No se encontró el elemento product-card');
+                return;
             }
+        
+            // Obtener datos del producto
+            const productId = productCard.dataset.productId;
+            const productName = productCard.dataset.productName;
+            const basePrice = parseFloat(productCard.dataset.basePrice);
             
-            let productoNuevo = table.insertRow(-1);
-            let columna1 = productoNuevo.insertCell(0);
-            let columna2 = productoNuevo.insertCell(1);
-            let columna3 = productoNuevo.insertCell(2);
-            let columna4 = productoNuevo.insertCell(3);
-            let columna5 = productoNuevo.insertCell(4);
-            let columna6 = productoNuevo.insertCell(5);
+            // Obtener elementos de la tarjeta
+            const weightSelect = productCard.querySelector('.weight-select');
+            const amountSelect = productCard.querySelector('.amount-select');
+            const customWeightInput = productCard.querySelector('.custom-weight-input');
             
-            columna1.innerHTML = productName;
-            columna2.innerHTML = `$${subtotal.toFixed(2)}`;
-            if (personalizedWeight > 0) {
-                columna3.innerHTML = `${personalizedWeight} kg`;
-            } else {
-                columna3.innerHTML = selectedWeightText;
+            // Calcular valores
+            const selectedWeight = weightSelect.value;
+            const selectedAmount = parseInt(amountSelect.value);
+            let weightFactor = weightOptions[selectedWeight];
+            let weightText = weightSelect.options[weightSelect.selectedIndex].text;
+        
+            // Manejar peso personalizado
+            if (selectedWeight === "other-kg") {
+                weightFactor = parseFloat(customWeightInput.value) || 0;
+                weightText = `${customWeightInput.value} kg`;
             }
-            columna4.innerHTML = selectedAmount;
-            columna5.innerHTML = `$${currentPrice.toFixed(2)}`;
-            columna6.innerHTML = '<button type="button" class="btn btn-sm btn-danger" onclick="borrarProducto(this)">Remover</button>';
+        
+            // Calcular precios
+            const subtotal = basePrice * weightFactor;
+            const totalPriceForItem = subtotal * selectedAmount;
+        
+            // Obtener o crear el tbody de la tabla
+            let tableBody = document.querySelector('#tablaCarrito tbody');
+            if (!tableBody) {
+                tableBody = document.createElement('tbody');
+                document.getElementById('tablaCarrito').appendChild(tableBody);
+            }
+        
+            // Agregar encabezados solo si es la primera vez
+            if (tableBody.rows.length === 0) {
+                const headerRow = tableBody.insertRow();
+                headerRow.className = 'table-header';
+                const headers = ['Producto', 'Precio Unitario', 'Peso', 'Cantidad', 'Total', 'Acción'];
+                headers.forEach(text => {
+                    const cell = headerRow.insertCell();
+                    cell.innerHTML = `<strong>${text}</strong>`;
+                });
+            }
+        
+            // Crear nueva fila para el producto
+            const newRow = tableBody.insertRow();
+            newRow.dataset.productId = productId;
             
+            // Llenar las celdas (el orden debe coincidir con los encabezados)
+            newRow.insertCell(0).textContent = productName;
+            newRow.insertCell(1).textContent = `$${subtotal.toFixed(2)}`;
+            newRow.insertCell(2).textContent = weightText;
+            newRow.insertCell(3).textContent = selectedAmount;
+            newRow.insertCell(4).textContent = `$${totalPriceForItem.toFixed(2)}`;
+            
+            // Celda de acción con botón para eliminar
+            const actionCell = newRow.insertCell(5);
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'btn btn-sm btn-danger';
+            removeBtn.textContent = 'Remover';
+            removeBtn.onclick = function() {
+                borrarProducto(this);
+            };
+            actionCell.appendChild(removeBtn);
+        
+            // Actualizar total global
+            totalPrice += totalPriceForItem;
+            totalDisplay.textContent = `$${totalPrice.toFixed(2)}`;
+        
+            // Actualizar contador del carrito
+            cartItemCount++;
+            cartCountDisplay.textContent = cartItemCount;
+        
+            // Agregar botón de guardar pedido (solo una vez)
             const cartFooter = document.querySelector('#cart-container .bg-light');
-            if (cartFooter) {
+            if (cartFooter && !document.querySelector('#save-order-btn')) {
                 const saveBtn = document.createElement('button');
+                saveBtn.id = 'save-order-btn';
                 saveBtn.className = 'btn btn-success w-100 mt-2';
                 saveBtn.textContent = 'Guardar Pedido';
                 saveBtn.addEventListener('click', guardarPedido);
                 cartFooter.appendChild(saveBtn);
             }
-
-            // Actualizar contador
-            cartItemCount++;
-            cartCountDisplay.textContent = cartItemCount;
-    
+        
             // Mostrar el carrito si está oculto
             if (!cartContainer.classList.contains('cart-visible')) {
                 toggleCart();
@@ -251,7 +299,7 @@ function initializeProductCards() {
 
         // Event listeners
         addButton.addEventListener('click', () => {
-            addToCart();
+            addToCart(addButton);
             addToTotal();
         });
 
