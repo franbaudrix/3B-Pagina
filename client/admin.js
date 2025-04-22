@@ -22,8 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const url = editingId 
-                ? `http://localhost:3000/api/admin/productos/${editingId}`
-                : 'http://localhost:3000/api/admin/productos';
+                ? `http://localhost:3000/api/admin/producto/${editingId}`
+                : 'http://localhost:3000/api/admin/producto';
 
             const method = editingId ? 'PUT' : 'POST';
 
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function cargarProductos() {
         try {
             console.log("Cargando productos..."); // Debug
-            const response = await fetch('http://localhost:3000/api/productos', {
+            const response = await fetch('http://localhost:3000/api/producto', {
                 headers: { 'Authorization': '3BGOD' } 
             });
 
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!id || id.length !== 24) {
                 throw new Error("ID de producto inválido");
             }
-            const response = await fetch(`http://localhost:3000/api/productos/${id}`, {
+            const response = await fetch(`http://localhost:3000/api/producto/${id}`, {
                 headers: { 
                   'Authorization': '3BGOD'
                 }
@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm('¿Estás seguro de eliminar este producto?')) return;
         
         try {
-            const response = await fetch(`http://localhost:3000/api/admin/productos/${id}`, {
+            const response = await fetch(`http://localhost:3000/api/admin/producto/${id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': '3BGOD' }
             });

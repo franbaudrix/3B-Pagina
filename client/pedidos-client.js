@@ -16,6 +16,38 @@ document.addEventListener('DOMContentLoaded', function() {
     btnRefrescar.addEventListener('click', cargarPedidos);
     document.getElementById('btn-guardar-estado').addEventListener('click', actualizarEstadoPedido);
 
+    function mostrarExito(mensaje) {
+        const toast = document.createElement('div');
+        toast.className = 'position-fixed bottom-0 end-0 p-3';
+        toast.innerHTML = `
+            <div class="toast show" role="alert">
+                <div class="toast-header bg-success text-white">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <strong class="me-auto">Éxito</strong>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+                </div>
+                <div class="toast-body">
+                    ${mensaje}
+                </div>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => toast.remove(), 3000);
+    }
+    
+    function mostrarError(mensaje) {
+        const alert = document.getElementById('error-alert') || document.createElement('div');
+        alert.id = 'error-alert';
+        alert.className = 'alert alert-danger position-fixed top-0 start-50 translate-middle-x mt-3';
+        alert.innerHTML = `
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            ${mensaje}
+            <button type="button" class="btn-close float-end" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alert);
+    }
+
     async function cargarPedidos() {
         try {
             const response = await fetch('http://localhost:3000/api/pedidos');
@@ -104,76 +136,131 @@ document.addEventListener('DOMContentLoaded', function() {
     async function mostrarDetallesPedido(id) {
         try {
             const response = await fetch(`http://localhost:3000/api/pedidos/${id}`);
-            if (!response.ok) throw new Error('Error al cargar pedido');
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al cargar pedido');
+            }
             
             pedidoActual = await response.json();
             
-            // Llenar modal con los datos
+            // Llenar modal
             document.getElementById('modal-pedido-id').textContent = pedidoActual._id;
             document.getElementById('modal-fecha').textContent = new Date(pedidoActual.fecha).toLocaleString();
             document.getElementById('modal-total').textContent = pedidoActual.total.toFixed(2);
             
+            // Estado
             const estadoElement = document.getElementById('modal-estado');
             estadoElement.textContent = formatEstado(pedidoActual.estado);
             estadoElement.className = 'badge ' + getEstadoClass(pedidoActual.estado);
-            
             document.getElementById('cambiar-estado').value = pedidoActual.estado;
             
-            // Mostrar productos
+            // Productos
             const productosContainer = document.getElementById('modal-productos');
             productosContainer.innerHTML = '';
             
-            pedidoActual.items.forEach(item => {
+            pedidoActual.items.forEach((item, index) => {
                 const productoDiv = document.createElement('div');
-                productoDiv.className = 'producto-item';
+                productoDiv.className = 'producto-item mb-3 p-3 border rounded';
                 productoDiv.innerHTML = `
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h6>${item.nombre}</h6>
-                            <p class="small text-muted mb-1">${item.peso} • ${item.cantidad} unidad(es)</p>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="form-check">
+                            <input class="form-check-input item-checkbox" 
+                                   type="checkbox" 
+                                   id="item-${index}" 
+                            <label class="form-check-label" for="item-${index}">
+                                <h6 class="mb-1">${item.nombre}</h6>
+                                <small class="text-muted">${item.peso} • ${item.cantidad} unidad(es)</small>
+                            </label>
                         </div>
                         <div class="text-end">
-                            <p class="mb-1">$${item.precioUnitario.toFixed(2)} c/u</p>
-                            <p class="fw-bold">$${item.precioTotal.toFixed(2)}</p>
+                            <small>$${item.precioUnitario?.toFixed(2) || '0.00'} c/u</small>
+                            <h6 class="mb-0 mt-1">$${item.precioTotal?.toFixed(2) || '0.00'}</h6>
                         </div>
                     </div>
                 `;
+                
+                // Si el item no está disponible, marca en rojo
+                if (item.disponible === false) {
+                    productoDiv.classList.add('bg-light', 'text-danger');
+                    productoDiv.querySelector('.form-check-input').disabled = true;
+                }
+                
                 productosContainer.appendChild(productoDiv);
             });
             
             detallesModal.show();
         } catch (error) {
             console.error('Error:', error);
-            mostrarError('Error al cargar los detalles del pedido');
+            mostrarError(error.message || 'Error al cargar los detalles del pedido');
         }
     }
 
     async function actualizarEstadoPedido() {
+        const btn = document.getElementById('btn-guardar-estado');
+        if (!btn) {
+            console.error('Botón no encontrado');
+            return;
+        }
+    
         try {
+            // Mostrar loading
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
+    
             const nuevoEstado = document.getElementById('cambiar-estado').value;
-            
             const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoActual._id}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
                 },
                 body: JSON.stringify({ estado: nuevoEstado })
             });
-            
-            if (!response.ok) throw new Error('Error al actualizar estado');
-            
-            // Actualizar en la lista
-            const pedidoIndex = pedidosData.findIndex(p => p._id === pedidoActual._id);
-            if (pedidoIndex !== -1) {
-                pedidosData[pedidoIndex].estado = nuevoEstado;
+    
+            const data = await response.json();
+    
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'Error al actualizar');
+            }
+    
+            // Actualizar la vista
+            const index = pedidosData.findIndex(p => p._id === pedidoActual._id);
+            if (index !== -1) {
+                pedidosData[index] = data.pedido;
                 mostrarPedidos(pedidosData);
             }
-            
-            detallesModal.hide();
+    
+            // Cerrar modal después de 1 segundo para que el usuario vea el feedback
+            setTimeout(() => {
+                detallesModal.hide();
+                mostrarExito('Estado actualizado correctamente');
+            }, 1000);
+    
         } catch (error) {
-            console.error('Error:', error);
-            mostrarError('Error al actualizar el estado del pedido');
+            console.error('Error al actualizar:', error);
+            mostrarError(error.message);
+        }finally{
+            
+            // Restaurar botón inmediatamente en caso de error
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-save"></i> Guardar estado';
         }
+    }
+    
+    // Función para mostrar notificaciones de éxito
+    function mostrarExito(mensaje) {
+        const alerta = document.createElement('div');
+        alerta.className = 'alert alert-success position-fixed top-0 end-0 m-3';
+        alerta.style.zIndex = '1100';
+        alerta.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>
+            ${mensaje}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        document.body.appendChild(alerta);
+        
+        setTimeout(() => alerta.remove(), 3000);
     }
 
     // Funciones de ayuda

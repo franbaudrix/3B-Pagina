@@ -94,7 +94,7 @@ async function guardarPedido() {
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
-        const response = await fetch('http://localhost:3000/api/productos');
+        const response = await fetch('http://localhost:3000/api/producto');
         const productos = await response.json();
 
         const container = document.getElementById('productos-container');

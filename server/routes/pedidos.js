@@ -1,9 +1,91 @@
 const express = require('express');
+const mongoose = require('mongoose'); 
 const router = express.Router();
-const mongoose = require('mongoose');
-const Pedido = mongoose.model('Pedido');
+const Pedido = require('../models/pedidos');
+
+router.get('/', async (req, res) => {
+  try {
+    const pedidos = await Pedido.find(); // Obtiene todos los pedidos
+    res.json(pedidos);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// GET /api/pedidos/:id - Obtener un pedido específico por ID
+router.get('/:id', async (req, res) => {
+  try {
+    const pedido = await Pedido.findById(req.params.id)
+                              .populate('usuario')
+                              .populate('items.producto');
+    
+    if (!pedido) {
+      return res.status(404).json({ message: 'Pedido no encontrado' });
+    }
+    
+    res.json(pedido);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+}); 
+
+// PUT /api/pedidos/:id - Actualizar pedido
+router.put('/:id', async (req, res) => {
+  try {
+      // Validación mejorada
+      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+          return res.status(400).json({ 
+              success: false,
+              message: "ID de pedido inválido"
+          });
+      }
+
+      const { estado } = req.body;
+
+      // Validar el estado
+      const estadosPermitidos = ['pendiente', 'en_proceso' , 'completado', 'cancelado'];
+      if (!estadosPermitidos.includes(estado)) {
+          return res.status(400).json({
+              success: false,
+              message: "Estado no válido"
+          });
+      }
+
+      const pedido = await Pedido.findByIdAndUpdate(
+          req.params.id,
+          { estado },
+          { new: true, runValidators: true }
+      );
+
+      if (!pedido) {
+          return res.status(404).json({
+              success: false,
+              message: "Pedido no encontrado"
+          });
+      }
+
+      res.json({
+          success: true,
+          pedido
+      });
+
+  } catch (error) {
+      console.error("Error en PUT /pedidos:", error);
+      res.status(500).json({
+          success: false,
+          message: error.message || "Error interno del servidor"
+      });
+  }
+});
 
 router.post('/', async (req, res) => {
+  try {
+    const Pedido = require('../models/pedidos');
+    console.log('Modelo Pedido cargado:', Pedido);
+  } catch (err) {
+    console.error('Error cargando modelo Pedido:', err);
+  }
+
   try {
     console.log("Body recibido:", req.body);
     // Validar items (puedes añadir más validaciones)
@@ -21,20 +103,6 @@ router.post('/', async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: error.message });
-  }
-});
-
-router.get('/test', async (req, res) => {
-  try {
-    const nuevoPedido = new Pedido({
-      estado: 'pendiente',
-      items: [{ nombre: 'Producto Test', cantidad: 1, precioUnitario: 100 }],
-      total: 100
-    });
-    await nuevoPedido.save();
-    res.json({ message: 'Pedido creado correctamente!', pedido: nuevoPedido });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
   }
 });
 
