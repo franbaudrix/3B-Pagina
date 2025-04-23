@@ -1,5 +1,6 @@
 // Variables globales
 let totalPrice = 0; // Variable para almacenar el total
+let allProducts = [];
 const totalDisplay = document.getElementById('total-price'); // Elemento donde se mostrará el total
 let iterations_agregar_button = 0; //Variable para agregar los nombres de las columnas solo una vez
 const cartCountDisplay = document.getElementById('cart-count');
@@ -95,52 +96,78 @@ async function guardarPedido() {
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         const response = await fetch('http://localhost:3000/api/producto');
-        const productos = await response.json();
-
-        const container = document.getElementById('productos-container');
-        container.innerHTML = productos.map(producto => `
-            <div class="col-md-4 product-card" data-product-id="${producto._id}" data-base-price="${producto.precio}" data-product-name="${producto.nombre}">
-                <div class="card h-100">
-                    <img src="${producto.imagen.toString()}" class="img-fluid" style="max-height: 250px;" alt="${producto.nombre}">
-                    <div class="card-body">
-                        <h5 class="card-title">${producto.nombre}</h5>
-                        <p class="card-text">$${producto.precio.toFixed(2)}</p>
-                        <p class="card-text text-muted">${producto.descripcion || ''}</p>
-                    </div>
-                    <div class="mb-2 p-3">
-                        <label for="weight" class="form-label">Peso:</label>
-                        <select name="weight" class="form-select form-select-sm weight-select">
-                            <option value="half-kg">500g</option>
-                            <option value="one-kg" selected>1000g</option>
-                            <option value="two-kg">2000g</option>
-                            <option value="other-kg">Otro</option>
-                        </select>
-                        <input type="number" class="form-control custom-weight-input mt-2" placeholder="Ingrese el peso en kg" style="display: none;">
-                    </div>
-                    
-                    <div class="mb-2 p-3">
-                        <label for="amount" class="form-label">Cantidad bolsas:</label>
-                        <select name="amount" class="form-select form-select-sm amount-select">
-                            <option value="1">1 bolsa</option>
-                            <option value="2">2 bolsas</option>
-                            <option value="3">3 bolsas</option>
-                            <option value="4">4 bolsas</option>
-                        </select>
-                    </div>
-                    <div class="mb-2 p-3 price-display text-end fw-bold"></div>
-                    <button class="btn btn-danger btn-block rounded-0 btn-product-card">Agregar</button>
-                </div>
-            </div>
-        `).join('');
-
-        // Inicializar los eventos después de cargar los productos
-        initializeProductCards();
+        allProducts = await response.json();
+        
+        displayProducts(allProducts); // Mostrar todos los productos inicialmente
+        
+        // Agregar event listener para el buscador
+        const searchInput = document.getElementById('search-input');
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            filterProducts(searchTerm);
+        });
 
     } catch (error) {
         console.error('Error al cargar productos:', error);
         document.getElementById('productos-container').innerHTML = '<p class="text-danger">Error al cargar los productos. Intenta más tarde.</p>';
     }
 });
+
+function filterProducts(searchTerm) {
+    const filteredProducts = allProducts.filter(producto => 
+        producto.nombre.toLowerCase().includes(searchTerm) ||
+        (producto.descripcion && producto.descripcion.toLowerCase().includes(searchTerm))
+    );
+    displayProducts(filteredProducts);
+}
+
+// Nueva función para mostrar productos (extraída de DOMContentLoaded)
+function displayProducts(productos) {
+    const container = document.getElementById('productos-container');
+
+    if (productos.length === 0) {
+        container.innerHTML = '<p class="text-center text-light">No se encontraron productos</p>';
+        return;
+    }
+    
+    container.innerHTML = productos.map(producto => `
+        <div class="col-md-4 product-card" data-product-id="${producto._id}" data-base-price="${producto.precio}" data-product-name="${producto.nombre}">
+            <div class="card h-100">
+                <img src="${producto.imagen.toString()}" class="img-fluid" style="max-height: 250px;" alt="${producto.nombre}">
+                <div class="card-body">
+                    <h5 class="card-title">${producto.nombre}</h5>
+                    <p class="card-text">$${producto.precio.toFixed(2)}</p>
+                    <p class="card-text text-muted">${producto.descripcion || ''}</p>
+                </div>
+                <div class="mb-2 p-3">
+                    <label for="weight" class="form-label">Peso:</label>
+                    <select name="weight" class="form-select form-select-sm weight-select">
+                        <option value="half-kg">500g</option>
+                        <option value="one-kg" selected>1000g</option>
+                        <option value="two-kg">2000g</option>
+                        <option value="other-kg">Otro</option>
+                    </select>
+                    <input type="number" class="form-control custom-weight-input mt-2" placeholder="Ingrese el peso en kg" style="display: none;">
+                </div>
+                
+                <div class="mb-2 p-3">
+                    <label for="amount" class="form-label">Cantidad bolsas:</label>
+                    <select name="amount" class="form-select form-select-sm amount-select">
+                        <option value="1">1 bolsa</option>
+                        <option value="2">2 bolsas</option>
+                        <option value="3">3 bolsas</option>
+                        <option value="4">4 bolsas</option>
+                    </select>
+                </div>
+                <div class="mb-2 p-3 price-display text-end fw-bold"></div>
+                <button class="btn btn-danger btn-block rounded-0 btn-product-card">Agregar</button>
+            </div>
+        </div>
+    `).join('');
+
+    // Inicializar los eventos después de cargar los productos
+    initializeProductCards();
+}
 
 function initializeProductCards() {
     // Selecciona todas las tarjetas de producto
