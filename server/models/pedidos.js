@@ -7,7 +7,14 @@
       subtotal: { type: Number, required: true },  
       peso: { type: String, required: true },
       cantidad: { type: Number, required: true },  
-      precioTotal: { type: Number, required: true }
+      precioTotal: { type: Number, required: true },
+      completado: { type: Boolean, default: false },
+      motivoIncompleto: {
+        type: String,
+        enum: ['sin stock', 'dañado', 'no solicitado', 'otro'],
+        default: null
+      },
+      observaciones: String
   });
 
   const PedidoSchema = new mongoose.Schema({

@@ -78,6 +78,71 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+// PUT /api/pedidos/:id/items - Actualizar estado de ítems
+router.put('/:id/items', async (req, res) => {
+  try {
+      const { items } = req.body;
+      const pedido = await Pedido.findById(req.params.id);
+      
+      if (!pedido) {
+          return res.status(404).json({ success: false, message: "Pedido no encontrado" });
+      }
+      
+      // Actualizar cada ítem
+      items.forEach(update => {
+          const item = pedido.items.id(update._id);
+          if (item) {
+              item.completado = update.completado;
+              item.motivoIncompleto = update.motivoIncompleto;
+              item.observaciones = update.observaciones;
+          }
+      });
+      
+      await pedido.save();
+      
+      res.json({ 
+          success: true,
+          pedido: await Pedido.findById(pedido._id).populate('items.producto')
+      });
+  } catch (error) {
+      res.status(500).json({ 
+          success: false,
+          message: error.message 
+      });
+  }
+});
+
+router.put('/:id/completar', async (req, res) => {
+  console.log("Llamada a PUT /completar con ID:", req.params.id); 
+  try {
+      const pedido = await Pedido.findByIdAndUpdate(
+          req.params.id,
+          { estado: 'completado', fechaCompletado: new Date() },
+          { new: true }
+      ).populate('items.producto');
+
+      if (!pedido) {
+          return res.status(404).json({ 
+              success: false,
+              message: "Pedido no encontrado" 
+          });
+      }
+
+      // Estructura de respuesta consistente
+      res.json({
+          success: true,
+          message: "Pedido completado exitosamente",
+          pedido: pedido
+      });
+
+  } catch (error) {
+      res.status(500).json({
+          success: false,
+          message: error.message
+      });
+  }
+});
+
 router.post('/', async (req, res) => {
   try {
     const Pedido = require('../models/pedidos');
