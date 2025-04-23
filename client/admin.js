@@ -166,23 +166,19 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const response = await fetch(`http://localhost:3000/api/admin/producto/${id}`, {
             method: 'DELETE',
-            headers: { 
-              'Authorization': '3BGOD',
-              'Content-Type': 'application/json'
-            }
+            headers: { 'Authorization': '3BGOD' }
           });
       
-          const data = await response.json();
-          
           if (!response.ok) {
-            throw new Error(data.error || 'Error al eliminar producto');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || `Error HTTP: ${response.status}`);
           }
           
-          mostrarAlerta(data.message || 'Producto eliminado correctamente', 'success');
+          mostrarAlerta('Producto eliminado correctamente', 'success');
           cargarProductos();
         } catch (error) {
           console.error('Error al eliminar:', error);
-          mostrarAlerta(error.message, 'danger');
+          mostrarAlerta(error.message || 'Error al eliminar producto', 'danger');
         }
       };
 });

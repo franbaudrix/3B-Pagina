@@ -57,7 +57,6 @@ router.put('/producto/:id', autenticar, async (req, res) => {
 });
 
 router.delete('/producto/:id', autenticar, async (req, res) => {
-  console.log(`Solicitud DELETE recibida para ID: ${req.params.id}`);
   try {
     const producto = await Producto.findByIdAndDelete(req.params.id);
     if (!producto) {
