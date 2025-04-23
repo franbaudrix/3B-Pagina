@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!id || id.length !== 24) {
                 throw new Error("ID de producto inválido");
             }
-            const response = await fetch(`http://localhost:3000/api/producto/${id}`, {
+            const response = await fetch(`http://localhost:3000/api/admin/producto/${id}`, {
                 headers: { 
                   'Authorization': '3BGOD'
                 }
@@ -164,18 +164,25 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm('¿Estás seguro de eliminar este producto?')) return;
         
         try {
-            const response = await fetch(`http://localhost:3000/api/admin/producto/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': '3BGOD' }
-            });
-
-            if (!response.ok) throw new Error(await response.text());
-            
-            mostrarAlerta('Producto eliminado correctamente', 'success');
-            cargarProductos();
+          const response = await fetch(`http://localhost:3000/api/admin/producto/${id}`, {
+            method: 'DELETE',
+            headers: { 
+              'Authorization': '3BGOD',
+              'Content-Type': 'application/json'
+            }
+          });
+      
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.error || 'Error al eliminar producto');
+          }
+          
+          mostrarAlerta(data.message || 'Producto eliminado correctamente', 'success');
+          cargarProductos();
         } catch (error) {
-            console.error('Error al eliminar:', error);
-            mostrarAlerta('Error al eliminar producto', 'danger');
+          console.error('Error al eliminar:', error);
+          mostrarAlerta(error.message, 'danger');
         }
-    };
+      };
 });

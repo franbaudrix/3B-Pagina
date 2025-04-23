@@ -7,7 +7,6 @@ const app = express();
 
 // Middlewares
 app.use(cors());
-app.use(bodyParser.json());
 app.use(express.json());
 
 // Conexión a MongoDB
@@ -27,42 +26,6 @@ const pedidosRoutes = require('./routes/pedidos');
 app.use('/api', apiRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/pedidos', pedidosRoutes);
-
-// Obtener todos los pedidos
-app.get('/api/pedidos', async (req, res) => {
-    try {
-        const pedidos = await Pedido.find().sort({ fecha: -1 });
-        res.json(pedidos);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Obtener un pedido por ID
-app.get('/api/pedidos/:id', async (req, res) => {
-    try {
-        const pedido = await Pedido.findById(req.params.id);
-        if (!pedido) return res.status(404).json({ message: 'Pedido no encontrado' });
-        res.json(pedido);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
-
-// Actualizar estado de un pedido
-app.put('/api/pedidos/:id', async (req, res) => {
-    try {
-        const pedido = await Pedido.findByIdAndUpdate(
-            req.params.id,
-            { estado: req.body.estado },
-            { new: true }
-        );
-        if (!pedido) return res.status(404).json({ message: 'Pedido no encontrado' });
-        res.json(pedido);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-});
 
 // Iniciar servidor
 const PORT = process.env.PORT || 3000;
