@@ -1,33 +1,50 @@
-  const mongoose = require('mongoose');
+const mongoose = require('mongoose');
 
-  const ItemSchema = new mongoose.Schema({
-      producto: { type: mongoose.Schema.Types.ObjectId, ref: 'Producto', required: true },
-      nombre: { type: String, required: true },
-      precioUnitario: { type: Number, required: true },
-      subtotal: { type: Number, required: true },  
-      peso: { type: String, required: true },
-      cantidad: { type: Number, required: true },  
-      precioTotal: { type: Number, required: true },
-      completado: { type: Boolean, default: false },
-      motivoIncompleto: {
+const ItemSchema = new mongoose.Schema({
+    producto: { type: mongoose.Schema.Types.ObjectId, ref: 'Producto', required: true },
+    nombre: { type: String, required: true },
+    precioUnitario: { type: Number, required: true },
+    subtotal: { type: Number, required: true },  
+    peso: { type: String, required: true },
+    cantidad: { type: Number, required: true },  
+    precioTotal: { type: Number, required: true },
+    completado: { type: Boolean, default: false },
+    motivoIncompleto: {
         type: String,
         enum: ['sin stock', 'dañado', 'no solicitado', 'otro'],
         default: null
-      },
-      observaciones: String
-  });
+    },
+    observaciones: String
+});
 
-  const PedidoSchema = new mongoose.Schema({
-    usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
-    items: [ItemSchema],
-    total: { type: Number, required: true },
-    estado: { type: String, default: 'pendiente', enum: ['pendiente', 'en_proceso' , 'completado', 'cancelado'] },
-    fecha: { type: Date, default: Date.now },
-    direccionEnvio: {
-      calle: String,
-      ciudad: String,
-      codigoPostal: String
+const PedidoSchema = new mongoose.Schema({
+  usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
+  items: [ItemSchema],
+  total: { type: Number, required: true },
+  estado: { 
+    type: String, 
+    default: 'pendiente', 
+    enum: ['pendiente', 'en_proceso', 'completado', 'cancelado'] 
+  },
+  fecha: { type: Date, default: Date.now },
+  tipoEnvio: {
+    type: String,
+    required: true,
+    enum: ['bahia-blanca', 'retiro', 'otra-localidad']
+  },
+  cliente: {
+    nombre: { type: String, required: true },
+    whatsapp: { type: String, required: true },
+    email: { type: String, required: true },
+    direccion: {
+      calle: { type: String },
+      numero: { type: String },
+      localidad: { type: String },
+      provincia: { type: String },
+      codigoPostal: { type: String }
     }
-  });
+  },
+  observaciones: String
+}, { versionKey: false });
 
-  module.exports = mongoose.model('Pedido', PedidoSchema);
+module.exports = mongoose.model('Pedido', PedidoSchema);

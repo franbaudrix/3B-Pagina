@@ -74,6 +74,7 @@
             </div>
         </div>
     </div>
+
     <div class="container mb-4">
         <div class="row justify-content-center">
             <div class="col-md-6">
@@ -81,10 +82,106 @@
             </div>
         </div>
     </div>
+
     <div class="container py-5">
         <h1 class="text-center mb-4 text-light">Arma tu pedido</h1>
         <div id="productos-container" class="row g-4"></div>
     </div>
+
+        <!-- Modal para datos del cliente -->
+    <div id="client-data-modal" class="modal fade" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header">
+                    <h5 class="modal-title">Datos del Cliente</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="client-data-form">
+                        <div class="mb-3">
+                            <label class="form-label">Tipo de envío</label>
+                            <select class="form-select" id="tipo-envio" required>
+                                <option value="" selected disabled>Seleccione una opción</option>
+                                <option value="bahia-blanca">Envío Bahía Blanca</option>
+                                <option value="retiro">Retiro en local</option>
+                                <option value="otra-localidad">Envío a otra localidad</option>
+                            </select>
+                        </div>
+
+                        <!-- Campos comunes a todos los tipos -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nombre completo</label>
+                                <input type="text" class="form-control" id="nombre-cliente" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">WhatsApp</label>
+                                <input type="tel" class="form-control" id="whatsapp-cliente" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email-cliente" required>
+                        </div>
+
+                        <!-- Campos específicos para Bahía Blanca -->
+                        <div id="bahia-blanca-fields" class="envio-fields" style="display: none;">
+                            <h6 class="mt-4">Dirección en Bahía Blanca</h6>
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label class="form-label">Calle</label>
+                                    <input type="text" class="form-control" id="calle-bahia">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Número</label>
+                                    <input type="text" class="form-control" id="numero-bahia">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Campos específicos para otra localidad -->
+                        <div id="otra-localidad-fields" class="envio-fields" style="display: none;">
+                            <h6 class="mt-4">Dirección de envío</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Localidad</label>
+                                    <input type="text" class="form-control" id="localidad-otra">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Provincia</label>
+                                    <input type="text" class="form-control" id="provincia-otra">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Código Postal</label>
+                                    <input type="text" class="form-control" id="cp-otra">
+                                </div>
+                                <div class="col-md-5 mb-3">
+                                    <label class="form-label">Calle</label>
+                                    <input type="text" class="form-control" id="calle-otra">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">Número</label>
+                                    <input type="text" class="form-control" id="numero-otra">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Observaciones (opcional)</label>
+                            <textarea class="form-control" id="observaciones" rows="2"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="confirmar-pedido">Confirmar Pedido</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

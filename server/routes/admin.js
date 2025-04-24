@@ -4,7 +4,7 @@ const Producto = require('../models/producto');
 
 // Middleware de autenticación
 const autenticar = (req, res, next) => {
-  console.log("Body recibido (sin autenticación):", req.body); 
+  //console.log("Body recibido (sin autenticación):", req.body); 
   const authHeader = req.headers.authorization;
   if (authHeader === '3BGOD') { // Hardcodeado para prueba
     next();
@@ -35,7 +35,7 @@ router.get('/producto/:id', async (req, res) => {
 });
 
 router.post('/producto', autenticar, async (req, res) => {
-  console.log("Body recibido:", req.body);
+  //console.log("Body recibido:", req.body);
   try {
     const producto = new Producto(req.body);
     await producto.save();

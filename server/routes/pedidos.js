@@ -145,29 +145,46 @@ router.put('/:id/completar', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const Pedido = require('../models/pedidos');
-    console.log('Modelo Pedido cargado:', Pedido);
-  } catch (err) {
-    console.error('Error cargando modelo Pedido:', err);
-  }
+      console.log("Body recibido anashe:", req.body);
+      
+      // Validar campos obligatorios
+      if (!req.body.items || req.body.items.length === 0) {
+          return res.status(400).json({ message: "El pedido debe contener items" });
+      }
+      
+      if (!req.body.tipoEnvio || !req.body.cliente || !req.body.cliente.nombre || 
+          !req.body.cliente.whatsapp || !req.body.cliente.email) {
+          return res.status(400).json({ message: "Faltan datos obligatorios del cliente" });
+      }
+      
+      // Validar dirección según tipo de envío
+      if (req.body.tipoEnvio === 'bahia-blanca') {
+          if (!req.body.cliente.direccion || !req.body.cliente.direccion.calle || !req.body.cliente.direccion.numero) {
+              return res.status(400).json({ message: "Falta la dirección para envío en Bahía Blanca" });
+          }
+      }
+      
+      if (req.body.tipoEnvio === 'otra-localidad') {
+          if (!req.body.cliente.direccion || !req.body.cliente.direccion.calle || 
+              !req.body.cliente.direccion.numero || !req.body.cliente.direccion.localidad || 
+              !req.body.cliente.direccion.provincia || !req.body.cliente.direccion.codigoPostal) {
+              return res.status(400).json({ message: "Faltan datos de dirección para envío a otra localidad" });
+          }
+      }
 
-  try {
-    console.log("Body recibido:", req.body);
-    // Validar items (puedes añadir más validaciones)
-    if (!req.body.items || req.body.items.length === 0) {
-      return res.status(400).json({ message: "El pedido debe contener items flaco" });
-    }
+      const nuevoPedido = new Pedido({
+          ...req.body,
+          usuario: req.userId // Si tienes autenticación
+      });
 
-    const nuevoPedido = new Pedido({
-      ...req.body,
-      usuario: req.userId // Si tienes autenticación
-    });
-
-    const pedidoGuardado = await nuevoPedido.save();
-    res.status(201).json(pedidoGuardado);
+      const pedidoGuardado = await nuevoPedido.save();
+      res.status(201).json(pedidoGuardado);
 
   } catch (error) {
-    res.status(500).json({ message: error.message });
+      console.error("Error al crear pedido:", error);
+      res.status(500).json({ 
+          message: error.message || "Error interno del servidor al crear el pedido" 
+      });
   }
 });
 

@@ -8,6 +8,8 @@ let cartItemCount = 0
 const cartContainer = document.getElementById('cart-container');
 const cartToggle = document.getElementById('cart-toggle');
 const closeCart = document.getElementById('close-cart');
+let pedidoItems = []; // Para almacenar temporalmente los items del pedido
+let pedidoTotal = 0; // Para almacenar temporalmente el total del pedido
 
 // Función para mostrar/ocultar el carrito
 function toggleCart() {
@@ -28,7 +30,7 @@ const weightOptions = {
 };
 
 // Función para guardar el pedido en la base de datos
-async function guardarPedido() {
+async function prepararPedido() {
     try {
         const items = [];
         const filas = document.querySelectorAll('#tablaCarrito tbody tr:not(.table-header)');
@@ -39,7 +41,7 @@ async function guardarPedido() {
                 producto: fila.dataset.productId,
                 nombre: celdas[0].textContent.trim(),
                 precioUnitario: parseFloat(celdas[1].textContent.replace('$', '')),
-                subtotal: parseFloat(celdas[1].textContent.replace('$', '')), // Añadido
+                subtotal: parseFloat(celdas[1].textContent.replace('$', '')),
                 peso: celdas[2].textContent.trim(),
                 cantidad: parseInt(celdas[3].textContent),
                 precioTotal: parseFloat(celdas[4].textContent.replace('$', ''))
@@ -50,14 +52,56 @@ async function guardarPedido() {
             throw new Error('El carrito está vacío');
         }
 
+        // Guardar temporalmente los datos del pedido
+        pedidoItems = items;
+        pedidoTotal = totalPrice;
+
+        // Mostrar el modal
+        const modal = new bootstrap.Modal(document.getElementById('client-data-modal'));
+        modal.show();
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Error al preparar el pedido: ' + error.message);
+    }
+}
+
+// Función para enviar el pedido completo al servidor
+async function enviarPedidoCompleto(clienteData) {
+    try {
+        // Preparar el objeto de dirección según el tipo de envío
+        let direccion = {};
+        if (clienteData.tipoEnvio === 'bahia-blanca') {
+            direccion = {
+                calle: clienteData.calle,
+                numero: clienteData.numero,
+                localidad: 'Bahía Blanca',
+                provincia: 'Buenos Aires'
+            };
+        } else if (clienteData.tipoEnvio === 'otra-localidad') {
+            direccion = {
+                calle: clienteData.calle,
+                numero: clienteData.numero,
+                localidad: clienteData.localidad,
+                provincia: clienteData.provincia,
+                codigoPostal: clienteData.codigoPostal
+            };
+        }
+
         const pedido = {
-            fecha: new Date().toISOString(),
-            items: items,
-            total: totalPrice,
-            estado: 'pendiente'
+            items: pedidoItems,
+            total: pedidoTotal,
+            tipoEnvio: clienteData.tipoEnvio,
+            cliente: {
+                nombre: clienteData.nombre,
+                whatsapp: clienteData.whatsapp,
+                email: clienteData.email,
+                direccion: direccion
+            },
+            observaciones: clienteData.observaciones
         };
 
-        console.log('Enviando pedido:', pedido); // Para depuración
+        console.log('Enviando pedido:', pedido); // Verifica en consola
 
         const response = await fetch('http://localhost:3000/api/pedidos', {
             method: 'POST',
@@ -73,38 +117,126 @@ async function guardarPedido() {
         }
 
         const data = await response.json();
-        alert(`Pedido guardado correctamente! ID: ${data.id}`);
-        
-        // Limpiar carrito
-        document.querySelector('#tablaCarrito tbody').innerHTML = '';
-        totalPrice = 0;
-        totalDisplay.textContent = '$0.00';
-        cartItemCount = 0;
-        cartCountDisplay.textContent = '0';
-        
-        // Eliminar botón de guardar
-        const saveBtn = document.querySelector('#save-order-btn');
-        if (saveBtn) saveBtn.remove();
+        console.log('Respuesta del servidor:', data); // Verifica la respuesta
+        return data;
         
     } catch (error) {
         console.error('Error:', error);
-        alert('Error al guardar el pedido: ' + error.message);
+        throw error;
     }
 }
 
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+        // 1. Cargar productos
         const response = await fetch('http://localhost:3000/api/producto');
         allProducts = await response.json();
+        displayProducts(allProducts);
         
-        displayProducts(allProducts); // Mostrar todos los productos inicialmente
-        
-        // Agregar event listener para el buscador
+        // 2. Configurar buscador
         const searchInput = document.getElementById('search-input');
         searchInput.addEventListener('input', (e) => {
             const searchTerm = e.target.value.toLowerCase();
             filterProducts(searchTerm);
+        });
+
+        // 3. Configurar modal de datos del cliente
+        // Manejar cambio en tipo de envío
+        document.getElementById('tipo-envio').addEventListener('change', function() {
+            // Ocultar todos los campos de envío primero
+            document.querySelectorAll('.envio-fields').forEach(el => {
+                el.style.display = 'none';
+            });
+
+            // Mostrar los campos correspondientes
+            if (this.value === 'bahia-blanca') {
+                document.getElementById('bahia-blanca-fields').style.display = 'block';
+            } else if (this.value === 'otra-localidad') {
+                document.getElementById('otra-localidad-fields').style.display = 'block';
+            }
+        });
+
+        // Manejar confirmación de pedido
+        document.getElementById('confirmar-pedido').addEventListener('click', async function() {
+            const tipoEnvio = document.getElementById('tipo-envio').value;
+            const nombre = document.getElementById('nombre-cliente').value;
+            const whatsapp = document.getElementById('whatsapp-cliente').value;
+            const email = document.getElementById('email-cliente').value;
+            const observaciones = document.getElementById('observaciones').value;
+        
+            // Validar campos comunes
+            if (!tipoEnvio || !nombre || !whatsapp || !email) {
+                alert('Por favor complete todos los campos obligatorios');
+                return;
+            }
+        
+            // Preparar objeto con datos del cliente
+            const clienteData = {
+                tipoEnvio: tipoEnvio,
+                nombre: nombre,
+                whatsapp: whatsapp,
+                email: email,
+                observaciones: observaciones
+            };
+        
+            // Agregar datos específicos según el tipo de envío
+            if (tipoEnvio === 'bahia-blanca') {
+                clienteData.calle = document.getElementById('calle-bahia').value;
+                clienteData.numero = document.getElementById('numero-bahia').value;
+                
+                if (!clienteData.calle || !clienteData.numero) {
+                    alert('Por favor complete la dirección para envío en Bahía Blanca');
+                    return;
+                }
+            } 
+            else if (tipoEnvio === 'otra-localidad') {
+                clienteData.localidad = document.getElementById('localidad-otra').value;
+                clienteData.provincia = document.getElementById('provincia-otra').value;
+                clienteData.codigoPostal = document.getElementById('cp-otra').value;
+                clienteData.calle = document.getElementById('calle-otra').value;
+                clienteData.numero = document.getElementById('numero-otra').value;
+                
+                if (!clienteData.localidad || !clienteData.provincia || !clienteData.codigoPostal || 
+                    !clienteData.calle || !clienteData.numero) {
+                    alert('Por favor complete todos los campos de dirección para envío a otra localidad');
+                    return;
+                }
+            }
+        
+            try {
+                // Mostrar spinner o indicador de carga
+                this.disabled = true;
+                this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...';
+                
+                const resultado = await enviarPedidoCompleto(clienteData);
+                
+                // Limpiar carrito después de éxito
+                document.querySelector('#tablaCarrito tbody').innerHTML = '';
+                totalPrice = 0;
+                totalDisplay.textContent = '$0.00';
+                cartItemCount = 0;
+                cartCountDisplay.textContent = '0';
+                
+                // Eliminar botón de guardar si existe
+                const saveBtn = document.querySelector('#save-order-btn');
+                if (saveBtn) saveBtn.remove();
+                
+                // Mostrar mensaje de éxito
+                alert(`Pedido #${resultado._id} guardado correctamente!`);
+                
+                // Cerrar modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('client-data-modal'));
+                modal.hide();
+                
+            } catch (error) {
+                console.error('Error al enviar pedido:', error);
+                alert('Error al guardar el pedido: ' + error.message);
+                
+                // Restaurar botón
+                this.disabled = false;
+                this.textContent = 'Confirmar Pedido';
+            }
         });
 
     } catch (error) {
@@ -314,7 +446,7 @@ function initializeProductCards() {
                 saveBtn.id = 'save-order-btn';
                 saveBtn.className = 'btn btn-success w-100 mt-2';
                 saveBtn.textContent = 'Guardar Pedido';
-                saveBtn.addEventListener('click', guardarPedido);
+                saveBtn.addEventListener('click', prepararPedido);
                 cartFooter.appendChild(saveBtn);
             }
         
