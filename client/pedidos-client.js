@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const pedidosContainer = document.getElementById('pedidos-container');
     const filtroEstado = document.getElementById('filtro-estado');
-    const buscarId = document.getElementById('buscar-id');
+    const buscarNombre = document.getElementById('buscar-nombre');
     const btnRefrescar = document.getElementById('btn-refrescar');
     const detallesModal = new bootstrap.Modal(document.getElementById('detallesModal'));
     let pedidosData = [];
@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event listeners
     filtroEstado.addEventListener('change', filtrarPedidos);
-    buscarId.addEventListener('input', filtrarPedidos);
+    buscarNombre.addEventListener('input', filtrarPedidos);
     btnRefrescar.addEventListener('click', cargarPedidos);
     document.getElementById('btn-guardar-estado').addEventListener('click', actualizarEstadoPedido);
 
@@ -53,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const response = await fetch('http://localhost:3000/api/pedidos');
             if (!response.ok) throw new Error('Error al cargar pedidos');
             
-            pedidosData = await response.json();
+            pedidosData = (await response.json()).filter(pedido => pedido.estado !== 'revision');
             mostrarPedidos(pedidosData);
         } catch (error) {
             console.error('Error:', error);
@@ -79,12 +79,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const estadoClass = getEstadoClass(pedido.estado);
             
             const pedidoCard = document.createElement('div');
-            pedidoCard.className = 'col-md-6 col-lg-4';
+            pedidoCard.className = 'col-md-6 col-lg-4 mb-4';
             pedidoCard.innerHTML = `
                 <div class="pedido-card card shadow-sm h-100">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3">
-                            <h5 class="card-title mb-0">Pedido #${pedido._id.substring(0, 8)}</h5>
+                            <h5 class="card-title mb-0">Nombre: ${pedido.cliente.nombre}</h5>
                             <span class="badge ${estadoClass}">${formatEstado(pedido.estado)}</span>
                         </div>
                         <p class="text-muted small mb-2">${fecha}</p>
@@ -116,17 +116,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function filtrarPedidos() {
         const estado = filtroEstado.value;
-        const idBusqueda = buscarId.value.toLowerCase();
+        const nombreBusqueda = buscarNombre.value.toLowerCase();
         
-        let pedidosFiltrados = pedidosData;
+        let pedidosFiltrados = pedidosData.filter(p => p.estado !== 'revision');
         
         if (estado !== 'todos') {
             pedidosFiltrados = pedidosFiltrados.filter(p => p.estado === estado);
         }
         
-        if (idBusqueda) {
+        if (nombreBusqueda) {
             pedidosFiltrados = pedidosFiltrados.filter(p => 
-                p._id.toLowerCase().includes(idBusqueda)
+                p.cliente.nombre.toLowerCase().includes(nombreBusqueda)
             );
         }
         
@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', function() {
             btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Completando...';
     
             // 1. Primero guarda el estado de los ítems
-            await guardarEstadoItems();
+            const itemsCompletados = await guardarEstadoItems();
     
             // 2. Marcar el pedido como completado
             const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoActual._id}/completar`, {
@@ -299,7 +299,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
-                }
+                },
+                body: JSON.stringify({ itemsCompletados }) // Add this line
             });
     
             if (!response.ok) {

@@ -3,52 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3B - Arma tu pedido</title>
+    <title>3B - Alimentos Naturales y Saludables</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="./style-index.css">
 </head>
 
-<header class="header">
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-3">
-                <div class="header__logo">
-                    <a href="./index.html"><img src="img/logo.jpeg" class="img-fluid w-25 rounded-circle" alt=""></a>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-3">
+                    <div class="header__logo">
+                        <a href="./index.html"><img src="img/logo.jpeg" class="img-fluid w-25 rounded-circle" alt=""></a>
+                    </div>
+                </div>
+                <div class="col-lg-9">
+                    <nav class="header__menu">
+                        <ul>
+                            <li class="active"><a href="./index.html">Inicio</a></li>
+                            <li><a href="./shop.html">Hacer un pedido</a></li>
+                            <li><a href="./nosotros.html">Nosotros</a></li>
+                            <li><a href="./contact.html">Contacto</a></li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
-            <div class="col-lg-9">
-                <nav class="header__menu">
-                    <ul>
-                        <li><a href="./index.html">Home</a></li>
-                        <li class="active"><a href="./shop-grid.html">Shop</a></li>
-                        <li><a href="#">Pages</a>
-                            <ul class="header__menu__dropdown">
-                                <li><a href="./shop-details.html">Shop Details</a></li>
-                                <li><a href="./shoping-cart.html">Shoping Cart</a></li>
-                                <li><a href="./checkout.html">Check Out</a></li>
-                                <li><a href="./blog-details.html">Blog Details</a></li>
-                            </ul>
-                        </li>
-                        <li><a href="./blog.html">Blog</a></li>
-                        <li><a href="./contact.html">Contact</a></li>
-                    </ul>
-                </nav>
-            </div>
         </div>
-        <div class="humberger__open">
-            <i class="fa fa-bars"></i>
-        </div>
-    </div>
-</header>
+    </header>
 
-<body class="bg-dark">
-        <!-- Botón del carrito (puedes ponerlo en tu navbar) -->
-    <button id="cart-toggle" class="btn position-fixed" style="right: 20px; top: 20px; z-index: 1000;">
-        🛒 Carrito <span id="cart-count" class="badge bg-danger">0</span>
+    <!-- Botón del carrito -->
+    <button id="cart-toggle" class="btn position-fixed" style="right: 20px; top: 20px; z-index: 1000; background-color: var(--primary-color); color: white;">
+        <i class="fas fa-shopping-cart"></i> <span id="cart-count" class="badge bg-danger">0</span>
     </button>
 
-    <!-- Contenedor del carrito (oculto inicialmente) -->
-    <div id="cart-container" class="position-fixed end-0 top-0 vh-100 bg-white shadow-lg" style="width: 400px; max-width: 100%; z-index: 999; transform: translateX(100%); transition: transform 0.3s ease; overflow-y: auto;">
+    <!-- Carrito -->
+    <div id="cart-container" class="position-fixed end-0 top-0 vh-100 bg-white shadow-lg" style="width: 400px; max-width: 100%; z-index: 999; overflow-y: auto;">
         <div class="p-4">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h4>Tu Carrito</h4>
@@ -71,117 +62,355 @@
                     <span>Total:</span>
                     <span id="total-price">$0.00</span>
                 </h5>
+                <button class="btn btn-primary w-100 mt-2">Finalizar Compra</button>
             </div>
         </div>
     </div>
 
-    <div class="container mb-4">
-        <div class="row justify-content-center">
-            <div class="col-md-6">
-                <input type="text" id="search-input" class="form-control form-control-lg" placeholder="Buscar productos...">
+    <!-- Hero Section / Carrusel -->
+    <!-- Hero Section / Carrusel -->
+<!-- Hero Section / Carrusel -->
+<!-- Hero Section / Carrusel -->
+<section class="hero">
+    <div id="heroCarousel" class="carousel slide h-100" data-bs-ride="carousel" data-bs-interval="5000">
+        <div class="carousel-inner h-100">
+            <!-- Slide 1 -->
+            <div class="carousel-item active h-100">
+                <img src="https://img.lagaceta.com.ar/fotos/notas/2023/11/09/frutos-secos-como-armar-mix-ideal-para-comer-durante-todo-dia-1013123-104626.jpg" class="d-block w-100 h-100" style="object-fit: cover;" alt="Harinas naturales">
+                <div class="carousel-caption d-flex flex-column justify-content-center h-100" style="top: 0; bottom: 0;">
+                    <h1 class="display-3 fw-bold mb-4">Natural, rico y saludable</h1>
+                    <p class="lead mb-5 fs-4">Frutos secos, semillas, frutas deshidratadas y granolas premium.
+                        Lo mejor de la naturaleza, directo a tu mesa.</p>
+                    <div class="mt-4">
+                        <a href="./shop.html" class="btn btn-primary btn-lg px-4">Hacer pedido ahora</a>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
-
-    <div class="container py-5">
-        <h1 class="text-center mb-4 text-light">Arma tu pedido</h1>
-        <div id="productos-container" class="row g-4"></div>
-    </div>
-
-        <!-- Modal para datos del cliente -->
-    <div id="client-data-modal" class="modal fade" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content bg-dark text-light">
-                <div class="modal-header">
-                    <h5 class="modal-title">Datos del Cliente</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            
+            <!-- Slide 2 -->
+            <div class="carousel-item h-100">
+                <img src="https://emporiocooperativo.com.ar/wp-content/uploads/2024/11/Mermeladas-Artesanales-en-San-Juan-Sabores-que-Conectan-Tradicion-y-Sabor.webp" class="d-block w-100 h-100" style="object-fit: cover;" alt="Frutas deshidratadas">
+                <div class="carousel-caption d-flex flex-column justify-content-center h-100" style="top: 0; bottom: 0;">
+                    <h1 class="display-3 fw-bold mb-4">Antojos sin culpa</h1>
+                    <p class="lead mb-5 fs-4">Snacks SIN TACC, chocolates, confituras, barras y dulces saludables.
+                        Opciones para todos los gustos, sin descuidar tu bienestar.</p>
+                    <div class="mt-4">
+                        <a href="./shop.html" class="btn btn-primary btn-lg px-4">Hacer pedido ahora</a>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <form id="client-data-form">
-                        <div class="mb-3">
-                            <label class="form-label">Tipo de envío</label>
-                            <select class="form-select" id="tipo-envio" required>
-                                <option value="" selected disabled>Seleccione una opción</option>
-                                <option value="bahia-blanca">Envío Bahía Blanca</option>
-                                <option value="retiro">Retiro en local</option>
-                                <option value="otra-localidad">Envío a otra localidad</option>
-                            </select>
-                        </div>
+            </div>
 
-                        <!-- Campos comunes a todos los tipos -->
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Nombre completo</label>
-                                <input type="text" class="form-control" id="nombre-cliente" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">WhatsApp</label>
-                                <input type="tel" class="form-control" id="whatsapp-cliente" required>
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email-cliente" required>
-                        </div>
-
-                        <!-- Campos específicos para Bahía Blanca -->
-                        <div id="bahia-blanca-fields" class="envio-fields" style="display: none;">
-                            <h6 class="mt-4">Dirección en Bahía Blanca</h6>
-                            <div class="row">
-                                <div class="col-md-8 mb-3">
-                                    <label class="form-label">Calle</label>
-                                    <input type="text" class="form-control" id="calle-bahia">
-                                </div>
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">Número</label>
-                                    <input type="text" class="form-control" id="numero-bahia">
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Campos específicos para otra localidad -->
-                        <div id="otra-localidad-fields" class="envio-fields" style="display: none;">
-                            <h6 class="mt-4">Dirección de envío</h6>
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Localidad</label>
-                                    <input type="text" class="form-control" id="localidad-otra">
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Provincia</label>
-                                    <input type="text" class="form-control" id="provincia-otra">
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
-                                    <label class="form-label">Código Postal</label>
-                                    <input type="text" class="form-control" id="cp-otra">
-                                </div>
-                                <div class="col-md-5 mb-3">
-                                    <label class="form-label">Calle</label>
-                                    <input type="text" class="form-control" id="calle-otra">
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <label class="form-label">Número</label>
-                                    <input type="text" class="form-control" id="numero-otra">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Observaciones (opcional)</label>
-                            <textarea class="form-control" id="observaciones" rows="2"></textarea>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn btn-primary" id="confirmar-pedido">Confirmar Pedido</button>
+            <!-- Slide 3 -->
+            <div class="carousel-item h-100">
+                <img src="https://www.vidactual.com/rcpmaker/wp-content/uploads/2021/09/bigstock-various-aromatic-colorful-spic-345747904.jpeg" class="d-block w-100 h-100" style="object-fit: cover;" alt="Frutas deshidratadas">
+                <div class="carousel-caption d-flex flex-column justify-content-center h-100" style="top: 0; bottom: 0;">
+                    <h1 class="display-3 fw-bold mb-4">Tu almacén gourmet</h1>
+                    <p class="lead mb-5 fs-4">Aceites, legumbres, condimentos, pickles, harinas y más.
+                        Todo lo que necesitás para cocinar rico, fácil y distinto.</p>
+                    <div class="mt-4">
+                        <a href="./shop.html" class="btn btn-primary btn-lg px-4">Hacer pedido ahora</a>
+                    </div>
                 </div>
             </div>
         </div>
+        
+        <!-- Controles del carrusel -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Anterior</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Siguiente</span>
+        </button>
     </div>
-    <script src="script.js"></script>
+</section>
+
+    <!-- Categorías Destacadas -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Nuestras Categorías</h2>
+            <div class="row">
+                <div class="col-md-4 col-6 mb-4">
+                    <div class="card feature-card text-center p-4">
+                        <div class="category-icon">
+                            <i class="fas fa-seedling"></i>
+                        </div>
+                        <h3>Frutos secos, semillas y deshidratados</h3>
+                        <p>Almendras, nueces, castañas y más</p>
+                        <a href="./shop.html?category=frutos-secos" class="btn btn-sm btn-outline-primary">Ver productos</a>
+                    </div>
+                </div>
+                <div class="col-md-4 col-6 mb-4">
+                    <div class="card feature-card text-center p-4">
+                        <div class="category-icon">
+                            <i class="fas fa-bread-slice"></i>
+                        </div>
+                        <h3>Granolas, cereales y barras</h3>
+                        <p>Granolas premium, cereales clásicos y barras energéticas para un desayuno completo o una merienda nutritiva.</p>
+                        <a href="./shop.html?category=harinas" class="btn btn-sm btn-outline-primary">Ver productos</a>
+                    </div>
+                </div>
+                <div class="col-md-4 col-6 mb-4">
+                    <div class="card feature-card text-center p-4">
+                        <div class="category-icon">
+                            <i class="fas fa-ban"></i>
+                        </div>
+                        <h3>Productos SIN TACC</h3>
+                        <p>Snacks, galletitas, papas y nachos aptos para celíacos, sin perder sabor ni variedad.</p>
+                        <a href="./shop.html?category=semillas" class="btn btn-sm btn-outline-primary">Ver productos</a>
+                    </div>
+                </div>
+                <div class="col-md-4 col-6 mb-4">
+                    <div class="card feature-card text-center p-4">
+                        <div class="category-icon">
+                            <i class="fas fa-candy-cane"></i>
+                        </div>
+                        <h3>Dulces y confituras</h3>
+                        <p>Mermeladas, dulces de leche, chocolates en barra y confituras artesanales para tus antojos dulces.</p>
+                        <a href="./shop.html?category=snacks" class="btn btn-sm btn-outline-primary">Ver productos</a>
+                    </div>
+                </div>
+                <div class="col-md-4 col-6 mb-4">
+                    <div class="card feature-card text-center p-4">
+                        <div class="category-icon">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                        <h3>Pastas, harinas y premezclas</h3>
+                        <p>Harinas tradicionales y especiales, premezclas y fideos para cocinar en casa con sabor y calidad.</p>
+                        <a href="./shop.html?category=especiales" class="btn btn-sm btn-outline-primary">Ver productos</a>
+                    </div>
+                </div>
+                <div class="col-md-4 col-6 mb-4">
+                    <div class="card feature-card text-center p-4">
+                        <div class="category-icon">
+                            <i class="fas fa-store"></i>
+                        </div>
+                        <h3>Almacén gourmet</h3>
+                        <p>Aceitunas, pickles, condimentos, sales, aceites y salsas para realzar cada plato.</p>
+                        <a href="./shop.html?category=mayor" class="btn btn-sm btn-outline-primary">Ver productos</a>
+                    </div>
+                </div>
+                <div class="col-md-4 col-6 mb-4">
+                    <div class="card feature-card text-center p-4">
+                        <div class="category-icon">
+                            <i class="fas fa-seedling"></i>
+                        </div>
+                        <h3>Legumbres y arroz</h3>
+                        <p>Lentejas, porotos y distintas variedades de arroz como base para platos nutritivos y reconfortantes.</p>
+                        <a href="./shop.html?category=snacks" class="btn btn-sm btn-outline-primary">Ver productos</a>
+                    </div>
+                </div>
+                <div class="col-md-4 col-6 mb-4">
+                    <div class="card feature-card text-center p-4">
+                        <div class="category-icon">
+                            <i class="fas fa-mug-hot"></i>
+                        </div>
+                        <h3>Bebidas e infusiones</h3>
+                        <p>Bebidas saludables, hierbas e infusiones para refrescarte o relajarte naturalmente.</p>
+                        <a href="./shop.html?category=especiales" class="btn btn-sm btn-outline-primary">Ver productos</a>
+                    </div>
+                </div>
+                <div class="col-md-4 col-6 mb-4">
+                    <div class="card feature-card text-center p-4">
+                        <div class="category-icon">
+                            <i class="fas fa-dumbbell"></i>
+                        </div>
+                        <h3>Suplementos y productos funcionales</h3>
+                        <p>Pastas de maní, aceites de coco, suplementos y miel que aportan energía y bienestar.</p>
+                        <a href="./shop.html?category=mayor" class="btn btn-sm btn-outline-primary">Ver productos</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Beneficios -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">¿Por qué elegirnos?</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="benefit-box">
+                        <div class="benefit-icon">
+                            <i class="fas fa-truck"></i>
+                        </div>
+                        <h3>Envíos a todo el país</h3>
+                        <p>Recibí tus productos naturales donde quiera que estés.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="benefit-box">
+                        <div class="benefit-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <h3>Atención personalizada</h3>
+                        <p>Te asesoramos para que encuentres exactamente lo que necesitás.</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="benefit-box">
+                        <div class="benefit-icon">
+                            <i class="fas fa-award"></i>
+                        </div>
+                        <h3>Calidad garantizada</h3>
+                        <p>Seleccionamos cuidadosamente cada producto que ofrecemos.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+        <!-- Sobre Nosotros -->
+    <section class="py-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <h2 class="mb-4">Sobre Nosotros</h2>
+                    <p class="lead">En 3B nos dedicamos a ofrecer productos naturales de la más alta calidad, seleccionando cuidadosamente cada ingrediente para garantizar su frescura y valor nutricional. Nuestro compromiso es con tu salud y bienestar.</p>
+                    <a href="./nosotros.html" class="btn btn-outline-primary mt-3">Conoce más sobre nosotros</a>
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- Testimonios -->
+    <section class="py-5 bg-light">
+        <div class="container">
+            <h2 class="text-center mb-5">Lo que dicen nuestros clientes</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card p-4 h-100">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p>"Los frutos secos son de excelente calidad y el servicio es impecable. Siempre llegan en perfecto estado."</p>
+                        <div class="mt-auto">
+                            <strong>- María G.</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card p-4 h-100">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                        </div>
+                        <p>"Hace años que compro sus harinas para mi panadería saludable. Calidad consistente y precios justos."</p>
+                        <div class="mt-auto">
+                            <strong>- Carlos M.</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="card p-4 h-100">
+                        <div class="mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star-half-alt text-warning"></i>
+                        </div>
+                        <p>"Me encanta la variedad de snacks saludables que ofrecen. Son perfectos para llevar al trabajo."</p>
+                        <div class="mt-auto">
+                            <strong>- Laura P.</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Llamado a la acción -->
+    <section class="py-5 bg-primary text-white">
+        <div class="container text-center">
+            <h2 class="mb-4">¿Ya sabés lo que necesitás?</h2>
+            <a href="./shop.html" class="btn btn-light btn-lg px-5">Crear pedido</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <h5>Contacto</h5>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-phone me-2"></i> (011) 1234-5678</li>
+                        <li><i class="fab fa-whatsapp me-2"></i> +54 9 11 2345-6789</li>
+                        <li><i class="fas fa-envelope me-2"></i> info@3balimentos.com</li>
+                        <li><i class="fas fa-map-marker-alt me-2"></i> Av. Siempreviva 742, CABA</li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5>Horarios</h5>
+                    <ul class="list-unstyled">
+                        <li>Lunes a Viernes: 9:00 - 18:00</li>
+                        <li>Sábados: 9:00 - 13:00</li>
+                        <li>Domingos: Cerrado</li>
+                    </ul>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <h5>Redes Sociales</h5>
+                    <div class="mb-3">
+                        <a href="#" class="social-icon"><i class="fab fa-instagram"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-facebook"></i></a>
+                        <a href="#" class="social-icon"><i class="fab fa-twitter"></i></a>
+                    </div>
+                    <h5>Menú</h5>
+                    <ul class="list-unstyled footer-links">
+                        <li><a href="./index.html">Inicio</a></li>
+                        <li><a href="./shop.html">Productos</a></li>
+                        <li><a href="./nosotros.html">Nosotros</a></li>
+                        <li><a href="./contact.html">Contacto</a></li>
+                    </ul>
+                </div>
+            </div>
+            <hr class="my-4 bg-light">
+            <div class="text-center">
+                <p class="mb-0">&copy; 2023 3B Alimentos Naturales. Todos los derechos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Funcionalidad básica del carrito
+        document.addEventListener('DOMContentLoaded', function() {
+            const cartToggle = document.getElementById('cart-toggle');
+            const cartContainer = document.getElementById('cart-container');
+            const closeCart = document.getElementById('close-cart');
+            
+            cartToggle.addEventListener('click', function() {
+                cartContainer.style.display = 'block';
+                setTimeout(() => {
+                    cartContainer.style.transform = 'translateX(0)';
+                }, 10);
+            });
+            
+            closeCart.addEventListener('click', function() {
+                cartContainer.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    cartContainer.style.display = 'none';
+                }, 300);
+            });
+            
+            // Ejemplo de cómo agregar productos al carrito
+            // En una implementación real, esto se haría desde la página de productos
+            function addToCart(productName, price) {
+                // Lógica para agregar productos al carrito
+                console.log(`Agregado al carrito: ${productName} - $${price}`);
+                // Actualizar contador del carrito
+                const count = parseInt(document.getElementById('cart-count').textContent);
+                document.getElementById('cart-count').textContent = count + 1;
+            }
+        });
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

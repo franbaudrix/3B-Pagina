@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Producto = require('../models/producto');
+const Pedido = require('../models/pedidos');
+
 
 // Middleware de autenticación
 const autenticar = (req, res, next) => {
@@ -67,6 +69,86 @@ router.delete('/producto/:id', autenticar, async (req, res) => {
     console.error("Error al eliminar:", error);
     res.status(500).json({ 
       error: "Error al eliminar producto",
+      details: error.message 
+    });
+  }
+});
+
+// Obtener pedidos con filtros
+router.get('/pedidos', autenticar , async (req, res) => {
+  try {
+      const { estado, tipoEnvio, fecha } = req.query;
+      
+      const filtro = {};
+      if (estado && estado !== 'todos') filtro.estado = estado;
+      if (tipoEnvio && tipoEnvio !== 'todos') filtro.tipoEnvio = tipoEnvio;
+      if (fecha) {
+          const fechaInicio = new Date(fecha);
+          const fechaFin = new Date(fechaInicio);
+          fechaFin.setDate(fechaFin.getDate() + 1);
+          
+          filtro.fecha = {
+              $gte: fechaInicio,
+              $lt: fechaFin
+          };
+      }
+      
+      const pedidos = await Pedido.find(filtro)
+          .sort({ fecha: -1 })
+          .select('cliente.nombre cliente.direccion.localidad total tipoEnvio estado fecha');
+      
+      res.json(pedidos);
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
+});
+
+// Obtener detalles de un pedido
+router.get('/pedidos/:id', autenticar, async (req, res) => {
+  try {
+      const pedido = await Pedido.findById(req.params.id);
+      if (!pedido) return res.status(404).json({ message: 'Pedido no encontrado' });
+      res.json(pedido);
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
+});
+
+// Actualizar estado de un pedido
+router.put('/pedidos/:id/estado', autenticar, async (req, res) => {
+  console.log('estoy actualizando el estado XD');
+  try {
+      const { estado } = req.body;
+      const estadosPermitidos = ['revision', 'pendiente', 'en_proceso', 'completado', 'cancelado'];
+      
+      if (!estadosPermitidos.includes(estado)) {
+          return res.status(400).json({ message: 'Estado no válido' });
+      }
+      
+      const pedido = await Pedido.findByIdAndUpdate(
+          req.params.id,
+          { estado },
+          { new: true }
+      );
+      
+      if (!pedido) return res.status(404).json({ message: 'Pedido no encontrado' });
+      res.json(pedido);
+  } catch (error) {
+      res.status(500).json({ message: error.message });
+  }
+});
+
+// Eliminar un pedido
+router.delete('/pedidos/:id', autenticar, async (req, res) => {
+  try {
+    const pedido = await Pedido.findByIdAndDelete(req.params.id);
+    if (!pedido) {
+      return res.status(404).json({ message: 'Pedido no encontrado' });
+    }
+    res.json({ message: 'Pedido eliminado correctamente' });
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Error al eliminar pedido',
       details: error.message 
     });
   }

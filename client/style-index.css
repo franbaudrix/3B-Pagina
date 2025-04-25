@@ -1,0 +1,180 @@
+.header__menu {
+    padding: 1; /* Eliminamos el padding original */
+    display: flex;
+    align-items: center; /* Centrado vertical */
+    height: 100%; /* Ocupa toda la altura del contenedor padre */
+}
+
+.header__menu ul {
+    width: 100%;
+    display: flex;
+    justify-content: center; /* Centrado horizontal */
+    padding: 0;
+    margin: 0;
+}
+
+.header__menu ul li {
+    list-style: none;
+    display: inline-block;
+    margin-right: 50px;
+    position: relative;
+}
+
+.header__menu ul li a {
+    font-size: 16px; /* Tamaño más grande (original era 14px) */
+    color: #252525;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 2px;
+    transition: all 0.3s;
+    padding: 5px 0;
+    display: block;
+    text-decoration: none !important; /* Elimina el subrayado */
+}
+
+.header__menu ul li a:hover,
+.header__menu ul li.active a {
+    color: #fbe70b;
+    text-decoration: none !important; /* Asegura que no haya subrayado en hover/active */
+}
+
+/* Ajustamos el contenedor principal para que todo esté alineado */
+.row {
+    align-items: center; /* Centrado vertical de toda la fila */
+    height: 100%; /* Ocupa toda la altura del header */
+}
+
+/* Opcional: ajustar el logo para que esté alineado con el menú */
+.header__logo {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0;
+}
+
+.header__cart .header__cart__price {
+	font-size: 14px;
+	color: #6f6f6f;
+	display: inline-block;
+}
+
+.header__cart .header__cart__price span {
+	color: #252525;
+	font-weight: 700;
+}
+
+.header{
+	background-color: #ba0202;
+}
+
+.humberger__menu__wrapper {
+	display: none;
+}
+
+.humberger__open {
+	display: none;
+}
+
+.btn{
+    background-color: #ba0202;
+}
+
+#cart-toggle{
+    background-color: #fbe70b !important;
+}
+        
+.hero {
+    position: relative;
+    height: 50vh; /* Cambiado de 80vh a 50vh */
+    min-height: 500px; /* Reducido de 500px */
+    overflow: hidden;
+}
+
+
+.carousel-item {
+    height: 500px;
+}
+
+.carousel-indicators button {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin: 0 5px;
+}
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #ba0202;
+            border-color: #ba0202;
+        }
+        
+        .feature-card {
+            border: none;
+            border-radius: 10px;
+            transition: transform 0.3s;
+            margin-bottom: 20px;
+            height: 100%;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .category-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        .benefit-box {
+            padding: 30px;
+            background-color: var(--secondary-color);
+            border-radius: 10px;
+            text-align: center;
+            height: 100%;
+        }
+        
+        .benefit-icon {
+            font-size: 2rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+        
+        footer {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 50px 0 20px;
+        }
+        
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+        }
+        
+        .footer-links a:hover {
+            color: var(--accent-color);
+        }
+        
+        .social-icon {
+            color: white;
+            font-size: 1.5rem;
+            margin-right: 15px;
+        }
+        
+        .social-icon:hover {
+            color: var(--accent-color);
+        }
+        
+        #cart-container {
+            display: none;
+        }
+        
+        .cart-item-remove {
+            color: #dc3545;
+            cursor: pointer;
+        }

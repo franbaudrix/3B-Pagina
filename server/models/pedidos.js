@@ -23,8 +23,8 @@ const PedidoSchema = new mongoose.Schema({
   total: { type: Number, required: true },
   estado: { 
     type: String, 
-    default: 'pendiente', 
-    enum: ['pendiente', 'en_proceso', 'completado', 'cancelado'] 
+    default: 'revision', 
+    enum: ['revision', 'pendiente', 'en_proceso', 'completado', 'cancelado'] 
   },
   fecha: { type: Date, default: Date.now },
   tipoEnvio: {

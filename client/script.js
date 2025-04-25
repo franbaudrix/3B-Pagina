@@ -265,34 +265,47 @@ function displayProducts(productos) {
     container.innerHTML = productos.map(producto => `
         <div class="col-md-4 product-card" data-product-id="${producto._id}" data-base-price="${producto.precio}" data-product-name="${producto.nombre}">
             <div class="card h-100">
-                <img src="${producto.imagen.toString()}" class="img-fluid" style="max-height: 250px;" alt="${producto.nombre}">
-                <div class="card-body">
-                    <h5 class="card-title">${producto.nombre}</h5>
-                    <p class="card-text">$${producto.precio.toFixed(2)}</p>
-                    <p class="card-text text-muted">${producto.descripcion || ''}</p>
-                </div>
-                <div class="mb-2 p-3">
-                    <label for="weight" class="form-label">Peso:</label>
-                    <select name="weight" class="form-select form-select-sm weight-select">
-                        <option value="half-kg">500g</option>
-                        <option value="one-kg" selected>1000g</option>
-                        <option value="two-kg">2000g</option>
-                        <option value="other-kg">Otro</option>
-                    </select>
-                    <input type="number" class="form-control custom-weight-input mt-2" placeholder="Ingrese el peso en kg" style="display: none;">
+                <!-- Contenido frontal (visible por defecto) -->
+                <div class="front-content">
+                    <img src="${producto.imagen.toString()}" class="img-fluid card-img-top" style="height: 250px; object-fit: cover; object-position: center;" alt="${producto.nombre}">
+                    <div class="card-body">
+                        <h3 class="card-title">${producto.nombre}</h3>
+                        <h5 class="card-text">$${producto.precio.toFixed(2)}</h5>
+                        <p class="card-text text-muted">${producto.descripcion || ''}</p>
+                    </div>
                 </div>
                 
-                <div class="mb-2 p-3">
-                    <label for="amount" class="form-label">Cantidad bolsas:</label>
-                    <select name="amount" class="form-select form-select-sm amount-select">
-                        <option value="1">1 bolsa</option>
-                        <option value="2">2 bolsas</option>
-                        <option value="3">3 bolsas</option>
-                        <option value="4">4 bolsas</option>
-                    </select>
+                <!-- Contenido trasero (visible al hacer hover) -->
+                <div class="back-content">
+                    <div class="card-body p-2">
+                        <h3 class="card-title mb-1">${producto.nombre}</h3>
+                        <h5 class="card-text mb-2">$${producto.precio.toFixed(2)}</h5>
+                    </div>
+                    <div class="px-3 pb-1">
+                        <label for="weight" class="form-label small mb-1">Peso:</label>
+                        <select name="weight" class="form-select form-select-sm weight-select mb-2">
+                            <option value="half-kg">500g</option>
+                            <option value="one-kg" selected>1000g</option>
+                            <option value="two-kg">2000g</option>
+                            <option value="other-kg">Otro</option>
+                        </select>
+                        <input type="number" class="form-control custom-weight-input mt-2" placeholder="Ingrese el peso en kg" style="display: none;">
+                    </div>
+                    
+                    <div class="p-3">
+                        <label for="amount" class="form-label">Cantidad bolsas:</label>
+                        <select name="amount" class="form-select form-select-sm amount-select">
+                            <option value="1">1 bolsa</option>
+                            <option value="2">2 bolsas</option>
+                            <option value="3">3 bolsas</option>
+                            <option value="4">4 bolsas</option>
+                        </select>
+                    </div>
+                    <div class="mb-2 p-3 price-display text-end fw-bold"></div>
+                    <div class="fixed-bottom-btn"> <!-- Nuevo contenedor para el botón fijo -->
+                        <button class="btn btn-danger rounded-0 btn-product-card w-100">Agregar</button>
+                    </div>
                 </div>
-                <div class="mb-2 p-3 price-display text-end fw-bold"></div>
-                <button class="btn btn-danger btn-block rounded-0 btn-product-card">Agregar</button>
             </div>
         </div>
     `).join('');
@@ -300,7 +313,6 @@ function displayProducts(productos) {
     // Inicializar los eventos después de cargar los productos
     initializeProductCards();
 }
-
 function initializeProductCards() {
     // Selecciona todas las tarjetas de producto
     const productCards = document.querySelectorAll('.product-card');
@@ -459,7 +471,7 @@ function initializeProductCards() {
         // Event listeners
         addButton.addEventListener('click', () => {
             addToCart(addButton);
-            addToTotal();
+            //addToTotal();
         });
 
         weightSelect.addEventListener('change', () => {

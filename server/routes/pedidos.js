@@ -5,7 +5,7 @@ const Pedido = require('../models/pedidos');
 
 router.get('/', async (req, res) => {
   try {
-    const pedidos = await Pedido.find(); // Obtiene todos los pedidos
+    const pedidos = await Pedido.find().populate('cliente'); // Obtiene todos los pedidos
     res.json(pedidos);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -43,7 +43,7 @@ router.put('/:id', async (req, res) => {
       const { estado } = req.body;
 
       // Validar el estado
-      const estadosPermitidos = ['pendiente', 'en_proceso' , 'completado', 'cancelado'];
+      const estadosPermitidos = ['revision', 'pendiente', 'en_proceso' , 'completado', 'cancelado'];
       if (!estadosPermitidos.includes(estado)) {
           return res.status(400).json({
               success: false,
@@ -113,35 +113,48 @@ router.put('/:id/items', async (req, res) => {
 });
 
 router.put('/:id/completar', async (req, res) => {
-  console.log("Llamada a PUT /completar con ID:", req.params.id); 
-  try {
-      const pedido = await Pedido.findByIdAndUpdate(
-          req.params.id,
-          { estado: 'completado', fechaCompletado: new Date() },
-          { new: true }
-      ).populate('items.producto');
-
+    try {
+      const { itemsCompletados } = req.body; // Array con el estado de cada item
+      
+      const pedido = await Pedido.findById(req.params.id);
       if (!pedido) {
-          return res.status(404).json({ 
-              success: false,
-              message: "Pedido no encontrado" 
-          });
-      }
-
-      // Estructura de respuesta consistente
-      res.json({
-          success: true,
-          message: "Pedido completado exitosamente",
-          pedido: pedido
-      });
-
-  } catch (error) {
-      res.status(500).json({
+        return res.status(404).json({ 
           success: false,
-          message: error.message
+          message: "Pedido no encontrado" 
+        });
+      }
+  
+      // Actualizar estado de cada item
+      if (itemsCompletados && itemsCompletados.length > 0) {
+        itemsCompletados.forEach(itemUpdate => {
+            const item = pedido.items.id(itemUpdate._id);
+            if (item) {
+                item.completado = itemUpdate.completado;
+                item.motivoIncompleto = itemUpdate.motivoIncompleto;
+                item.observaciones = itemUpdate.observaciones;
+            }
+        });
+      }
+  
+      // Marcar pedido como completado
+      pedido.estado = 'completado';
+      pedido.fechaCompletado = new Date();
+      
+      await pedido.save();
+  
+      res.json({
+        success: true,
+        message: "Pedido completado exitosamente",
+        pedido: await Pedido.findById(pedido._id).populate('items.producto')
       });
-  }
-});
+  
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message
+      });
+    }
+  });
 
 router.post('/', async (req, res) => {
   try {
