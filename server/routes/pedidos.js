@@ -114,7 +114,7 @@ router.put('/:id/items', async (req, res) => {
 
 router.put('/:id/completar', async (req, res) => {
     try {
-      const { itemsCompletados } = req.body; // Array con el estado de cada item
+      const { estado = 'completado', itemsCompletados } = req.body;
       
       const pedido = await Pedido.findById(req.params.id);
       if (!pedido) {
@@ -135,9 +135,14 @@ router.put('/:id/completar', async (req, res) => {
             }
         });
       }
-  
+      
+      const nuevoTotal = pedido.items.reduce((total, item) => {
+        return item.completado ? total + item.precioTotal : total;
+      }, 0);
+
       // Marcar pedido como completado
-      pedido.estado = 'completado';
+      pedido.estado = estado;
+      pedido.total = nuevoTotal;
       pedido.fechaCompletado = new Date();
       
       await pedido.save();

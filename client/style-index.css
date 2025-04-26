@@ -1,3 +1,10 @@
+:root {
+    --primary: #ba0202; /* Rojo */
+    --secondary: #fbe70b; /* Amarillo */
+    --dark: #252525; /* Negro */
+    --light: #ffffff;
+}
+
 .header__menu {
     padding: 1; /* Eliminamos el padding original */
     display: flex;
@@ -22,7 +29,7 @@
 
 .header__menu ul li a {
     font-size: 16px; /* Tamaño más grande (original era 14px) */
-    color: #252525;
+    color: white;
     text-transform: uppercase;
     font-weight: 700;
     letter-spacing: 2px;
@@ -101,80 +108,127 @@
     border-radius: 50%;
     margin: 0 5px;
 }
+
+.carousel-caption h1, 
+.carousel-caption p {
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.7); /* Sombra negra intensa */
+}
         
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
+.btn-primary {
+    background-color: #ba0202; /* Rojo */
+    border-color: #ba0202;
+    color: white;
+}
+.btn-primary:hover {
+    background-color: #9a0000; /* Rojo más oscuro */
+    border-color: #9a0000;
+}
+
+.btn-outline-primary {
+    border-color: #ba0202;
+    color: #ffffff;
+}
+.btn-outline-primary:hover {
+    background-color: #ba0202;
+    color: white;
+}
+
+/* Botones de categorías - Tamaño aumentado */
+.feature-card .btn-outline-primary {
+    padding: 10px 20px;       /* Aumenta el padding (vertical, horizontal) */
+    font-size: 1rem;         /* Tamaño de fuente más grande */
+    border-width: 2px;       /* Borde más grueso */
+    margin-top: 15px;        /* Espacio superior para separar del texto */
+    width: auto;            /* Ancho automático (se ajusta al contenido) */
+    display: inline-block;  /* Para que el padding funcione correctamente */
+}
+
+/* Efecto hover mejorado */
+.feature-card .btn-outline-primary:hover {
+    transform: scale(1.05);  /* Ligero aumento al pasar el mouse */
+    box-shadow: 0 4px 8px rgba(186, 2, 2, 0.2); /* Sombra roja suave */
+}
         
-        .btn-primary:hover {
-            background-color: #ba0202;
-            border-color: #ba0202;
-        }
+.feature-card {
+    border: 1px solid #fbe70b;
+    border-radius: 10px;
+    transition: transform 0.3s;
+    margin-bottom: 20px;
+    height: 100%;
+}
         
-        .feature-card {
-            border: none;
-            border-radius: 10px;
-            transition: transform 0.3s;
-            margin-bottom: 20px;
-            height: 100%;
-        }
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    border-color: #ba0202;
+}
         
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-        }
+.category-icon {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 15px;
+}
         
-        .category-icon {
-            font-size: 2.5rem;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-        }
+.benefit-box {
+    padding: 30px;
+    background-color: var(--secondary-color);
+    border-radius: 10px;
+    text-align: center;
+    height: 100%;
+}
         
-        .benefit-box {
-            padding: 30px;
-            background-color: var(--secondary-color);
-            border-radius: 10px;
-            text-align: center;
-            height: 100%;
-        }
+.benefit-icon {
+    color: #fbe70b;
+    background: rgba(251, 231, 11, 0.1);
+    width: 60px;
+    height: 60px;
+    line-height: 60px;
+    border-radius: 50%;
+    margin: 0 auto 15px;
+}
         
-        .benefit-icon {
-            font-size: 2rem;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-        }
+footer {
+    background-color: #252525;
+    color: white;
+    padding: 50px 0 20px;
+}
         
-        footer {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 50px 0 20px;
-        }
+.footer-links a {
+    color: white;
+    text-decoration: none;
+}
         
-        .footer-links a {
-            color: white;
-            text-decoration: none;
-        }
+.footer-links a:hover {
+    color: var(--accent-color);
+}
+
+footer h5 {
+    color: #fbe70b; 
+}
         
-        .footer-links a:hover {
-            color: var(--accent-color);
-        }
+.social-icon {
+    color: white;
+    font-size: 1.5rem;
+    margin-right: 15px;
+}
         
-        .social-icon {
-            color: white;
-            font-size: 1.5rem;
-            margin-right: 15px;
-        }
+.social-icon:hover {
+    color: var(--accent-color);
+}
         
-        .social-icon:hover {
-            color: var(--accent-color);
-        }
+#cart-container {
+    display: none;
+}
         
-        #cart-container {
-            display: none;
-        }
-        
-        .cart-item-remove {
-            color: #dc3545;
-            cursor: pointer;
-        }
+.cart-item-remove {
+    color: #dc3545;
+    cursor: pointer;
+}
+
+.feature-card, .benefit-box {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+a, button {
+    transition: all 0.3s ease;
+}

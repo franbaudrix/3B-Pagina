@@ -10,6 +10,8 @@ const cartToggle = document.getElementById('cart-toggle');
 const closeCart = document.getElementById('close-cart');
 let pedidoItems = []; // Para almacenar temporalmente los items del pedido
 let pedidoTotal = 0; // Para almacenar temporalmente el total del pedido
+let categoriasDisponibles = [];
+let subcategoriasDisponibles = [];
 
 // Función para mostrar/ocultar el carrito
 function toggleCart() {
@@ -126,13 +128,74 @@ async function enviarPedidoCompleto(clienteData) {
     }
 }
 
+// Función para cargar categorías
+async function loadCategories() {
+    try {
+        const response = await fetch('http://localhost:3000/api/categorias', {
+            headers: { 'Authorization': '3BGOD' }
+        });
+        
+        if (!response.ok) throw new Error('Error al cargar categorías');
+        
+        const data = await response.json();
+        categoriasDisponibles = data.categorias || [];
+        subcategoriasDisponibles = data.subcategorias || [];
+        
+        // Llenar selector de categorías
+        const categoriaFilter = document.getElementById('categoria-filter');
+        categoriasDisponibles.forEach(categoria => {
+            const option = document.createElement('option');
+            option.value = categoria;
+            option.textContent = categoria;
+            categoriaFilter.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error al cargar categorías:', error);
+        mostrarAlerta('Error al cargar categorías', 'danger');
+    }
+}
+
+// Función para actualizar subcategorías según categoría seleccionada
+function updateSubcategorias() {
+    const categoriaSeleccionada = document.getElementById('categoria-filter').value;
+    const subcategoriaFilter = document.getElementById('subcategoria-filter');
+    
+    // Limpiar y resetear el selector
+    subcategoriaFilter.innerHTML = '<option value="">Todas las subcategorías</option>';
+    subcategoriaFilter.disabled = !categoriaSeleccionada;
+    
+    if (categoriaSeleccionada) {
+        // Filtrar subcategorías para la categoría seleccionada
+        const subcategoriasFiltradas = subcategoriasDisponibles.filter(sub => 
+            allProducts.some(p => p.categoria === categoriaSeleccionada && p.subcategoria === sub)
+        );
+        
+        // Agregar opciones
+        subcategoriasFiltradas.forEach(subcategoria => {
+            const option = document.createElement('option');
+            option.value = subcategoria;
+            option.textContent = subcategoria;
+            subcategoriaFilter.appendChild(option);
+        });
+    }
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         // 1. Cargar productos
+        await loadCategories();
+
         const response = await fetch('http://localhost:3000/api/producto');
         allProducts = await response.json();
         displayProducts(allProducts);
+        
+        // Configurar eventos de filtrado
+        document.getElementById('categoria-filter').addEventListener('change', () => {
+            updateSubcategorias();
+            filterProducts();
+        });
+        
+        document.getElementById('subcategoria-filter').addEventListener('change', filterProducts);
         
         // 2. Configurar buscador
         const searchInput = document.getElementById('search-input');
@@ -245,12 +308,29 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-function filterProducts(searchTerm) {
-    const filteredProducts = allProducts.filter(producto => 
-        producto.nombre.toLowerCase().includes(searchTerm) ||
-        (producto.descripcion && producto.descripcion.toLowerCase().includes(searchTerm))
-    );
-    displayProducts(filteredProducts);
+async function filterProducts() {
+    const categoria = document.getElementById('categoria-filter').value;
+    const subcategoria = document.getElementById('subcategoria-filter').value;
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    
+    let filtered = allProducts;
+    
+    // Aplicar filtros
+    if (categoria) {
+        filtered = filtered.filter(p => p.categoria === categoria);
+    }
+    
+    if (subcategoria) {
+        filtered = filtered.filter(p => p.subcategoria === subcategoria);
+    }
+    
+    if (searchTerm) {
+        filtered = filtered.filter(p => 
+            p.nombre.toLowerCase().includes(searchTerm) || 
+            (p.descripcion && p.descripcion.toLowerCase().includes(searchTerm)));
+    }
+    
+    displayProducts(filtered);
 }
 
 // Nueva función para mostrar productos (extraída de DOMContentLoaded)

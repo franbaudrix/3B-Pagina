@@ -29,7 +29,7 @@
 }
 
 .header__menu ul li a {
-    font-size: 16px; /* Tamaño más grande (original era 14px) */
+    font-size: 16px; 
     color: #252525;
     text-transform: uppercase;
     font-weight: 700;
@@ -37,16 +37,15 @@
     transition: all 0.3s;
     padding: 5px 0;
     display: block;
-    text-decoration: none !important; /* Elimina el subrayado */
+    text-decoration: none !important; 
 }
 
 .header__menu ul li a:hover,
 .header__menu ul li.active a {
     color: #fbe70b;
-    text-decoration: none !important; /* Asegura que no haya subrayado en hover/active */
+    text-decoration: none !important; 
 }
 
-/* Ajustamos el contenedor principal para que todo esté alineado */
 .row {
     align-items: center; /* Centrado vertical de toda la fila */
     height: 100%; /* Ocupa toda la altura del header */
@@ -182,4 +181,30 @@
     position: sticky;
     bottom: 0;
     z-index: 1;
+}
+
+/* Estilos para los filtros */
+#categoria-filter, #subcategoria-filter, #search-input {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border: 1px solid #ddd;
+    transition: all 0.3s ease;
+}
+
+#categoria-filter:hover, #subcategoria-filter:hover, #search-input:hover {
+    border-color: #ba0202;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* Estilo para selectores deshabilitados */
+select:disabled {
+    background-color: #f8f9fa;
+    opacity: 0.8;
+}
+
+/* Responsividad para los filtros */
+@media (max-width: 768px) {
+    .container.mb-4 .col-md-3, 
+    .container.mb-4 .col-md-4 {
+        margin-bottom: 10px;
+    }
 }

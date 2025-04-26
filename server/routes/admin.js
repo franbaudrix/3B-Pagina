@@ -37,7 +37,6 @@ router.get('/producto/:id', async (req, res) => {
 });
 
 router.post('/producto', autenticar, async (req, res) => {
-  //console.log("Body recibido:", req.body);
   try {
     const producto = new Producto(req.body);
     await producto.save();
@@ -71,6 +70,25 @@ router.delete('/producto/:id', autenticar, async (req, res) => {
       error: "Error al eliminar producto",
       details: error.message 
     });
+  }
+});
+
+router.get('/categorias', async (req, res) => {
+  try {
+      const productos = await Producto.find();
+      
+      // Obtener categorías únicas
+      const categorias = [...new Set(productos.map(p => p.categoria))].filter(Boolean);
+      
+      // Obtener subcategorías únicas
+      const subcategorias = [...new Set(productos.map(p => p.subcategoria))].filter(Boolean);
+      
+      res.json({
+          categorias,
+          subcategorias
+      });
+  } catch (error) {
+      res.status(500).json({ message: error.message });
   }
 });
 
@@ -151,6 +169,54 @@ router.delete('/pedidos/:id', autenticar, async (req, res) => {
       message: 'Error al eliminar pedido',
       details: error.message 
     });
+  }
+});
+
+// En tu archivo de rutas (pedidos.js)
+router.put('/:id/completar', async (req, res) => {
+  try {
+      const { estado, itemsCompletados } = req.body;
+      
+      const pedido = await Pedido.findById(req.params.id);
+      if (!pedido) {
+          return res.status(404).json({ success: false, message: "Pedido no encontrado" });
+      }
+
+      // Actualizar estado de cada item
+      if (itemsCompletados && itemsCompletados.length > 0) {
+          itemsCompletados.forEach(itemUpdate => {
+              const item = pedido.items.id(itemUpdate._id);
+              if (item) {
+                  item.completado = itemUpdate.completado;
+                  item.motivoIncompleto = itemUpdate.motivoIncompleto;
+                  item.observaciones = itemUpdate.observaciones;
+              }
+          });
+      }
+
+      // Calcular nuevo total basado en items completados
+      const nuevoTotal = pedido.items.reduce((total, item) => {
+          return item.completado ? total + item.precioTotal : total;
+      }, 0);
+
+      // Actualizar pedido
+      pedido.estado = estado;
+      pedido.total = nuevoTotal;
+      pedido.fechaCompletado = estado === 'completado' ? new Date() : null;
+      
+      await pedido.save();
+
+      res.json({
+          success: true,
+          message: "Pedido actualizado exitosamente",
+          pedido: await Pedido.findById(pedido._id).populate('items.producto')
+      });
+
+  } catch (error) {
+      res.status(500).json({
+          success: false,
+          message: error.message
+      });
   }
 });
 

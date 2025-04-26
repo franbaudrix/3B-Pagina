@@ -1,4 +1,11 @@
 document.addEventListener('DOMContentLoaded', function() {
+        // Verificar autenticación
+    const auth = checkAuth();
+    if (!auth) {
+        window.location.href = 'login.html';
+        return;
+    }
+
     const pedidosContainer = document.getElementById('pedidos-container');
     const filtroEstado = document.getElementById('filtro-estado');
     const buscarNombre = document.getElementById('buscar-nombre');
@@ -255,9 +262,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
             const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoActual._id}/items`, {
                 method: 'PUT',
-                headers: {
+                headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                    ...getAuthHeader()
                 },
                 body: JSON.stringify({ items: itemsActualizados })
             });
@@ -296,9 +303,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // 2. Marcar el pedido como completado
             const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoActual._id}/completar`, {
                 method: 'PUT',
-                headers: {
+                headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                    ...getAuthHeader()
                 },
                 body: JSON.stringify({ itemsCompletados }) // Add this line
             });
@@ -379,9 +386,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const nuevoEstado = document.getElementById('cambiar-estado').value;
             const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoActual._id}`, {
                 method: 'PUT',
-                headers: {
+                headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+                    ...getAuthHeader()
                 },
                 body: JSON.stringify({ estado: nuevoEstado })
             });

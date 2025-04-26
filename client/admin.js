@@ -1,4 +1,177 @@
+// Función para cargar categorías
+async function loadCategories() {
+    try {
+        const response = await fetch('http://localhost:3000/api/categorias', {
+            headers: { 
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            }
+        });
+        
+        if (!response.ok) throw new Error('Error al cargar categorías');
+        
+        const data = await response.json();
+        categoriasDisponibles = data.categorias || [];
+        subcategoriasDisponibles = data.subcategorias || [];
+        
+        // Llenar selector de categorías
+        const categoriaFilter = document.getElementById('categoria-filter');
+        categoriasDisponibles.forEach(categoria => {
+            const option = document.createElement('option');
+            option.value = categoria;
+            option.textContent = categoria;
+            categoriaFilter.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error al cargar categorías:', error);
+        mostrarAlerta('Error al cargar categorías', 'danger');
+    }
+}
+
+// Función para actualizar subcategorías según categoría seleccionada
+function updateSubcategorias() {
+    const categoriaSeleccionada = document.getElementById('categoria-filter').value;
+    const subcategoriaFilter = document.getElementById('subcategoria-filter');
+    
+    // Limpiar y resetear el selector
+    subcategoriaFilter.innerHTML = '<option value="">Todas las subcategorías</option>';
+    subcategoriaFilter.disabled = !categoriaSeleccionada;
+    
+    if (categoriaSeleccionada) {
+        // Filtrar subcategorías para la categoría seleccionada
+        const subcategoriasFiltradas = subcategoriasDisponibles.filter(sub => 
+            allProducts.some(p => p.categoria === categoriaSeleccionada && p.subcategoria === sub)
+        );
+        
+        // Agregar opciones
+        subcategoriasFiltradas.forEach(subcategoria => {
+            const option = document.createElement('option');
+            option.value = subcategoria;
+            option.textContent = subcategoria;
+            subcategoriaFilter.appendChild(option);
+        });
+    }
+}
+
+// Función para filtrar productos
+function filterProducts() {
+    const categoria = document.getElementById('categoria-filter').value;
+    const subcategoria = document.getElementById('subcategoria-filter').value;
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    
+    let filtered = allProducts;
+    
+    // Aplicar filtros
+    if (categoria) {
+        filtered = filtered.filter(p => p.categoria === categoria);
+    }
+    
+    if (subcategoria) {
+        filtered = filtered.filter(p => p.subcategoria === subcategoria);
+    }
+    
+    if (searchTerm) {
+        filtered = filtered.filter(p => 
+            p.nombre.toLowerCase().includes(searchTerm) || 
+            (p.descripcion && p.descripcion.toLowerCase().includes(searchTerm)));
+    }
+    
+    renderProductos(filtered);
+}
+
+// Función para renderizar productos en tabla
+function renderProductos(productos) {
+    const listaProductos = document.getElementById('lista-productos');
+    
+    // Ordenar por categoría y luego por nombre
+    productos.sort((a, b) => {
+        if (a.categoria < b.categoria) return -1;
+        if (a.categoria > b.categoria) return 1;
+        return a.nombre.localeCompare(b.nombre);
+    });
+    
+    listaProductos.innerHTML = productos.map(producto => `
+        <tr>
+            <td>${producto.nombre}</td>
+            <td>$${producto.precio.toFixed(2)}</td>
+            <td>${producto.categoria}</td>
+            <td>${producto.subcategoria || '-'}</td>
+            <td class="small text-muted">${producto.descripcion ? 
+                (producto.descripcion.length > 50 ? 
+                    producto.descripcion.substring(0, 50) + '...' : 
+                    producto.descripcion) : 
+                'Sin descripción'}</td>
+            <td>
+                <button onclick="editarProducto('${producto._id}')" class="btn btn-sm btn-warning me-2">
+                    <i class="bi bi-pencil"></i> Editar
+                </button>
+                <button onclick="eliminarProducto('${producto._id}')" class="btn btn-sm btn-danger">
+                    <i class="bi bi-trash"></i> Eliminar
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    // Mostrar mensaje si no hay productos
+    if (productos.length === 0) {
+        listaProductos.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4 text-muted">
+                    <i class="bi bi-box-seam"></i> No se encontraron productos
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function calcularNuevoTotal(pedido, itemsActualizados) {
+    return pedido.items.reduce((total, item, index) => {
+        const itemActualizado = itemsActualizados.find(i => i._id === item._id);
+        if (itemActualizado && !itemActualizado.completado) {
+            return total; // No sumar si no está completado
+        }
+        return total + item.precioTotal;
+    }, 0);
+}
+
+function actualizarBotonesAccion(fila, pedidoId, nuevoEstado) {
+    const accionesTd = fila.querySelector('td:last-child');
+    
+    if (nuevoEstado === 'en_proceso') {
+        accionesTd.innerHTML = `
+            <button class="btn btn-sm btn-info btn-detalle me-2" data-id="${pedidoId}">
+                <i class="bi bi-eye"></i>
+            </button>
+            <button class="btn btn-sm btn-primary btn-completar" data-id="${pedidoId}">
+                Completar
+            </button>
+        `;
+    } else if (nuevoEstado === 'completado' || nuevoEstado === 'cancelado') {
+        accionesTd.innerHTML = `
+            <button class="btn btn-sm btn-info btn-detalle" data-id="${pedidoId}">
+                <i class="bi bi-eye"></i>
+            </button>
+        `;
+    }
+    
+    // Reasignar event listeners
+    if (accionesTd.querySelector('.btn-detalle')) {
+        accionesTd.querySelector('.btn-detalle').addEventListener('click', mostrarDetallePedido);
+    }
+    if (accionesTd.querySelector('.btn-completar')) {
+        accionesTd.querySelector('.btn-completar').addEventListener('click', 
+            () => cambiarEstadoPedido(pedidoId, 'completado'));
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    // Verificar autenticación y rol
+    const auth = checkAuth();
+    if (!auth || auth.user.role !== 'admin') {
+        window.location.href = 'login.html';
+        return;
+    }
+
     const form = document.getElementById('form-producto');
     const listaProductos = document.getElementById('lista-productos');
     const btnSubmit = form.querySelector('button[type="submit"]');
@@ -6,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Cargar productos al iniciar
     cargarProductos();
+    loadCategories();
 
     // Guardar o actualizar producto
     form.addEventListener('submit', async (e) => {
@@ -17,7 +191,9 @@ document.addEventListener('DOMContentLoaded', () => {
             nombre: document.getElementById('nombre').value,
             precio: parseFloat(document.getElementById('precio').value),
             imagen: document.getElementById('imagen').value,
-            descripcion: document.getElementById('descripcion').value
+            descripcion: document.getElementById('descripcion').value,
+            categoria: document.getElementById('categoria').value,
+            subcategoria: document.getElementById('subcategoria').value
         };
 
         try {
@@ -29,9 +205,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const response = await fetch(url, {
                 method,
-                headers: {
+                headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': '3BGOD'
+                    ...getAuthHeader()
                 },
                 body: JSON.stringify(producto)
             });
@@ -54,23 +230,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    document.getElementById('categoria-filter').addEventListener('change', () => {
+        updateSubcategorias();
+        filterProducts();
+    });
+
+    document.getElementById('subcategoria-filter').addEventListener('change', filterProducts);
+    document.getElementById('search-input').addEventListener('input', filterProducts);
+
     // Cargar productos desde la API
     async function cargarProductos() {
         try {
-            console.log("Cargando productos..."); // Debug
             const response = await fetch('http://localhost:3000/api/producto', {
-                headers: { 'Authorization': '3BGOD' } 
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                }
             });
-
-            console.log("Respuesta:", response); // Debug
-
+    
             if (!response.ok) throw new Error('Error al cargar productos');
-            const productos = await response.json();
-            console.log("Productos recibidos:", productos); // Debug
-            renderProductos(productos);
+            
+            allProducts = await response.json();
+            filterProducts(); // Esto mostrará los productos con los filtros actuales
         } catch (error) {
-            console.error('Error al cargar productos:', error);
-            mostrarAlerta('Error al cargar productos', 'danger');
+            console.error('Error:', error);
+            mostrarAlerta('Error al cargar los productos. Intente nuevamente.', 'danger');
         }
     }
 
@@ -122,7 +306,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const response = await fetch(`http://localhost:3000/api/admin/producto/${id}`, {
                 headers: { 
-                  'Authorization': '3BGOD'
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
                 }
               });
             if (!response.ok) throw new Error('Error al cargar producto');
@@ -166,7 +351,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const response = await fetch(`http://localhost:3000/api/admin/producto/${id}`, {
             method: 'DELETE',
-            headers: { 'Authorization': '3BGOD' }
+            headers: { 
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            }
           });
       
           if (!response.ok) {
@@ -214,7 +402,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (filtroFecha.value) url += `fecha=${filtroFecha.value}&`;
             
             const response = await fetch(url, {
-                headers: { 'Authorization': '3BGOD' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                }
             });
             
             if (!response.ok) throw new Error('Error al cargar pedidos');
@@ -260,6 +451,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             Completar
                         </button>
                     ` : ''}
+                    ${pedido.estado === 'completado' && pedido.tipoEnvio === 'otra-localidad' ? `
+                        <button class="btn btn-sm btn-secondary btn-imprimir-remito ms-2" data-id="${pedido._id}">
+                            <i class="bi bi-printer"></i> Remito
+                        </button>
+                    ` : ''}
                     <button class="btn btn-sm btn-danger btn-eliminar" data-id="${pedido._id}">
                         <i class="bi bi-trash"></i>
                     </button>
@@ -287,6 +483,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.btn-eliminar').forEach(btn => {
             btn.addEventListener('click', eliminarPedido);
         });
+
+        document.querySelectorAll('.btn-imprimir-remito').forEach(btn => {
+            btn.addEventListener('click', generarRemitoPDF);
+        });
     }
     
     // Función para mostrar detalles del pedido en modal
@@ -295,7 +495,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoId}`, {
-                headers: { 'Authorization': '3BGOD' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                }
             });
             
             if (!response.ok) throw new Error('Error al cargar pedido');
@@ -387,6 +590,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
             }
 
+            if (pedido.estado === 'completado' && pedido.tipoEnvio === 'otra-localidad') {
+                accionesDiv.innerHTML += `
+                    <button class="btn btn-secondary ms-2" onclick="generarRemitoPDFFromModal('${pedido._id}')">
+                        <i class="bi bi-printer"></i> Imprimir Remito
+                    </button>
+                `;
+            }
+
             window.eliminarPedidoModal = async (pedidoId) => {
                 if (!confirm('¿Estás seguro de que quieres eliminar este pedido? Esta acción no se puede deshacer.')) {
                     return;
@@ -395,7 +606,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const response = await fetch(`/api/admin/pedidos/${pedidoId}`, {
                         method: 'DELETE',
-                        headers: { 'Authorization': '3BGOD' }
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            ...getAuthHeader()
+                        }
                     });
             
                     if (!response.ok) throw new Error('Error al eliminar pedido');
@@ -420,10 +634,98 @@ document.addEventListener('DOMContentLoaded', () => {
             mostrarAlerta('Error al cargar detalles del pedido', 'danger');
         }
     }
+
+    // Función para generar el remito en PDF
+    async function generarRemitoPDF(e) {
+        const pedidoId = e.currentTarget.dataset.id;
+        
+        try {
+            const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoId}`, {
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                }
+            });
+            
+            if (!response.ok) throw new Error('Error al cargar pedido');
+            const pedido = await response.json();
+            
+            // Crear PDF
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            // Configuración de estilo
+        const fontSizeLarge = 36;
+        const fontSizeMedium = 24;
+        const lineHeight = 20;
+        let yPosition = 40; // Posición vertical inicial
+        
+        // Establecer margen izquierdo para centrado aproximado
+        const leftMargin = 20;
+        
+        // Información del destinatario - Título grande
+        doc.setFontSize(fontSizeLarge);
+        doc.setTextColor(0, 0, 0);
+        doc.text('DESTINATARIO', 105, yPosition, { align: 'center' });
+        yPosition += lineHeight * 2;
+        
+        // Datos del cliente - Texto grande
+        doc.setFontSize(fontSizeMedium);
+        
+        // Nombre
+        doc.text(pedido.cliente.nombre.toUpperCase(), 105, yPosition, { align: 'center' });
+        yPosition += lineHeight;
+        
+        // Dirección (si existe)
+        if (pedido.cliente.direccion) {
+            const direccion = `${pedido.cliente.direccion.calle} ${pedido.cliente.direccion.numero || ''}`.toUpperCase();
+            doc.text(direccion, 105, yPosition, { align: 'center' });
+            yPosition += lineHeight;
+            
+            const localidad = `${pedido.cliente.direccion.localidad || ''}, ${pedido.cliente.direccion.provincia || ''}`.toUpperCase();
+            doc.text(localidad, 105, yPosition, { align: 'center' });
+            yPosition += lineHeight;
+            
+            if (pedido.cliente.direccion.codigoPostal) {
+                doc.text(`CP: ${pedido.cliente.direccion.codigoPostal}`, 105, yPosition, { align: 'center' });
+                yPosition += lineHeight;
+            }
+        }
+        
+        // Teléfono
+        doc.text(`TEL: ${pedido.cliente.whatsapp}`, 105, yPosition, { align: 'center' });
+        yPosition += lineHeight * 2;
+        
+        // Espacio para observaciones (si existen)
+        if (pedido.observaciones) {
+            doc.setFontSize(fontSizeMedium);
+            doc.text('OBS:', 105, yPosition, { align: 'center' });
+            yPosition += lineHeight;
+            doc.text(pedido.observaciones.toUpperCase(), 105, yPosition, { align: 'center' });
+            yPosition += lineHeight * 2;
+        }
+        
+        // Espacio para firma (más abajo)
+        yPosition = 250; // Posición fija cerca del final de la página
+        doc.setFontSize(fontSizeMedium);
+        doc.line(50, yPosition, 160, yPosition);
+        doc.text('FIRMA', 105, yPosition + 10, { align: 'center' });
+        
+        // Guardar PDF
+        doc.save(`Datos_Envio_${pedido.cliente.nombre.replace(/\s+/g, '_')}.pdf`);
+        
+    } catch (error) {
+        console.error('Error al generar remito:', error);
+        mostrarAlerta('Error al generar el remito en PDF', 'danger');
+    }
+    }
     
     // Función para cambiar estado del pedido
     window.cambiarEstadoPedido = async (pedidoId, nuevoEstado, recargar = false) => {
-        console.log('ID del pedido:', pedidoId);
         const confirmMessage = nuevoEstado === 'cancelado' ? 
             '¿Estás seguro de cancelar este pedido?' :
             `¿Estás seguro de marcar este pedido como ${formatEstado(nuevoEstado).toLowerCase()}?`;
@@ -431,23 +733,51 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm(confirmMessage)) return;
         
         try {
-            const response = await fetch(`http://localhost:3000/api/admin/pedidos/${pedidoId}/estado`, {
+
+            let itemsActualizados = [];
+            let body = { estado: nuevoEstado };
+
+            if (nuevoEstado === 'completado') {
+                const checkboxes = document.querySelectorAll('.item-completado');
+                itemsActualizados = Array.from(checkboxes).map(checkbox => {
+                    const index = checkbox.id.split('-')[1];
+                    return {
+                        _id: pedidoActual.items[index]._id,
+                        completado: checkbox.checked,
+                        motivoIncompleto: checkbox.checked ? null : 
+                            document.querySelector(`#motivo-container-${index} .motivo-select`).value,
+                        observaciones: checkbox.checked ? null : 
+                            document.querySelector(`#motivo-container-${index} .observaciones`).value
+                    };
+                });
+
+                body.itemsCompletados = itemsActualizados;
+            }
+
+            const endpoint = nuevoEstado === 'completado' 
+            ? `http://localhost:3000/api/admin/pedidos/${pedidoId}/completar`
+            : `http://localhost:3000/api/admin/pedidos/${pedidoId}/estado`;
+
+            const response = await fetch(endpoint, {
                 method: 'PUT',
-                headers: {
+                headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': '3BGOD'
+                    ...getAuthHeader()
                 },
-                body: JSON.stringify({ estado: nuevoEstado })
+                body: JSON.stringify(body)
             });
             
-            if (!response.ok) throw new Error('Error al actualizar estado');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al actualizar pedido');
+            }
             
+            const data = await response.json();
+
             mostrarAlerta(`Pedido ${formatEstado(nuevoEstado).toLowerCase()} correctamente`, 'success');
             
             if (recargar) {
-                // Si se llamó desde el modal, recargar la tabla
                 cargarPedidos();
-                // Cerrar modal
                 bootstrap.Modal.getInstance(document.getElementById('detallePedidoModal')).hide();
             } else {
                 // Si se llamó desde la tabla, actualizar la fila
@@ -456,9 +786,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const estadoBadge = fila.querySelector('.badge-estado');
                     estadoBadge.className = `badge badge-estado ${getEstadoClass(nuevoEstado)}`;
                     estadoBadge.textContent = formatEstado(nuevoEstado);
-                    
-                    // Actualizar botones de acción
+
                     const accionesTd = fila.querySelector('td:last-child');
+
+                    if (nuevoEstado === 'completado') {
+                        const totalCell = fila.querySelector('td:nth-child(4)');
+                        totalCell.textContent = `$${data.pedido.total.toLocaleString('es-AR')}`;
+                    }
+                    
                     if (nuevoEstado === 'en_proceso') {
                         accionesTd.innerHTML = `
                             <button class="btn btn-sm btn-info btn-detalle me-2" data-id="${pedidoId}">
@@ -498,7 +833,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(`http://localhost:3000/api/admin/pedidos/${pedidoId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': '3BGOD' }
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                }
             });
 
             if (!response.ok) throw new Error('Error al eliminar pedido');
@@ -539,4 +877,18 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hacer funciones accesibles globalmente
     window.mostrarDetallePedido = mostrarDetallePedido;
     window.eliminarPedido = eliminarPedido;
+
+    window.generarRemitoPDFFromModal = async (pedidoId) => {
+        try {
+            // Simulamos un click en el botón para reutilizar la función existente
+            const event = { currentTarget: { dataset: { id: pedidoId } } };
+            await generarRemitoPDF(event);
+            
+            // Cerrar el modal después de generar el PDF
+            bootstrap.Modal.getInstance(document.getElementById('detallePedidoModal')).hide();
+        } catch (error) {
+            console.error('Error al generar remito desde modal:', error);
+            mostrarAlerta('Error al generar el remito', 'danger');
+        }
+    };
 });
