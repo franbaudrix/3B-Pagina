@@ -2,6 +2,15 @@ const express = require('express');
 const mongoose = require('mongoose'); 
 const router = express.Router();
 const Pedido = require('../models/pedidos');
+const { auth } = require('../middleware/auth');
+
+// Todas las rutas requieren autenticación
+router.use((req, res, next) => {
+  if (req.method === 'POST' && req.path === '/') {
+    return next(); // Saltar el middleware de autenticación para POST /
+  }
+  auth(req, res, next); // Aplicar autenticación a todas las demás rutas
+});
 
 router.get('/', async (req, res) => {
   try {
@@ -16,18 +25,21 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const pedido = await Pedido.findById(req.params.id)
-                              .populate('usuario')
-                              .populate('items.producto');
-    
+      .populate('items.producto')
+      .populate({
+        path: 'completadoPor',
+        select: 'name email' 
+      });
+
     if (!pedido) {
-      return res.status(404).json({ message: 'Pedido no encontrado' });
+      return res.status(404).json({ error: 'Pedido no encontrado' });
     }
-    
+
     res.json(pedido);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    res.status(500).json({ error: error.message });
   }
-}); 
+});
 
 // PUT /api/pedidos/:id - Actualizar pedido
 router.put('/:id', async (req, res) => {
@@ -144,13 +156,16 @@ router.put('/:id/completar', async (req, res) => {
       pedido.estado = estado;
       pedido.total = nuevoTotal;
       pedido.fechaCompletado = new Date();
+      pedido.completadoPor = req.user._id;
       
       await pedido.save();
   
       res.json({
         success: true,
         message: "Pedido completado exitosamente",
-        pedido: await Pedido.findById(pedido._id).populate('items.producto')
+        pedido: await Pedido.findById(pedido._id)
+          .populate('items.producto')
+          .populate('completadoPor', 'name email')
       });
   
     } catch (error) {
@@ -163,8 +178,6 @@ router.put('/:id/completar', async (req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-      console.log("Body recibido anashe:", req.body);
-      
       // Validar campos obligatorios
       if (!req.body.items || req.body.items.length === 0) {
           return res.status(400).json({ message: "El pedido debe contener items" });

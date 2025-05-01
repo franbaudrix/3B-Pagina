@@ -2,19 +2,11 @@ const express = require('express');
 const router = express.Router();
 const Producto = require('../models/producto');
 const Pedido = require('../models/pedidos');
+const { auth, admin } = require('../middleware/auth');
 
-
-// Middleware de autenticación
-const autenticar = (req, res, next) => {
-  //console.log("Body recibido (sin autenticación):", req.body); 
-  const authHeader = req.headers.authorization;
-  if (authHeader === '3BGOD') { // Hardcodeado para prueba
-    next();
-  } else {
-    res.status(401).json({ error: "Acceso no autorizado" });
-  }
-};
-
+// Todas las rutas requieren autenticación y ser admin
+router.use(auth);
+router.use(admin);
 
 // Configuración de rutas API
 router.get('/producto', async (req, res) => { // Nueva ruta GET todos
@@ -36,7 +28,7 @@ router.get('/producto/:id', async (req, res) => {
   }
 });
 
-router.post('/producto', autenticar, async (req, res) => {
+router.post('/producto', async (req, res) => {
   try {
     const producto = new Producto(req.body);
     await producto.save();
@@ -47,7 +39,7 @@ router.post('/producto', autenticar, async (req, res) => {
   }
 });
 
-router.put('/producto/:id', autenticar, async (req, res) => {
+router.put('/producto/:id', async (req, res) => {
   try {
     const producto = await Producto.findByIdAndUpdate(req.params.id, req.body, { new: true });
     if (!producto) return res.status(404).json({ error: "Producto no encontrado" });
@@ -57,7 +49,7 @@ router.put('/producto/:id', autenticar, async (req, res) => {
   }
 });
 
-router.delete('/producto/:id', autenticar, async (req, res) => {
+router.delete('/producto/:id', async (req, res) => {
   try {
     const producto = await Producto.findByIdAndDelete(req.params.id);
     if (!producto) {
@@ -93,7 +85,7 @@ router.get('/categorias', async (req, res) => {
 });
 
 // Obtener pedidos con filtros
-router.get('/pedidos', autenticar , async (req, res) => {
+router.get('/pedidos', async (req, res) => {
   try {
       const { estado, tipoEnvio, fecha } = req.query;
       
@@ -122,7 +114,7 @@ router.get('/pedidos', autenticar , async (req, res) => {
 });
 
 // Obtener detalles de un pedido
-router.get('/pedidos/:id', autenticar, async (req, res) => {
+router.get('/pedidos/:id', async (req, res) => {
   try {
       const pedido = await Pedido.findById(req.params.id);
       if (!pedido) return res.status(404).json({ message: 'Pedido no encontrado' });
@@ -133,7 +125,7 @@ router.get('/pedidos/:id', autenticar, async (req, res) => {
 });
 
 // Actualizar estado de un pedido
-router.put('/pedidos/:id/estado', autenticar, async (req, res) => {
+router.put('/pedidos/:id/estado', async (req, res) => {
   console.log('estoy actualizando el estado XD');
   try {
       const { estado } = req.body;
@@ -157,7 +149,7 @@ router.put('/pedidos/:id/estado', autenticar, async (req, res) => {
 });
 
 // Eliminar un pedido
-router.delete('/pedidos/:id', autenticar, async (req, res) => {
+router.delete('/pedidos/:id', async (req, res) => {
   try {
     const pedido = await Pedido.findByIdAndDelete(req.params.id);
     if (!pedido) {

@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
         // Verificar autenticación
     const auth = checkAuth();
-    if (!auth) {
+    if (!auth || auth.user.role !== 'employee') {
         window.location.href = 'login.html';
         return;
     }
@@ -57,7 +57,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function cargarPedidos() {
         try {
-            const response = await fetch('http://localhost:3000/api/pedidos');
+            const response = await fetch('http://localhost:3000/api/pedidos', {
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                }
+            });
             if (!response.ok) throw new Error('Error al cargar pedidos');
             
             pedidosData = (await response.json()).filter(pedido => pedido.estado !== 'revision');
@@ -142,7 +147,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function mostrarDetallesPedido(id) {
         try {
-            const response = await fetch(`http://localhost:3000/api/pedidos/${id}`);
+            const response = await fetch(`http://localhost:3000/api/pedidos/${id}`,{
+                headers: { 
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                }
+            });
             
             if (!response.ok) {
                 const errorData = await response.json();

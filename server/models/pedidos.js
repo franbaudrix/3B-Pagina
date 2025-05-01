@@ -44,7 +44,9 @@ const PedidoSchema = new mongoose.Schema({
       codigoPostal: { type: String }
     }
   },
-  observaciones: String
+  observaciones: String,
+  completadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  fechaCompletado: { type: Date }
 }, { versionKey: false });
 
 module.exports = mongoose.model('Pedido', PedidoSchema);

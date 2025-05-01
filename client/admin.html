@@ -22,7 +22,6 @@
 </head>
 <body class="bg-dark text-light">
   <header class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="text-center mb-0">Panel de Administración</h1>
     <button class="btn btn-danger btn-logout">
         <i class="bi bi-box-arrow-right"></i> Cerrar Sesión
     </button>
@@ -38,6 +37,9 @@
       </li>
       <li class="nav-item" role="presentation">
         <button class="nav-link" id="pedidos-tab" data-bs-toggle="tab" data-bs-target="#pedidos" type="button" role="tab">Pedidos</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="usuarios-tab" data-bs-toggle="tab" data-bs-target="#usuarios" type="button" role="tab">Usuarios</button>
       </li>
     </ul>
 
@@ -178,6 +180,87 @@
                   <!-- Los pedidos se cargarán aquí -->
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pestaña Usuarios -->
+      <div class="tab-pane fade" id="usuarios" role="tabpanel">
+        <div class="card mb-4 bg-secondary">
+          <div class="card-body">
+            <h2 class="h4">Gestión de Usuarios</h2>
+            
+            <!-- Formulario para crear usuarios -->
+            <form id="form-usuario" class="mb-4">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Nombre*</label>
+                  <input type="text" id="usuario-nombre" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Email*</label>
+                  <input type="email" id="usuario-email" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Contraseña*</label>
+                  <input type="password" id="usuario-password" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Rol*</label>
+                  <select id="usuario-rol" class="form-select" required>
+                    <option value="employee">Empleado</option>
+                    <option value="admin">Administrador</option>
+                  </select>
+                </div>
+                <div class="col-md-6 d-flex align-items-end">
+                  <button type="submit" class="btn btn-primary">Crear Usuario</button>
+                </div>
+              </div>
+            </form>
+            
+            <!-- Filtros -->
+            <div class="row mb-3">
+              <div class="col-md-4">
+                <label class="form-label">Rol</label>
+                <select id="usuario-rol-filter" class="form-select">
+                  <option value="todos">Todos</option>
+                  <option value="empleado">Empleados</option>
+                  <option value="admin">Administradores</option>
+                </select>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">Buscar</label>
+                <input type="text" id="usuario-search" class="form-control" placeholder="Buscar por nombre o email...">
+              </div>
+            </div>
+            
+            <!-- Tabla de usuarios -->
+            <div class="table-responsive">
+              <table class="table table-dark table-hover">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Email</th>
+                    <th>Rol</th>
+                    <th>Fecha Creación</th>
+                    <th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="lista-usuarios">
+                  <!-- Los usuarios se cargarán aquí -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Sección de estadísticas (se desarrollará más adelante) -->
+        <div class="card bg-secondary">
+          <div class="card-body">
+            <h2 class="h4">Estadísticas</h2>
+            <div class="alert alert-info">
+              <i class="bi bi-info-circle"></i> Sección en desarrollo. Aquí se mostrarán estadísticas de usuarios.
             </div>
           </div>
         </div>

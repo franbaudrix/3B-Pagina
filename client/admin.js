@@ -1,3 +1,5 @@
+let allUsers = [];
+
 // Función para cargar categorías
 async function loadCategories() {
     try {
@@ -161,6 +163,253 @@ function actualizarBotonesAccion(fila, pedidoId, nuevoEstado) {
     if (accionesTd.querySelector('.btn-completar')) {
         accionesTd.querySelector('.btn-completar').addEventListener('click', 
             () => cambiarEstadoPedido(pedidoId, 'completado'));
+    }
+}
+
+async function cargarUsuarios() {
+    try {
+        const response = await fetch('http://localhost:3000/api/auth/users', {
+            headers: { 
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            }
+        });
+
+        if (!response.ok) throw new Error('Error al cargar usuarios');
+        
+        allUsers = await response.json();
+        renderUsuarios(allUsers);
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarAlerta('Error al cargar los usuarios. Intente nuevamente.', 'danger');
+    }
+}
+
+// Función para renderizar usuarios
+function renderUsuarios(usuarios) {
+    const listaUsuarios = document.getElementById('lista-usuarios');
+    
+    listaUsuarios.innerHTML = usuarios.map(usuario => `
+        <tr data-id="${usuario._id}">
+            <td>${usuario.name}</td>
+            <td>${usuario.email}</td>
+            <td>
+                <span class="badge ${usuario.role === 'admin' ? 'bg-danger' : 'bg-primary'}">
+                    ${usuario.role === 'admin' ? 'Administrador' : 'Empleado'}
+                </span>
+            </td>
+            <td>${new Date(usuario.createdAt).toLocaleDateString()}</td>
+            <td>
+                <button class="btn btn-sm btn-warning btn-editar-usuario me-2" data-id="${usuario._id}">
+                    <i class="bi bi-pencil"></i> Editar
+                </button>
+                <button class="btn btn-sm btn-danger btn-eliminar-usuario" data-id="${usuario._id}">
+                    <i class="bi bi-trash"></i> Eliminar
+                </button>
+            </td>
+        </tr>
+    `).join('');
+    
+    // Agregar event listeners a los botones
+    document.querySelectorAll('.btn-editar-usuario').forEach(btn => {
+        btn.addEventListener('click', editarUsuario);
+    });
+    
+    document.querySelectorAll('.btn-eliminar-usuario').forEach(btn => {
+        btn.addEventListener('click', eliminarUsuario);
+    });
+    
+    // Mostrar mensaje si no hay usuarios
+    if (usuarios.length === 0) {
+        listaUsuarios.innerHTML = `
+            <tr>
+                <td colspan="5" class="text-center py-4 text-muted">
+                    <i class="bi bi-people"></i> No se encontraron usuarios
+                </td>
+            </tr>
+        `;
+    }
+}
+
+// Función para crear usuario
+async function crearUsuario(e) {
+    e.preventDefault();
+    const btnSubmit = e.target.querySelector('button[type="submit"]');
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Procesando...';
+
+    const usuario = {
+        name: document.getElementById('usuario-nombre').value,
+        email: document.getElementById('usuario-email').value,
+        password: document.getElementById('usuario-password').value,
+        role: document.getElementById('usuario-rol').value
+    };
+
+    try {
+        const response = await fetch('http://localhost:3000/api/auth/register', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            },
+            body: JSON.stringify(usuario)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error desconocido');
+        }
+
+        mostrarAlerta('Usuario creado correctamente', 'success');
+        e.target.reset();
+        cargarUsuarios();
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarAlerta(error.message, 'danger');
+    } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Crear Usuario';
+    }
+}
+
+// Función para eliminar usuario
+async function eliminarUsuario(e) {
+    const usuarioId = e.currentTarget.dataset.id;
+    
+    if (!confirm('¿Estás seguro de eliminar este usuario?')) return;
+    
+    try {
+        const response = await fetch(`http://localhost:3000/api/auth/users/${usuarioId}`, {
+            method: 'DELETE',
+            headers: { 
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            }
+        });
+
+        if (!response.ok) throw new Error('Error al eliminar usuario');
+
+        mostrarAlerta('Usuario eliminado correctamente', 'success');
+        cargarUsuarios();
+    } catch (error) {
+        console.error('Error al eliminar:', error);
+        mostrarAlerta(error.message || 'Error al eliminar usuario', 'danger');
+    }
+}
+
+// Función para editar usuario
+async function editarUsuario(e) {
+    const usuarioId = e.currentTarget.dataset.id;
+    
+    try {
+        const response = await fetch(`http://localhost:3000/api/auth/users/${usuarioId}`, {
+            headers: { 
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            }
+        });
+
+        if (!response.ok) throw new Error('Error al cargar usuario');
+        
+        const usuario = await response.json();
+        
+        // Llenar formulario con datos del usuario
+        document.getElementById('usuario-nombre').value = usuario.name;
+        document.getElementById('usuario-email').value = usuario.email;
+        document.getElementById('usuario-rol').value = usuario.role;
+        
+        // Cambiar el formulario a modo edición
+        const form = document.getElementById('form-usuario');
+        form.dataset.editingId = usuarioId;
+        form.querySelector('button[type="submit"]').textContent = 'Actualizar Usuario';
+        
+        // Agregar botón cancelar si no existe
+        if (!form.querySelector('#btn-cancelar-usuario')) {
+            const cancelBtn = document.createElement('button');
+            cancelBtn.id = 'btn-cancelar-usuario';
+            cancelBtn.type = 'button';
+            cancelBtn.className = 'btn btn-secondary ms-2';
+            cancelBtn.textContent = 'Cancelar';
+            cancelBtn.onclick = cancelarEdicionUsuario;
+            form.querySelector('button[type="submit"]').after(cancelBtn);
+        }
+        
+        // Deshabilitar campo de contraseña en edición
+        document.getElementById('usuario-password').disabled = true;
+    } catch (error) {
+        console.error('Error al cargar usuario:', error);
+        mostrarAlerta('Error al cargar usuario', 'danger');
+    }
+}
+
+// Función para cancelar edición de usuario
+function cancelarEdicionUsuario() {
+    const form = document.getElementById('form-usuario');
+    form.reset();
+    delete form.dataset.editingId;
+    form.querySelector('button[type="submit"]').textContent = 'Crear Usuario';
+    document.getElementById('usuario-password').disabled = false;
+    
+    const cancelBtn = document.getElementById('btn-cancelar-usuario');
+    if (cancelBtn) cancelBtn.remove();
+}
+
+// Función para filtrar usuarios
+function filtrarUsuarios() {
+    const rol = document.getElementById('usuario-rol-filter').value;
+    const searchTerm = document.getElementById('usuario-search').value.toLowerCase();
+    
+    let filtered = allUsers;
+    
+    if (rol !== 'todos') {
+        filtered = filtered.filter(u => u.role === rol);
+    }
+    
+    if (searchTerm) {
+        filtered = filtered.filter(u => 
+            u.name.toLowerCase().includes(searchTerm) || 
+            u.email.toLowerCase().includes(searchTerm));
+    }
+    
+    renderUsuarios(filtered);
+}
+
+// Función para actualizar usuario
+async function actualizarUsuario(usuarioId, e) {
+    const btnSubmit = e.target.querySelector('button[type="submit"]');
+    btnSubmit.disabled = true;
+    btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Procesando...';
+
+    const usuario = {
+        name: document.getElementById('usuario-nombre').value,
+        email: document.getElementById('usuario-email').value,
+        role: document.getElementById('usuario-rol').value
+    };
+
+    try {
+        const response = await fetch(`http://localhost:3000/api/auth/users/${usuarioId}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            },
+            body: JSON.stringify(usuario)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Error desconocido');
+        }
+
+        mostrarAlerta('Usuario actualizado correctamente', 'success');
+        cancelarEdicionUsuario();
+        cargarUsuarios();
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarAlerta(error.message, 'danger');
+    } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Actualizar Usuario';
     }
 }
 
@@ -561,8 +810,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 itemsBody.insertAdjacentHTML('afterend', `
                     <div class="mt-3">
                         <h5>Resumen de Entrega</h5>
-                        <p><strong>Observaciones generales:</strong> ${pedido.observaciones || 'Ninguna'}</p>
+                        <p><strong>Completado por:</strong> ${pedido.completadoPor?.name}</p>
                         <p><strong>Fecha de completado:</strong> ${new Date(pedido.fechaCompletado).toLocaleString()}</p>
+                        <p><strong>Observaciones generales:</strong> ${pedido.observaciones || 'Ninguna'}</p>
                     </div>
                 `);
             }
@@ -891,4 +1141,23 @@ document.addEventListener('DOMContentLoaded', () => {
             mostrarAlerta('Error al generar el remito', 'danger');
         }
     };
+
+    document.getElementById('usuarios-tab').addEventListener('shown.bs.tab', cargarUsuarios);
+    
+    // Formulario de usuario
+    document.getElementById('form-usuario').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (this.dataset.editingId) {
+            // Lógica para actualizar usuario
+            await actualizarUsuario(this.dataset.editingId, e);
+        } else {
+            // Lógica para crear usuario
+            await crearUsuario(e);
+        }
+    });
+    
+    // Filtros de usuarios
+    document.getElementById('usuario-rol-filter').addEventListener('change', filtrarUsuarios);
+    document.getElementById('usuario-search').addEventListener('input', filtrarUsuarios);
 });
