@@ -7,6 +7,6 @@ const ProductoSchema = new mongoose.Schema({
   descripcion: String,
   categoria: { type: String, required: true },
   subcategoria: String
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Producto', ProductoSchema);

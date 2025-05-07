@@ -65,12 +65,71 @@
                 <input type="text" id="imagen" class="form-control" required>
               </div>
               <div class="mb-3">
-                <label class="form-label">Categoria</label>
-                <input type="text" id="categoria" class="form-control" required>
+                <label class="form-label">Categoria*</label>
+                <div class="input-group">
+                  <select id="categoria" class="form-select" required>
+                    <option value="">Seleccione una categoría</option>
+                  </select>
+                  <button class="btn btn-outline-light" type="button" id="btn-nueva-categoria">
+                    <i class="bi bi-plus"></i> Nueva
+                  </button>
+                </div>
+              </div>
+              <div class="modal fade" id="nuevaCategoriaModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content bg-dark">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Nueva Categoría</h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">Nombre de la categoría*</label>
+                        <input type="text" id="nueva-categoria-nombre" class="form-control">
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <button type="button" class="btn btn-primary" id="btn-guardar-categoria">Guardar</button>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="mb-3">
-                <label class="form-label">Sub categoria</label>
-                <input type="text" id="subcategoria" class="form-control">
+                <label class="form-label">Subcategoría</label>
+                <div class="input-group">
+                  <select id="subcategoria" class="form-select" disabled>
+                    <option value="">Seleccione una subcategoría</option>
+                  </select>
+                  <button class="btn btn-outline-light" type="button" id="btn-nueva-subcategoria" disabled>
+                    <i class="bi bi-plus"></i> Nueva
+                  </button>
+                </div>
+              </div>
+              <div class="modal fade" id="nuevaSubcategoriaModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                  <div class="modal-content bg-dark">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Nueva Subcategoría</h5>
+                      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="mb-3">
+                        <label class="form-label">Categoría padre:</label>
+                        <div id="subcategoria-categoria-nombre" class="fw-bold mb-2"></div>
+                        <input type="hidden" id="subcategoria-categoria-actual">
+                      </div>
+                      <div class="mb-3">
+                        <label for="nueva-subcategoria-nombre" class="form-label">Nombre de la subcategoría*</label>
+                        <input type="text" id="nueva-subcategoria-nombre" class="form-control">
+                      </div>
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                      <button type="button" class="btn btn-primary" id="btn-guardar-subcategoria">Guardar</button>
+                    </div>
+                  </div>
+                </div>
               </div>
               <div class="mb-3">
                 <label class="form-label">Descripción</label>

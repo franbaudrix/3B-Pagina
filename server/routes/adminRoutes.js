@@ -3,6 +3,7 @@ const router = express.Router();
 const Producto = require('../models/producto');
 const Pedido = require('../models/pedidos');
 const { auth, admin } = require('../middleware/auth');
+const Categoria = require('../models/categorias');
 
 // Todas las rutas requieren autenticación y ser admin
 router.use(auth);
@@ -65,22 +66,190 @@ router.delete('/producto/:id', async (req, res) => {
   }
 });
 
+// Rutas para categorías
+router.post('/categorias', async (req, res) => {
+  try {
+    const { nombre, descripcion } = req.body;
+    
+    if (!nombre) {
+      return res.status(400).json({ message: 'El nombre de la categoría es requerido' });
+    }
+    
+    // Verificar si ya existe la categoría
+    const categoriaExistente = await Categoria.findOne({ nombre });
+    
+    if (categoriaExistente) {
+      return res.status(400).json({ 
+        message: 'La categoría ya existe' 
+      });
+    }
+    
+    const nuevaCategoria = new Categoria({
+      nombre,
+      descripcion: descripcion || ''
+    });
+    
+    await nuevaCategoria.save();
+    
+    res.status(201).json(nuevaCategoria);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 router.get('/categorias', async (req, res) => {
   try {
-      const productos = await Producto.find();
-      
-      // Obtener categorías únicas
-      const categorias = [...new Set(productos.map(p => p.categoria))].filter(Boolean);
-      
-      // Obtener subcategorías únicas
-      const subcategorias = [...new Set(productos.map(p => p.subcategoria))].filter(Boolean);
-      
-      res.json({
-          categorias,
-          subcategorias
+    const categorias = await Categoria.find().populate('subcategorias');
+    res.json(categorias);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.get('/categorias/:id', async (req, res) => {
+  try {
+    const categoria = await Categoria.findById(req.params.id).populate('subcategorias');
+    if (!categoria) {
+      return res.status(404).json({ message: 'Categoría no encontrada' });
+    }
+    res.json(categoria);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.put('/categorias/:id', async (req, res) => {
+  try {
+    const categoria = await Categoria.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    ).populate('subcategorias');
+    
+    if (!categoria) {
+      return res.status(404).json({ message: 'Categoría no encontrada' });
+    }
+    
+    res.json(categoria);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.delete('/categorias/:id', async (req, res) => {
+  try {
+    // Verificar si hay productos asociados a esta categoría
+    const productosAsociados = await Producto.findOne({ categoria: req.params.id });
+    
+    if (productosAsociados) {
+      return res.status(400).json({ 
+        message: 'No se puede eliminar la categoría porque tiene productos asociados' 
       });
+    }
+    
+    const categoria = await Categoria.findByIdAndDelete(req.params.id);
+    
+    if (!categoria) {
+      return res.status(404).json({ message: 'Categoría no encontrada' });
+    }
+    
+    res.json({ message: 'Categoría eliminada correctamente' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Rutas para subcategorías
+router.post('/categorias/:categoriaId/subcategorias', async (req, res) => {
+  console.log('Body recibido:', req.body); // ← Agrega esto
+  console.log('Tipo de dato recibido:', typeof req.body.nombre); // ← Y esto
+  try {
+      const { nombre } = req.body; // Solo extraemos el nombre
+      
+      if (!nombre) {
+          return res.status(400).json({ message: 'El nombre de la subcategoría es requerido' });
+      }
+      
+      const categoria = await Categoria.findById(req.params.categoriaId);
+      
+      if (!categoria) {
+          return res.status(404).json({ message: 'Categoría no encontrada' });
+      }
+      
+      // Verificar si la subcategoría ya existe
+      if (categoria.subcategorias.includes(nombre)) {
+          return res.status(400).json({ 
+              message: 'La subcategoría ya existe en esta categoría' 
+          });
+      }
+      
+      // Agregar la subcategoría (solo el nombre como string)
+      categoria.subcategorias.push(nombre);
+      await categoria.save();
+      
+      res.status(201).json(categoria);
   } catch (error) {
       res.status(500).json({ message: error.message });
+  }
+});
+
+router.put('/categorias/:categoriaId/subcategorias/:subcategoriaId', async (req, res) => {
+  try {
+    const { nombre, descripcion } = req.body;
+    const categoria = await Categoria.findById(req.params.categoriaId);
+    
+    if (!categoria) {
+      return res.status(404).json({ message: 'Categoría no encontrada' });
+    }
+    
+    const subcategoria = categoria.subcategorias.id(req.params.subcategoriaId);
+    
+    if (!subcategoria) {
+      return res.status(404).json({ message: 'Subcategoría no encontrada' });
+    }
+    
+    if (nombre) subcategoria.nombre = nombre;
+    if (descripcion) subcategoria.descripcion = descripcion;
+    
+    await categoria.save();
+    
+    res.json(subcategoria);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+router.delete('/categorias/:categoriaId/subcategorias/:subcategoriaId', async (req, res) => {
+  try {
+    const categoria = await Categoria.findById(req.params.categoriaId);
+    
+    if (!categoria) {
+      return res.status(404).json({ message: 'Categoría no encontrada' });
+    }
+    
+    // Verificar si hay productos asociados a esta subcategoría
+    const productosAsociados = await Producto.findOne({ 
+      subcategoria: req.params.subcategoriaId 
+    });
+    
+    if (productosAsociados) {
+      return res.status(400).json({ 
+        message: 'No se puede eliminar la subcategoría porque tiene productos asociados' 
+      });
+    }
+    
+    const subcategoria = categoria.subcategorias.id(req.params.subcategoriaId);
+    
+    if (!subcategoria) {
+      return res.status(404).json({ message: 'Subcategoría no encontrada' });
+    }
+    
+    subcategoria.remove();
+    await categoria.save();
+    
+    res.json({ message: 'Subcategoría eliminada correctamente' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

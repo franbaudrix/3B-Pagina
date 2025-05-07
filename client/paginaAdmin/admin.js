@@ -1,9 +1,24 @@
+let categoriasDisponibles = [];
+let subcategoriasDisponibles = [];
+let allProducts = [];
 let allUsers = [];
+
+// Función para mostrar alertas
+function mostrarAlerta(mensaje, tipo = 'success') {
+    const alerta = document.createElement('div');
+    alerta.className = `alert alert-${tipo} alert-dismissible fade show fixed-top mt-3 mx-3`;
+    alerta.innerHTML = `
+        ${mensaje}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.prepend(alerta);
+    setTimeout(() => alerta.remove(), 5000);
+}
 
 // Función para cargar categorías
 async function loadCategories() {
     try {
-        const response = await fetch('http://localhost:3000/api/categorias', {
+        const response = await fetch('http://localhost:3000/api/admin/categorias', {
             headers: { 
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
@@ -12,41 +27,162 @@ async function loadCategories() {
         
         if (!response.ok) throw new Error('Error al cargar categorías');
         
-        const data = await response.json();
-        categoriasDisponibles = data.categorias || [];
-        subcategoriasDisponibles = data.subcategorias || [];
+        const categorias = await response.json();
+        categoriasDisponibles = categorias;
         
-        // Llenar selector de categorías
-        const categoriaFilter = document.getElementById('categoria-filter');
-        categoriasDisponibles.forEach(categoria => {
-            const option = document.createElement('option');
-            option.value = categoria;
-            option.textContent = categoria;
-            categoriaFilter.appendChild(option);
-        });
+        // Actualizar selectores de categoría
+        updateCategorySelectors(categorias);
     } catch (error) {
         console.error('Error al cargar categorías:', error);
         mostrarAlerta('Error al cargar categorías', 'danger');
     }
 }
 
+function updateCategorySelectors(categorias) {
+    // Selector en el formulario de producto
+    const categoriaSelect = document.getElementById('categoria');
+    categoriaSelect.innerHTML = '<option value="">Seleccione una categoría</option>';
+    
+    // Selector en el filtro
+    const categoriaFilter = document.getElementById('categoria-filter');
+    categoriaFilter.innerHTML = '<option value="">Todas las categorías</option>';
+    
+    categorias.forEach(categoria => {
+        // Opción para el formulario
+        const option = document.createElement('option');
+        option.value = categoria._id;
+        option.textContent = categoria.nombre;
+        categoriaSelect.appendChild(option);
+        
+        // Opción para el filtro
+        const filterOption = document.createElement('option');
+        filterOption.value = categoria._id;
+        filterOption.textContent = categoria.nombre;
+        categoriaFilter.appendChild(filterOption);
+    });
+}
+
+async function loadSubcategories(categoriaId) {
+    const subcategoriaSelect = document.getElementById('subcategoria');
+    const btnNuevaSubcategoria = document.getElementById('btn-nueva-subcategoria');
+    
+    subcategoriaSelect.innerHTML = '<option value="">Seleccione una subcategoría</option>';
+    subcategoriaSelect.disabled = !categoriaId;
+    btnNuevaSubcategoria.disabled = !categoriaId;
+    
+    if (!categoriaId) return;
+    
+    try {
+        const response = await fetch(`http://localhost:3000/api/admin/categorias/${categoriaId}`, {
+            headers: { 
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            }
+        });
+        
+        if (!response.ok) throw new Error('Error al cargar subcategorías');
+        
+        const categoria = await response.json();
+        
+        if (categoria.subcategorias && categoria.subcategorias.length > 0) {
+            categoria.subcategorias.forEach(subcategoria => {
+                const option = document.createElement('option');
+                option.value = subcategoria;
+                option.textContent = subcategoria;
+                subcategoriaSelect.appendChild(option);
+            });
+        }
+    } catch (error) {
+        console.error('Error al cargar subcategorías:', error);
+        mostrarAlerta('Error al cargar subcategorías', 'danger');
+    }
+}
+
+// Función para agregar nueva categoría
+async function agregarNuevaCategoria(nombre) {
+    try {
+        if (!nombre || nombre.trim() === '') {
+            mostrarAlerta('Por favor ingrese un nombre válido para la categoría', 'warning');
+            return false;
+        }
+
+        const response = await fetch('http://localhost:3000/api/admin/categorias', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            },
+            body: JSON.stringify({ nombre })
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al crear categoría');
+        }
+        
+        const nuevaCategoria = await response.json();
+        
+        // Actualizar la lista de categorías
+        await loadCategories();
+        
+        mostrarAlerta('Categoría creada correctamente', 'success');
+        return nuevaCategoria;
+    } catch (error) {
+        console.error('Error al crear categoría:', error);
+        mostrarAlerta(error.message, 'danger');
+        return false;
+    }
+}
+
+// Función para agregar nueva subcategoría
+async function agregarNuevaSubcategoria(categoriaId, nombreSubcategoria) {
+    try {
+        if (!nombreSubcategoria || nombreSubcategoria.trim() === '') {
+            mostrarAlerta('Por favor ingrese un nombre válido para la subcategoría', 'warning');
+            return;
+        }
+
+        const response = await fetch(`http://localhost:3000/api/admin/categorias/${categoriaId}/subcategorias`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            },
+            body: JSON.stringify({ nombre: nombreSubcategoria.trim() })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            // Si la subcategoría ya existe, no es un error grave, podemos continuar
+            if (errorData.message.includes('ya existe')) {
+                return { message: errorData.message };
+            }
+            throw new Error(errorData.message || 'Error al crear subcategoría');
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error al crear subcategoría:', error);
+        mostrarAlerta(error.message, 'danger');
+        throw error;
+    }
+}
+
 // Función para actualizar subcategorías según categoría seleccionada
-function updateSubcategorias() {
-    const categoriaSeleccionada = document.getElementById('categoria-filter').value;
+function updateSubcategoryFilter() {
+    const categoriaId = document.getElementById('categoria-filter').value;
     const subcategoriaFilter = document.getElementById('subcategoria-filter');
     
-    // Limpiar y resetear el selector
     subcategoriaFilter.innerHTML = '<option value="">Todas las subcategorías</option>';
-    subcategoriaFilter.disabled = !categoriaSeleccionada;
+    subcategoriaFilter.disabled = !categoriaId;
     
-    if (categoriaSeleccionada) {
-        // Filtrar subcategorías para la categoría seleccionada
-        const subcategoriasFiltradas = subcategoriasDisponibles.filter(sub => 
-            allProducts.some(p => p.categoria === categoriaSeleccionada && p.subcategoria === sub)
-        );
-        
-        // Agregar opciones
-        subcategoriasFiltradas.forEach(subcategoria => {
+    if (!categoriaId) return;
+    
+    // Buscar la categoría seleccionada
+    const categoria = categoriasDisponibles.find(c => c._id === categoriaId);
+    
+    if (categoria && categoria.subcategorias) {
+        categoria.subcategorias.forEach(subcategoria => {
             const option = document.createElement('option');
             option.value = subcategoria;
             option.textContent = subcategoria;
@@ -57,15 +193,15 @@ function updateSubcategorias() {
 
 // Función para filtrar productos
 function filterProducts() {
-    const categoria = document.getElementById('categoria-filter').value;
+    const categoriaId = document.getElementById('categoria-filter').value;
     const subcategoria = document.getElementById('subcategoria-filter').value;
     const searchTerm = document.getElementById('search-input').value.toLowerCase();
     
     let filtered = allProducts;
     
     // Aplicar filtros
-    if (categoria) {
-        filtered = filtered.filter(p => p.categoria === categoria);
+    if (categoriaId) {
+        filtered = filtered.filter(p => p.categoria === categoriaId);
     }
     
     if (subcategoria) {
@@ -81,14 +217,23 @@ function filterProducts() {
     renderProductos(filtered);
 }
 
+function getCategoryName(categoryId) {
+    if (!categoryId) return '-';
+    const categoria = categoriasDisponibles.find(c => c._id === categoryId);
+    return categoria ? categoria.nombre : '-';
+}
+
 // Función para renderizar productos en tabla
 function renderProductos(productos) {
     const listaProductos = document.getElementById('lista-productos');
     
-    // Ordenar por categoría y luego por nombre
+    // Ordenar por nombre de categoría y luego por nombre de producto
     productos.sort((a, b) => {
-        if (a.categoria < b.categoria) return -1;
-        if (a.categoria > b.categoria) return 1;
+        const catA = getCategoryName(a.categoria);
+        const catB = getCategoryName(b.categoria);
+        
+        if (catA < catB) return -1;
+        if (catA > catB) return 1;
         return a.nombre.localeCompare(b.nombre);
     });
     
@@ -96,7 +241,7 @@ function renderProductos(productos) {
         <tr>
             <td>${producto.nombre}</td>
             <td>$${producto.precio.toFixed(2)}</td>
-            <td>${producto.categoria}</td>
+            <td>${getCategoryName(producto.categoria)}</td>
             <td>${producto.subcategoria || '-'}</td>
             <td class="small text-muted">${producto.descripcion ? 
                 (producto.descripcion.length > 50 ? 
@@ -114,7 +259,6 @@ function renderProductos(productos) {
         </tr>
     `).join('');
     
-    // Mostrar mensaje si no hay productos
     if (productos.length === 0) {
         listaProductos.innerHTML = `
             <tr>
@@ -425,6 +569,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const listaProductos = document.getElementById('lista-productos');
     const btnSubmit = form.querySelector('button[type="submit"]');
     let editingId = null;
+    document.getElementById('descripcion').maxLength = 150; 
 
     // Cargar productos al iniciar
     cargarProductos();
@@ -435,8 +580,8 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         btnSubmit.disabled = true;
         btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Procesando...';
-
-        const producto = {
+    
+        const productoData = {
             nombre: document.getElementById('nombre').value,
             precio: parseFloat(document.getElementById('precio').value),
             imagen: document.getElementById('imagen').value,
@@ -444,32 +589,50 @@ document.addEventListener('DOMContentLoaded', () => {
             categoria: document.getElementById('categoria').value,
             subcategoria: document.getElementById('subcategoria').value
         };
-
+    
         try {
+            // Primero verifica si es una subcategoría nueva
+            const subcategoria = productoData.subcategoria;
+            const categoria = productoData.categoria;
+            
+            if (subcategoria) {
+                // Intenta crear la subcategoría (si ya existe, no es problema)
+                try {
+                    await agregarNuevaSubcategoria(categoria, subcategoria);
+                } catch (error) {
+                    // Si el error es que ya existe, continuamos normalmente
+                    if (!error.message.includes('ya existe')) {
+                        throw error;
+                    }
+                }
+            }
+    
+            // Ahora crea el producto
             const url = editingId 
                 ? `http://localhost:3000/api/admin/producto/${editingId}`
                 : 'http://localhost:3000/api/admin/producto';
-
+    
             const method = editingId ? 'PUT' : 'POST';
-
+    
             const response = await fetch(url, {
                 method,
                 headers: { 
                     'Content-Type': 'application/json',
                     ...getAuthHeader()
                 },
-                body: JSON.stringify(producto)
+                body: JSON.stringify(productoData)
             });
-
+    
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || 'Error desconocido');
             }
-
+    
             mostrarAlerta(editingId ? 'Producto actualizado correctamente' : 'Producto creado correctamente', 'success');
             form.reset();
             editingId = null;
-            cargarProductos();
+            await cargarProductos();
+            await loadCategories(); // Recargar categorías y subcategorías
         } catch (error) {
             console.error('Error:', error);
             mostrarAlerta(error.message, 'danger');
@@ -480,12 +643,93 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('categoria-filter').addEventListener('change', () => {
-        updateSubcategorias();
+        updateSubcategoryFilter();
         filterProducts();
     });
 
     document.getElementById('subcategoria-filter').addEventListener('change', filterProducts);
     document.getElementById('search-input').addEventListener('input', filterProducts);
+
+    document.getElementById('btn-nueva-categoria').addEventListener('click', () => {
+        document.getElementById('nueva-categoria-nombre').value = '';
+        const modal = new bootstrap.Modal(document.getElementById('nuevaCategoriaModal'));
+        modal.show();
+    });
+    
+    document.getElementById('btn-guardar-categoria').addEventListener('click', async () => {
+        const nombre = document.getElementById('nueva-categoria-nombre').value.trim();
+        
+        if (!nombre) {
+            mostrarAlerta('Por favor ingrese un nombre para la categoría', 'warning');
+            return;
+        }
+        
+        const success = await agregarNuevaCategoria(nombre);
+        
+        if (success) {
+            document.getElementById('nueva-categoria-nombre').value = '';
+            bootstrap.Modal.getInstance(document.getElementById('nuevaCategoriaModal')).hide();
+        }
+    });
+
+    document.getElementById('categoria').addEventListener('change', function() {
+        const categoriaId = this.value;
+        loadSubcategories(categoriaId);
+        
+        // Actualizar el campo de categoría en el modal de subcategoría
+        document.getElementById('subcategoria-categoria-actual').value = categoriaId || '';
+        document.getElementById('subcategoria-categoria-nombre').textContent = 
+            this.options[this.selectedIndex]?.text || '';
+    });
+    
+    // Manejar clic en botón de nueva subcategoría
+    document.getElementById('btn-nueva-subcategoria').addEventListener('click', () => {
+        const categoriaSelect = document.getElementById('categoria');
+        const categoriaId = categoriaSelect.value;
+        const categoriaNombre = categoriaSelect.options[categoriaSelect.selectedIndex].text;
+        
+        if (!categoriaId) {
+            mostrarAlerta('Primero seleccione una categoría', 'warning');
+            return;
+        }
+        
+        // Actualiza el modal
+        const nombreCategoriaElement = document.getElementById('subcategoria-categoria-nombre');
+        if (nombreCategoriaElement) {
+            nombreCategoriaElement.textContent = categoriaNombre;
+        }
+        
+        document.getElementById('subcategoria-categoria-actual').value = categoriaId;
+        document.getElementById('nueva-subcategoria-nombre').value = '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('nuevaSubcategoriaModal'));
+        modal.show();
+    });
+    
+    // Manejar guardar nueva subcategoría (versión corregida)
+    document.getElementById('btn-guardar-subcategoria').addEventListener('click', async () => {
+        const categoriaId = document.getElementById('subcategoria-categoria-actual').value;
+        const nombreSubcategoria = document.getElementById('nueva-subcategoria-nombre').value.trim();
+        
+        if (!nombreSubcategoria) {
+            mostrarAlerta('Por favor ingrese un nombre para la subcategoría', 'warning');
+            return;
+        }
+        
+        try {
+            await agregarNuevaSubcategoria(categoriaId, nombreSubcategoria);
+            mostrarAlerta('Subcategoría creada correctamente', 'success');
+            
+            // Actualizar el select de subcategorías
+            await loadSubcategories(categoriaId);
+            
+            // Cerrar modal y limpiar
+            document.getElementById('nueva-subcategoria-nombre').value = '';
+            bootstrap.Modal.getInstance(document.getElementById('nuevaSubcategoriaModal')).hide();
+        } catch (error) {
+            // El error ya se muestra en agregarNuevaSubcategoria
+        }
+    });
 
     // Cargar productos desde la API
     async function cargarProductos() {
@@ -514,35 +758,18 @@ document.addEventListener('DOMContentLoaded', () => {
         listaProductos.innerHTML = productos.map(producto => `
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    <img src="${producto.imagen}" class="card-img-top" alt="${producto.nombre}" style="height: 200px; object-fit: cover;">
-                    <div class="card-body">
-                        <h5 class="card-title">${producto.nombre}</h5>
-                        <p class="card-text">$${producto.precio.toFixed(2)}</p>
-                        <p class="card-text text-muted small">${producto.descripcion || 'Sin descripción'}</p>
-                    </div>
-                    <div class="card-footer bg-transparent">
-                        <button onclick="editarProducto('${producto._id.toString()}')" class="btn btn-sm btn-warning me-2">
-                            <i class="bi bi-pencil"></i> Editar
-                        </button>
-                        <button onclick="eliminarProducto('${producto._id.toString()}')" class="btn btn-sm btn-danger">
-                            <i class="bi bi-trash"></i> Eliminar
-                        </button>
-                    </div>
+                    <!-- ... otros elementos ... -->
+                    <p class="card-text text-muted small">${
+                        producto.descripcion ? 
+                        (producto.descripcion.length > 100 ? 
+                            producto.descripcion.substring(0, 100) + '...' : 
+                            producto.descripcion) : 
+                        'Sin descripción'
+                    }</p>
+                    <!-- ... otros elementos ... -->
                 </div>
             </div>
         `).join('');
-    }
-
-    // Función para mostrar alertas
-    function mostrarAlerta(mensaje, tipo = 'success') {
-        const alerta = document.createElement('div');
-        alerta.className = `alert alert-${tipo} alert-dismissible fade show fixed-top mt-3 mx-3`;
-        alerta.innerHTML = `
-            ${mensaje}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        document.body.prepend(alerta);
-        setTimeout(() => alerta.remove(), 5000);
     }
 
     // Funciones globales para botones
@@ -767,7 +994,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             
             document.getElementById('cliente-contacto').innerHTML = `
-                <strong>WhatsApp:</strong> ${pedido.cliente.whatsapp}<br>
+                <strong>WhatsApp:</strong> <a href="https://wa.me/${pedido.cliente.whatsapp}" target="_blank">${pedido.cliente.whatsapp}</a><br>
                 <strong>Email:</strong> ${pedido.cliente.email}
             `;
             

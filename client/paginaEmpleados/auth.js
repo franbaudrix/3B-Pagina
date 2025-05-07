@@ -49,7 +49,7 @@ function checkAuth() {
     const user = JSON.parse(localStorage.getItem('user'));
     
     if (!token || !user) {
-        window.location.href = 'login.html';
+        window.location.href = '/login.html';
         return;
     }
     

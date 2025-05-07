@@ -20,11 +20,12 @@ mongoose.connect(process.env.DB_URI)
 require('./models/pedidos');
 require('./models/producto');
 require('./models/usuarios');  
+require('./models/categorias');  
 
 // Importación de rutas
-const apiRoutes = require('./routes/api');
-const adminRoutes = require('./routes/admin');
-const pedidosRoutes = require('./routes/pedidos');
+const apiRoutes = require('./routes/shopRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const pedidosRoutes = require('./routes/pedidosRoutes');
 const authRoutes = require('./routes/authRoutes')
 
 // Configuración de rutas

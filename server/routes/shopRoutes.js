@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Producto = require('../models/producto');
+const Categoria = require('../models/categorias');
 
 // GET: Obtener todos los productos (con filtros opcionales)
 router.get('/producto', async (req, res) => {
@@ -24,18 +25,13 @@ router.get('/producto', async (req, res) => {
   }
 });
 
-// GET: Obtener categorías y subcategorías disponibles
+// GET: Obtener categorías y subcategorías disponibles (versión mejorada)
 router.get('/categorias', async (req, res) => {
   try {
-    const categorias = await Producto.distinct('categoria');
-    const subcategorias = await Producto.distinct('subcategoria');
-    
-    res.json({
-      categorias,
-      subcategorias
-    });
+    const categorias = await Categoria.find({}, '_id nombre subcategorias'); // Proyección para incluir solo estos campos
+    res.json(categorias);
   } catch (error) {
-    res.status(500).json({ error: "Error al obtener categorías" });
+    res.status(500).json({ message: error.message });
   }
 });
 

@@ -138,15 +138,18 @@ async function loadCategories() {
         if (!response.ok) throw new Error('Error al cargar categorías');
         
         const data = await response.json();
-        categoriasDisponibles = data.categorias || [];
-        subcategoriasDisponibles = data.subcategorias || [];
+        // Asumiendo que la respuesta tiene una estructura similar a tu primer ejemplo
+        categoriasDisponibles = data; // O data.categorias si viene dentro de un objeto
         
         // Llenar selector de categorías
         const categoriaFilter = document.getElementById('categoria-filter');
+        categoriaFilter.innerHTML = '<option value="">Todas las categorías</option>';
+        
         categoriasDisponibles.forEach(categoria => {
             const option = document.createElement('option');
-            option.value = categoria;
-            option.textContent = categoria;
+            // Asumiendo que cada categoría es un objeto con _id y nombre
+            option.value = categoria._id; // Usamos el ID como valor
+            option.textContent = categoria.nombre; // Mostramos el nombre
             categoriaFilter.appendChild(option);
         });
     } catch (error) {
@@ -166,9 +169,12 @@ function updateSubcategorias() {
     
     if (categoriaSeleccionada) {
         // Filtrar subcategorías para la categoría seleccionada
-        const subcategoriasFiltradas = subcategoriasDisponibles.filter(sub => 
-            allProducts.some(p => p.categoria === categoriaSeleccionada && p.subcategoria === sub)
-        );
+        const subcategoriasFiltradas = [...new Set(
+            allProducts
+                .filter(p => p.categoria === categoriaSeleccionada)
+                .map(p => p.subcategoria)
+                .filter(sub => sub) // Eliminar valores nulos/undefined
+        )];
         
         // Agregar opciones
         subcategoriasFiltradas.forEach(subcategoria => {
@@ -179,7 +185,6 @@ function updateSubcategorias() {
         });
     }
 }
-
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         // 1. Cargar productos
@@ -333,35 +338,47 @@ async function filterProducts() {
     displayProducts(filtered);
 }
 
-// Nueva función para mostrar productos (extraída de DOMContentLoaded)
 function displayProducts(productos) {
     const container = document.getElementById('productos-container');
-
+    
     if (productos.length === 0) {
         container.innerHTML = '<p class="text-center text-light">No se encontraron productos</p>';
         return;
     }
     
-    container.innerHTML = productos.map(producto => `
+    container.innerHTML = productos.map(producto => {
+        // Calcular tamaño de fuente basado en longitud del título
+        const titleLength = producto.nombre.length;
+        let titleSize = '2rem'; // Tamaño base
+        
+        if (titleLength > 18) titleSize = '1.5rem';
+        if (titleLength > 120) titleSize = '0.9rem';
+        
+        // Limitar descripción
+        const maxDescLength = 150; 
+        const descripcion = producto.descripcion ? 
+            (producto.descripcion.length > maxDescLength ? 
+                producto.descripcion.substring(0, maxDescLength) + '...' : 
+                producto.descripcion) : 
+            '';
+        
+        return `
         <div class="col-md-4 product-card" data-product-id="${producto._id}" data-base-price="${producto.precio}" data-product-name="${producto.nombre}">
             <div class="card h-100">
-                <!-- Contenido frontal (visible por defecto) -->
                 <div class="front-content">
-                    <img src="${producto.imagen.toString()}" class="img-fluid card-img-top" style="height: 250px; object-fit: cover; object-position: center;" alt="${producto.nombre}">
+                    <img src="${producto.imagen.toString()}" class="card-img-top" alt="${producto.nombre}">
                     <div class="card-body">
-                        <h3 class="card-title">${producto.nombre}</h3>
-                        <h5 class="card-text">$${producto.precio.toFixed(2)}</h5>
-                        <p class="card-text text-muted">${producto.descripcion || ''}</p>
+                        <h3 class="card-title" style="font-size: ${titleSize}">${producto.nombre}</h3>
+                        <p class="card-text description">${descripcion}</p>
+                        <h5 class="card-text price">$${producto.precio.toFixed(2)}</h5>
                     </div>
                 </div>
-                
-                <!-- Contenido trasero (visible al hacer hover) -->
                 <div class="back-content">
-                    <div class="card-body p-2">
-                        <h3 class="card-title mb-1">${producto.nombre}</h3>
-                        <h5 class="card-text mb-2">$${producto.precio.toFixed(2)}</h5>
+                    <div class="card-body">
+                        <h3 class="card-title mb-2">${producto.nombre}</h3>
+                        <h5 class="card-text mb-3">$${producto.precio.toFixed(2)}</h5>
                     </div>
-                    <div class="px-3 pb-1">
+                    <div class="selection-section">
                         <label for="weight" class="form-label small mb-1">Peso:</label>
                         <select name="weight" class="form-select form-select-sm weight-select mb-2">
                             <option value="half-kg">500g</option>
@@ -371,8 +388,7 @@ function displayProducts(productos) {
                         </select>
                         <input type="number" class="form-control custom-weight-input mt-2" placeholder="Ingrese el peso en kg" style="display: none;">
                     </div>
-                    
-                    <div class="p-3">
+                    <div class="selection-section">
                         <label for="amount" class="form-label">Cantidad bolsas:</label>
                         <select name="amount" class="form-select form-select-sm amount-select">
                             <option value="1">1 bolsa</option>
@@ -381,18 +397,19 @@ function displayProducts(productos) {
                             <option value="4">4 bolsas</option>
                         </select>
                     </div>
-                    <div class="mb-2 p-3 price-display text-end fw-bold"></div>
-                    <div class="fixed-bottom-btn"> <!-- Nuevo contenedor para el botón fijo -->
+                    <div class="price-display text-end fw-bold"></div>
+                    <div class="fixed-bottom-btn">
                         <button class="btn btn-danger rounded-0 btn-product-card w-100">Agregar</button>
                     </div>
                 </div>
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
-    // Inicializar los eventos después de cargar los productos
     initializeProductCards();
 }
+
 function initializeProductCards() {
     // Selecciona todas las tarjetas de producto
     const productCards = document.querySelectorAll('.product-card');
