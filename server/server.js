@@ -10,6 +10,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+app.use(express.static('client'));
 
 // Conexión a MongoDB
 mongoose.connect(process.env.DB_URI)
