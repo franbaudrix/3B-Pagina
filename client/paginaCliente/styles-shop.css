@@ -131,14 +131,15 @@ body{
 /* Estilos para el efecto hover en las tarjetas de producto */
 /* Estilos para el contenedor principal */
 .product-card .card-img-top {
-    height: 200px; /* Ajusta esta altura según necesites */
+    height: 200px !important; 
+    width: 100%;
     object-fit: cover;
     object-position: center;
     transition: transform 0.3s ease;
 }
 
 .product-card .card {
-    height: 100%;
+    height: 450px;
     display: flex;
     flex-direction: column;
     transition: all 0.3s ease;
@@ -245,19 +246,21 @@ body{
 }
 
 .product-card .card-title {
-    font-size: 2rem;
-    margin-bottom: 0.75rem;
-    line-height: 1.3;
-    font-weight: 600;
-    color: #333;
-    flex-shrink: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;  
+    line-clamp: 3;          
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    height: 3.6em;          
 }
 
 .product-card .card-text {
     flex-grow: 1;
-    min-height: 4.5em; /* Altura mínima para consistencia */
+    min-height: 4.5em; 
     display: -webkit-box;
-    -webkit-line-clamp: 3; /* Máximo de 3 líneas */
+    line-clamp: 3;  
+    -webkit-line-clamp: 3; 
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -274,13 +277,14 @@ body{
 .product-card .card-text.description {
     font-size: 0.9rem;
     color: #6c757d;
-    margin-bottom: 1rem;
-    flex-grow: 1; 
+    height: 4.2em; 
     overflow: hidden;
     display: -webkit-box;
+    line-clamp: 3;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     line-height: 1.4;
+    margin-bottom: 1rem;
 }
 
 /* Efecto hover para la tarjeta */
@@ -325,6 +329,7 @@ body{
     flex-direction: column;
     height: 100%;
 } 
+
 
 /* Estilos para los filtros */
 #categoria-filter, #subcategoria-filter, #search-input {

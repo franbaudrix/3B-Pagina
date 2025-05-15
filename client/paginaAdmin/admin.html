@@ -132,6 +132,13 @@
                 </div>
               </div>
               <div class="mb-3">
+                <label for="unidadMedida" class="form-label">Unidad de Medida</label>
+                <select class="form-select" id="unidadMedida" required>
+                    <option value="kg">Por Kilogramo</option>
+                    <option value="unidad">Por Unidad</option>
+                </select>
+              </div>
+              <div class="mb-3">
                 <label class="form-label">Descripción</label>
                 <textarea id="descripcion" class="form-control"></textarea>
               </div>
@@ -174,8 +181,8 @@
                     <th>Precio</th>
                     <th>Categoría</th>
                     <th>Subcategoría</th>
-                    <th>Descripción</th>
-                    <th>Acciones</th>
+                    <th>Medida</th>
+                    <th>Descripcion</th>
                   </tr>
                 </thead>
                 <tbody id="lista-productos">

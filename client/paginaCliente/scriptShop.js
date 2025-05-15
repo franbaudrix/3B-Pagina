@@ -347,13 +347,6 @@ function displayProducts(productos) {
     }
     
     container.innerHTML = productos.map(producto => {
-        // Calcular tamaño de fuente basado en longitud del título
-        const titleLength = producto.nombre.length;
-        let titleSize = '2rem'; // Tamaño base
-        
-        if (titleLength > 18) titleSize = '1.5rem';
-        if (titleLength > 120) titleSize = '0.9rem';
-        
         // Limitar descripción
         const maxDescLength = 150; 
         const descripcion = producto.descripcion ? 
@@ -363,22 +356,24 @@ function displayProducts(productos) {
             '';
         
         return `
-        <div class="col-md-4 product-card" data-product-id="${producto._id}" data-base-price="${producto.precio}" data-product-name="${producto.nombre}">
+        <div class="col-md-4 product-card" data-product-id="${producto._id}" data-base-price="${producto.precio}" data-product-name="${producto.nombre}" data-unidad-medida="${producto.unidadMedida || 'kg'}">
             <div class="card h-100">
                 <div class="front-content">
-                    <img src="${producto.imagen.toString()}" class="card-img-top" alt="${producto.nombre}">
+                    <img src="${producto.imagen.toString()}" class="img-fluid card-img-top" alt="${producto.nombre}">
                     <div class="card-body">
-                        <h3 class="card-title" style="font-size: ${titleSize}">${producto.nombre}</h3>
-                        <p class="card-text description">${descripcion}</p>
-                        <h5 class="card-text price">$${producto.precio.toFixed(2)}</h5>
+                        <h3 class="card-title">${producto.nombre}</h3>
+                        <h5 class="card-text">$${producto.precio.toFixed(2)}</h5>
+                        <p class="card-text text-muted description">${descripcion}</p>
                     </div>
                 </div>
+                <!-- Contenido trasero (visible al hacer hover) -->
                 <div class="back-content">
-                    <div class="card-body">
-                        <h3 class="card-title mb-2">${producto.nombre}</h3>
-                        <h5 class="card-text mb-3">$${producto.precio.toFixed(2)}</h5>
+                    <div class="card-body p-2">
+                        <h3 class="card-title mb-1">${producto.nombre}</h3>
+                        <h5 class="card-text mb-2">$${producto.precio.toFixed(2)}</h5>
                     </div>
-                    <div class="selection-section">
+                    ${producto.unidadMedida === 'kg' ? `
+                    <div class="px-3 pb-1">
                         <label for="weight" class="form-label small mb-1">Peso:</label>
                         <select name="weight" class="form-select form-select-sm weight-select mb-2">
                             <option value="half-kg">500g</option>
@@ -388,7 +383,8 @@ function displayProducts(productos) {
                         </select>
                         <input type="number" class="form-control custom-weight-input mt-2" placeholder="Ingrese el peso en kg" style="display: none;">
                     </div>
-                    <div class="selection-section">
+                    
+                    <div class="p-3">
                         <label for="amount" class="form-label">Cantidad bolsas:</label>
                         <select name="amount" class="form-select form-select-sm amount-select">
                             <option value="1">1 bolsa</option>
@@ -397,7 +393,20 @@ function displayProducts(productos) {
                             <option value="4">4 bolsas</option>
                         </select>
                     </div>
-                    <div class="price-display text-end fw-bold"></div>
+                    ` : `
+                    <div class="p-3">
+                        <label for="amount" class="form-label">Cantidad:</label>
+                        <select name="amount" class="form-select form-select-sm amount-select">
+                            <option value="1">1 unidad</option>
+                            <option value="2">2 unidades</option>
+                            <option value="3">3 unidades</option>
+                            <option value="4">4 unidades</option>
+                            <option value="5">5 unidades</option>
+                            <option value="6">6 unidades</option>
+                        </select>
+                    </div>
+                    `}
+                    <div class="mb-2 p-3 price-display text-end fw-bold"></div>
                     <div class="fixed-bottom-btn">
                         <button class="btn btn-danger rounded-0 btn-product-card w-100">Agregar</button>
                     </div>
@@ -417,35 +426,50 @@ function initializeProductCards() {
     productCards.forEach(card => {
         const basePrice = parseFloat(card.getAttribute('data-base-price'));
         const productName = card.getAttribute('data-product-name');
+        const unidadMedida = card.getAttribute('data-unidad-medida') || 'kg'; // Asegurar valor por defecto
         const priceDisplay = card.querySelector('.price-display');
-        const weightSelect = card.querySelector('.weight-select');
         const amountSelect = card.querySelector('.amount-select');
         const addButton = card.querySelector('button');
-        const customWeightInput = card.querySelector('.custom-weight-input');
+        
+        // Elementos específicos por kg
+        let weightSelect, customWeightInput;
+        if (unidadMedida === 'kg') {
+            weightSelect = card.querySelector('.weight-select');
+            customWeightInput = card.querySelector('.custom-weight-input');
+        }
 
         // Función para calcular el precio de la tarjeta actual
         function calculateCurrentPrice() {
-            const selectedWeight = weightSelect.value;
             const selectedAmount = parseInt(amountSelect.value, 10);
-            let weightFactor = weightOptions[selectedWeight];
+            
+            if (unidadMedida === 'kg') {
+                const selectedWeight = weightSelect.value;
+                let weightFactor = weightOptions[selectedWeight];
 
-            if (selectedWeight === "other-kg") {
-                weightFactor = parseFloat(customWeightInput.value) || 0;
+                if (selectedWeight === "other-kg") {
+                    weightFactor = parseFloat(customWeightInput.value) || 0;
+                }
+
+                return basePrice * weightFactor * selectedAmount;
+            } else {
+                return basePrice * selectedAmount;
             }
-
-            return basePrice * weightFactor * selectedAmount;
         }
 
         // Función para calcular el subtotal (precio por bolsa)
         function calculateSubtotal() {
-            const selectedWeight = weightSelect.value;
-            let weightFactor = weightOptions[selectedWeight];
+            if (unidadMedida === 'kg') {
+                const selectedWeight = weightSelect.value;
+                let weightFactor = weightOptions[selectedWeight];
 
-            if (selectedWeight === "other-kg") {
-                weightFactor = parseFloat(customWeightInput.value) || 0;
+                if (selectedWeight === "other-kg") {
+                    weightFactor = parseFloat(customWeightInput.value) || 0;
+                }
+
+                return basePrice * weightFactor;
+            } else {
+                return basePrice;
             }
-
-            return basePrice * weightFactor;
         }
 
         // Función para actualizar el precio mostrado en la tarjeta
@@ -453,52 +477,48 @@ function initializeProductCards() {
             const currentPrice = calculateCurrentPrice();
             const subtotal = calculateSubtotal();
             priceDisplay.innerHTML = `
-                <small>Subtotal (por bolsa): $${subtotal.toFixed(2)}</small><br>
+                <small>Subtotal (por ${unidadMedida === 'kg' ? 'bolsa' : 'unidad'}): $${subtotal.toFixed(2)}</small><br>
                 <strong>Total: $${currentPrice.toFixed(2)}</strong>
             `;
         }
 
-        // Función para agregar el precio actual al total
-        function addToTotal() {
-            const currentPrice = calculateCurrentPrice();
-            totalPrice += currentPrice;
-            totalDisplay.textContent = `$${totalPrice.toFixed(2)}`;
-        }
-
         // Función para añadir producto al carrito
         function addToCart(button) {
-            // Obtener el elemento padre product-card
             const productCard = button.closest('.product-card');
             if (!productCard) {
                 console.error('No se encontró el elemento product-card');
                 return;
             }
         
-            // Obtener datos del producto
             const productId = productCard.dataset.productId;
             const productName = productCard.dataset.productName;
             const basePrice = parseFloat(productCard.dataset.basePrice);
+            const unidadMedida = productCard.dataset.unidadMedida || 'kg';
             
-            // Obtener elementos de la tarjeta
-            const weightSelect = productCard.querySelector('.weight-select');
+            // Obtener el valor seleccionado correctamente
             const amountSelect = productCard.querySelector('.amount-select');
-            const customWeightInput = productCard.querySelector('.custom-weight-input');
+            const selectedAmount = parseInt(amountSelect.value);  // Esto obtiene el valor numérico seleccionado
             
-            // Calcular valores
-            const selectedWeight = weightSelect.value;
-            const selectedAmount = parseInt(amountSelect.value);
-            let weightFactor = weightOptions[selectedWeight];
-            let weightText = weightSelect.options[weightSelect.selectedIndex].text;
+            let weightText = 'unidad';
+            let subtotal = basePrice;
+            let totalPriceForItem = basePrice * selectedAmount;
         
-            // Manejar peso personalizado
-            if (selectedWeight === "other-kg") {
-                weightFactor = parseFloat(customWeightInput.value) || 0;
-                weightText = `${customWeightInput.value} kg`;
+            if (unidadMedida === 'kg') {
+                const weightSelect = productCard.querySelector('.weight-select');
+                const customWeightInput = productCard.querySelector('.custom-weight-input');
+                
+                const selectedWeight = weightSelect.value;
+                let weightFactor = weightOptions[selectedWeight];
+                weightText = weightSelect.options[weightSelect.selectedIndex].text;
+        
+                if (selectedWeight === "other-kg") {
+                    weightFactor = parseFloat(customWeightInput.value) || 0;
+                    weightText = `${customWeightInput.value} kg`;
+                }
+        
+                subtotal = basePrice * weightFactor;
+                totalPriceForItem = subtotal * selectedAmount;
             }
-        
-            // Calcular precios
-            const subtotal = basePrice * weightFactor;
-            const totalPriceForItem = subtotal * selectedAmount;
         
             // Obtener o crear el tbody de la tabla
             let tableBody = document.querySelector('#tablaCarrito tbody');
@@ -506,7 +526,7 @@ function initializeProductCards() {
                 tableBody = document.createElement('tbody');
                 document.getElementById('tablaCarrito').appendChild(tableBody);
             }
-        
+            
             // Agregar encabezados solo si es la primera vez
             if (tableBody.rows.length === 0) {
                 const headerRow = tableBody.insertRow();
@@ -517,7 +537,7 @@ function initializeProductCards() {
                     cell.innerHTML = `<strong>${text}</strong>`;
                 });
             }
-        
+            
             // Crear nueva fila para el producto
             const newRow = tableBody.insertRow();
             newRow.dataset.productId = productId;
@@ -526,7 +546,7 @@ function initializeProductCards() {
             newRow.insertCell(0).textContent = productName;
             newRow.insertCell(1).textContent = `$${subtotal.toFixed(2)}`;
             newRow.insertCell(2).textContent = weightText;
-            newRow.insertCell(3).textContent = selectedAmount;
+            newRow.insertCell(3).textContent = selectedAmount;  // Aquí usamos el valor numérico ya obtenido
             newRow.insertCell(4).textContent = `$${totalPriceForItem.toFixed(2)}`;
             
             // Celda de acción con botón para eliminar
@@ -566,25 +586,26 @@ function initializeProductCards() {
         }
 
         // Event listeners
+        // Event listeners solo para productos por kg
+        if (unidadMedida === 'kg') {
+            weightSelect.addEventListener('change', () => {
+                if (weightSelect.value === 'other-kg') {
+                    customWeightInput.style.display = 'block';
+                } else {
+                    customWeightInput.style.display = 'none';
+                    customWeightInput.value = '';
+                }
+                updatePriceDisplay();
+            });
+
+            customWeightInput.addEventListener('input', updatePriceDisplay);
+        }
+
+        amountSelect.addEventListener('change', updatePriceDisplay);
         addButton.addEventListener('click', () => {
             addToCart(addButton);
-            //addToTotal();
         });
 
-        weightSelect.addEventListener('change', () => {
-            if (weightSelect.value === 'other-kg') {
-                customWeightInput.style.display = 'block';
-            } else {
-                customWeightInput.style.display = 'none';
-                customWeightInput.value = '';
-            }
-            updatePriceDisplay();
-        });
-
-        customWeightInput.addEventListener('input', updatePriceDisplay);
-        amountSelect.addEventListener('change', updatePriceDisplay);
-
-        // Inicializa el precio
         updatePriceDisplay();
     });
 }

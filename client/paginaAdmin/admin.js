@@ -243,17 +243,18 @@ function renderProductos(productos) {
             <td>$${producto.precio.toFixed(2)}</td>
             <td>${getCategoryName(producto.categoria)}</td>
             <td>${producto.subcategoria || '-'}</td>
-            <td class="small text-muted">${producto.descripcion ? 
+            <td>${producto.unidadMedida === 'kg' ? 'Por Kg' : 'Por Unidad'}</td>
+            <td>${producto.descripcion ? 
                 (producto.descripcion.length > 50 ? 
                     producto.descripcion.substring(0, 50) + '...' : 
                     producto.descripcion) : 
                 'Sin descripción'}</td>
-            <td>
+            <td class="d-flex align-items-center">
                 <button onclick="editarProducto('${producto._id}')" class="btn btn-sm btn-warning me-2">
-                    <i class="bi bi-pencil"></i> Editar
+                    <i class="bi bi-pencil"></i>
                 </button>
                 <button onclick="eliminarProducto('${producto._id}')" class="btn btn-sm btn-danger">
-                    <i class="bi bi-trash"></i> Eliminar
+                    <i class="bi bi-trash"></i>
                 </button>
             </td>
         </tr>
@@ -587,6 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
             imagen: document.getElementById('imagen').value,
             descripcion: document.getElementById('descripcion').value,
             categoria: document.getElementById('categoria').value,
+            unidadMedida: document.getElementById('unidadMedida').value,
             subcategoria: document.getElementById('subcategoria').value
         };
     
@@ -751,27 +753,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Renderizar lista de productos
-    function renderProductos(productos) {
-        console.log("Renderizando:", productos); // Debug
-        productos.forEach(p => console.log("ID del producto:", p._id));
-        listaProductos.innerHTML = productos.map(producto => `
-            <div class="col-md-4 mb-4">
-                <div class="card h-100">
-                    <!-- ... otros elementos ... -->
-                    <p class="card-text text-muted small">${
-                        producto.descripcion ? 
-                        (producto.descripcion.length > 100 ? 
-                            producto.descripcion.substring(0, 100) + '...' : 
-                            producto.descripcion) : 
-                        'Sin descripción'
-                    }</p>
-                    <!-- ... otros elementos ... -->
-                </div>
-            </div>
-        `).join('');
-    }
-
     // Funciones globales para botones
     window.editarProducto = async (id) => {
         try {
@@ -793,6 +774,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('precio').value = producto.precio;
             document.getElementById('imagen').value = producto.imagen;
             document.getElementById('descripcion').value = producto.descripcion || '';
+            document.getElementById('unidadMedida').value = producto.unidadMedida || 'kg';
             editingId = producto._id;
             
             btnSubmit.textContent = 'Actualizar Producto';
