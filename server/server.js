@@ -37,7 +37,7 @@ app.use('/api/pedidos', pedidosRoutes);
 app.use('/api/auth', authRoutes);
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'client', 'paginaEmpleados', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'client', 'paginaCliente', 'index.html'));
 });
 
 // Iniciar servidor
