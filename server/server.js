@@ -13,7 +13,21 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(express.static(path.join(__dirname, '..', 'client')));
+const CLIENT_DIR = path.join(__dirname, '../client/paginaClientes');
+
+const fs = require('fs');
+if (!fs.existsSync(CLIENT_DIR)) {
+  console.error(`ERROR: No se encuentra la carpeta client en ${CLIENT_DIR}`);
+}
+
+// Servir archivos estáticos
+app.use(express.static(CLIENT_DIR));
+app.use('/img', express.static(path.join(CLIENT_DIR, 'img')));
+
+// Ruta principal
+app.get('*', (req, res) => {
+  res.sendFile(path.join(CLIENT_DIR, 'index.html'));
+});
 
 app.get('/file-structure', (req, res) => {
   try {
