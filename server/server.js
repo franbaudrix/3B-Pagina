@@ -15,7 +15,6 @@ app.use(cookieParser());
 
 const CLIENT_DIR = path.join(__dirname, '../client/paginaClientes');
 
-const fs = require('fs');
 if (!fs.existsSync(CLIENT_DIR)) {
   console.error(`ERROR: No se encuentra la carpeta client en ${CLIENT_DIR}`);
 }
