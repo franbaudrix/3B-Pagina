@@ -105,7 +105,7 @@ async function enviarPedidoCompleto(clienteData) {
 
         console.log('Enviando pedido:', pedido); // Verifica en consola
 
-        const response = await fetch('http://localhost:3000/api/pedidos', {
+        const response = await fetch('/api/pedidos', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -131,7 +131,7 @@ async function enviarPedidoCompleto(clienteData) {
 // Función para cargar categorías
 async function loadCategories() {
     try {
-        const response = await fetch('http://localhost:3000/api/categorias', {
+        const response = await fetch('/api/categorias', {
             headers: { 'Authorization': '3BGOD' }
         });
         
@@ -190,7 +190,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 1. Cargar productos
         await loadCategories();
 
-        const response = await fetch('http://localhost:3000/api/producto');
+        const response = await fetch('/api/producto');
         allProducts = await response.json();
         displayProducts(allProducts);
         

@@ -28,46 +28,13 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(CLIENT_DIR, 'index.html'));
 });
 
-app.get('/file-structure', (req, res) => {
-  try {
-    const getStructure = (dir, depth = 0) => {
-      if (depth > 3) return '[...]'; // Limitar profundidad
-      
-      try {
-        return fs.readdirSync(dir).map(file => {
-          const fullPath = path.join(dir, file);
-          try {
-            const stats = fs.statSync(fullPath);
-            if (stats.isDirectory()) {
-              return `${'  '.repeat(depth)}📂 ${file}/\n${getStructure(fullPath, depth + 1)}`;
-            } else {
-              return `${'  '.repeat(depth)}📄 ${file} (${stats.size} bytes)`;
-            }
-          } catch (e) {
-            return `${'  '.repeat(depth)}❌ ${file} (Error: ${e.message})`;
-          }
-        }).join('\n');
-      } catch (e) {
-        return `❌ Error leyendo directorio: ${e.message}`;
-      }
-    };
-
-    const structure = `
-      Directorio actual: ${__dirname}
-      Estructura:
-      ${getStructure(__dirname)}
-      
-      ¿Existe /client?
-      ${fs.existsSync(path.join(__dirname, 'client')) ? '✅ Sí' : '❌ No'}
-      
-      ¿Existe /client/paginaClientes?
-      ${fs.existsSync(path.join(__dirname, 'client', 'paginaClientes')) ? '✅ Sí' : '❌ No'}
-    `;
-
-    res.type('text/plain').send(structure);
-  } catch (error) {
-    res.status(500).send(`Error en el diagnóstico: ${error.message}`);
-  }
+app.get('/server-info', (req, res) => {
+  res.json({
+    nodeVersion: process.version,
+    port: process.env.PORT || 3000,
+    actualPort: server.address().port, // ← Esto muestra el puerto real
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 // Conexión a MongoDB
