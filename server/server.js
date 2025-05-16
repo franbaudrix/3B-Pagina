@@ -12,47 +12,48 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
-// Servir archivos estáticos
-app.use(express.static(path.join(__dirname)));
-app.use('/client', express.static(path.join(__dirname, 'client')));
-
-// Todas las demás rutas van al index.html
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.get('/debug', (req, res) => {
-  const fs = require('fs');
-  const files = fs.readdirSync(__dirname);
-  res.send(`
-    <h1>Estructura de archivos:</h1>
-    <pre>${files.join('\n')}</pre>
-    <h2>Client:</h2>
-    <pre>${fs.readdirSync(path.join(__dirname, 'client')).join('\n')}</pre>
-  `);
-});
+app.use(express.static(path.join(__dirname, '..', 'client')));
 
 app.get('/file-structure', (req, res) => {
-  const fs = require('fs');
-  const path = require('path');
-  
-  const listFiles = (dir, indent = 0) => {
-    try {
-      return fs.readdirSync(dir).map(file => {
-        const fullPath = path.join(dir, file);
-        const stats = fs.statSync(fullPath);
-        return ' '.repeat(indent) + 
-               (stats.isDirectory() ? `📁 ${file}/` : `📄 ${file}`) +
-               (stats.isFile() ? ` (${stats.size} bytes)` : '') +
-               '\n' +
-               (stats.isDirectory() ? listFiles(fullPath, indent + 4) : '');
-      }).join('\n');
-    } catch (error) {
-      return `❌ Error reading ${dir}: ${error.message}`;
-    }
-  };
+  try {
+    const getStructure = (dir, depth = 0) => {
+      if (depth > 3) return '[...]'; // Limitar profundidad
+      
+      try {
+        return fs.readdirSync(dir).map(file => {
+          const fullPath = path.join(dir, file);
+          try {
+            const stats = fs.statSync(fullPath);
+            if (stats.isDirectory()) {
+              return `${'  '.repeat(depth)}📂 ${file}/\n${getStructure(fullPath, depth + 1)}`;
+            } else {
+              return `${'  '.repeat(depth)}📄 ${file} (${stats.size} bytes)`;
+            }
+          } catch (e) {
+            return `${'  '.repeat(depth)}❌ ${file} (Error: ${e.message})`;
+          }
+        }).join('\n');
+      } catch (e) {
+        return `❌ Error leyendo directorio: ${e.message}`;
+      }
+    };
 
-  res.type('text/plain').send(`Estructura de archivos:\n${listFiles(__dirname)}`);
+    const structure = `
+      Directorio actual: ${__dirname}
+      Estructura:
+      ${getStructure(__dirname)}
+      
+      ¿Existe /client?
+      ${fs.existsSync(path.join(__dirname, 'client')) ? '✅ Sí' : '❌ No'}
+      
+      ¿Existe /client/paginaClientes?
+      ${fs.existsSync(path.join(__dirname, 'client', 'paginaClientes')) ? '✅ Sí' : '❌ No'}
+    `;
+
+    res.type('text/plain').send(structure);
+  } catch (error) {
+    res.status(500).send(`Error en el diagnóstico: ${error.message}`);
+  }
 });
 
 // Conexión a MongoDB
