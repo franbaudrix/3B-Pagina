@@ -11,7 +11,16 @@ const path = require('path');
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
+
 app.use(express.static(path.join(__dirname, '..', 'client')));
+
+// Ruta adicional para imágenes si es necesario
+app.use('/img', express.static(path.join(__dirname, 'img')));
+
+// Todas las demás rutas deben devolver el index.html
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 // Conexión a MongoDB
 mongoose.connect(process.env.DB_URI)
