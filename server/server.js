@@ -32,6 +32,29 @@ app.get('/debug', (req, res) => {
   `);
 });
 
+app.get('/file-structure', (req, res) => {
+  const fs = require('fs');
+  const path = require('path');
+  
+  const listFiles = (dir, indent = 0) => {
+    try {
+      return fs.readdirSync(dir).map(file => {
+        const fullPath = path.join(dir, file);
+        const stats = fs.statSync(fullPath);
+        return ' '.repeat(indent) + 
+               (stats.isDirectory() ? `📁 ${file}/` : `📄 ${file}`) +
+               (stats.isFile() ? ` (${stats.size} bytes)` : '') +
+               '\n' +
+               (stats.isDirectory() ? listFiles(fullPath, indent + 4) : '');
+      }).join('\n');
+    } catch (error) {
+      return `❌ Error reading ${dir}: ${error.message}`;
+    }
+  };
+
+  res.type('text/plain').send(`Estructura de archivos:\n${listFiles(__dirname)}`);
+});
+
 // Conexión a MongoDB
 mongoose.connect(process.env.DB_URI)
 
