@@ -12,14 +12,24 @@ app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
-app.use(express.static(path.join(__dirname, '..', 'client')));
+// Servir archivos estáticos
+app.use(express.static(path.join(__dirname)));
+app.use('/client', express.static(path.join(__dirname, 'client')));
 
-// Ruta adicional para imágenes si es necesario
-app.use('/img', express.static(path.join(__dirname, 'img')));
-
-// Todas las demás rutas deben devolver el index.html
+// Todas las demás rutas van al index.html
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/debug', (req, res) => {
+  const fs = require('fs');
+  const files = fs.readdirSync(__dirname);
+  res.send(`
+    <h1>Estructura de archivos:</h1>
+    <pre>${files.join('\n')}</pre>
+    <h2>Client:</h2>
+    <pre>${fs.readdirSync(path.join(__dirname, 'client')).join('\n')}</pre>
+  `);
 });
 
 // Conexión a MongoDB
