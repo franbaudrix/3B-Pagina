@@ -23,6 +23,10 @@ function toggleCart() {
 cartToggle.addEventListener('click', toggleCart);
 closeCart.addEventListener('click', toggleCart);
 
+document.getElementById('cart-toggle-mobile')?.addEventListener('click', function() {
+    document.getElementById('cart-container').classList.toggle('cart-visible');
+});
+
 // Opciones de peso
 const weightOptions = {
     "half-kg": 0.5,

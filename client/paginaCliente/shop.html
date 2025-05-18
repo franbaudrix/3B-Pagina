@@ -17,14 +17,23 @@
                     <a href="./index.html"><img src="img/logo.jpeg" class="img-fluid w-25 rounded-circle" alt=""></a>
                 </div>
             </div>
-            <div class="col-lg-9">
+            <div class="col-lg-9 col-6">
                 <nav class="header__menu">
-                    <ul>
+                    <ul class="d-none d-lg-flex">
                         <li><a href="./index.html">Inicio</a></li>
                         <li class="active"><a href="./shop.html">Hacer un pedido</a></li>
                         <li><a href="./nosotros.html">Nosotros</a></li>
                         <li><a href="./contact.html">Contacto</a></li>
                     </ul>
+
+                    <div class="d-flex d-lg-none w-100 justify-content-between align-items-center" id="header-mobile-buttons">
+                        <a href="./index.html" class="btn btn-sm btn-outline-light me-2">Inicio</a>
+                        <a href="./shop.html" class="btn btn-sm btn-outline-light me-2">Productos</a>
+                        <button id="cart-toggle-mobile" class="btn btn-sm flex-grow-1 text-center mx-1 position-relative">
+                            Carrito
+                            <span id="cart-count-mobile" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
+                        </button>
+                    </div>
                 </nav>
             </div>
         </div>
