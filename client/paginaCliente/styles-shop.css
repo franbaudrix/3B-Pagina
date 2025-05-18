@@ -382,6 +382,51 @@ select:disabled {
     display: none !important;
 }
 
+/* === Overlay “toca la tarjeta” ===================================== */
+#card-tip-overlay {
+    position: fixed;
+    inset: 0;                          /* top:0; right:0; bottom:0; left:0 */
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .4s ease;
+}
+
+/* globo de texto */
+#card-tip-box {
+    background: #ffffff;
+    color: #000;
+    padding: 12px 18px;
+    border-radius: 8px;
+    font-size: 15px;
+    max-width: 260px;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,.25);
+}
+
+/* dedo/círculo animado que simula “tap” */
+.card-tap-anim::after {
+    content: '';
+    position: absolute;
+    top: 40%; left: 50%;
+    width: 60px; height: 60px;
+    transform: translate(-50%,-50%);
+    border-radius: 50%;
+    border: 3px solid #fbe70b;
+    animation: tapPulse 1s ease-out 0s 2; /* dos pulsos */
+    pointer-events: none;
+}
+
+@keyframes tapPulse {
+    0%   { transform: translate(-50%,-50%) scale(0.7); opacity: 1; }
+    70%  { transform: translate(-50%,-50%) scale(1.2); opacity: 0; }
+    100% { opacity: 0; }
+}
+
 
 @media (max-width: 992px) {
     header .row {
