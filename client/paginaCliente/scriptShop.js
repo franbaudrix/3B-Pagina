@@ -13,6 +13,10 @@ let pedidoTotal = 0; // Para almacenar temporalmente el total del pedido
 let categoriasDisponibles = [];
 let subcategoriasDisponibles = [];
 
+const API_BASE_URL = window.location.host.includes('localhost') || window.location.host.includes('127.0.0.1')
+  ? 'http://localhost:3000/api'  
+  : '/api';      
+
 // Función para mostrar/ocultar el carrito
 function toggleCart() {
     cartContainer.classList.toggle('cart-visible');
@@ -109,7 +113,7 @@ async function enviarPedidoCompleto(clienteData) {
 
         console.log('Enviando pedido:', pedido); // Verifica en consola
 
-        const response = await fetch('/api/pedidos', {
+        const response = await fetch(`${API_BASE_URL}/pedidos`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -135,7 +139,7 @@ async function enviarPedidoCompleto(clienteData) {
 // Función para cargar categorías
 async function loadCategories() {
     try {
-        const response = await fetch('/api/categorias', {
+        const response = await fetch(`${API_BASE_URL}/categorias`, {
             headers: { 'Authorization': '3BGOD' }
         });
         
@@ -194,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 1. Cargar productos
         await loadCategories();
 
-        const response = await fetch('/api/producto');
+        const response = await fetch(`${API_BASE_URL}/producto`);
         allProducts = await response.json();
         displayProducts(allProducts);
         
@@ -368,6 +372,7 @@ function displayProducts(productos) {
                         <h3 class="card-title">${producto.nombre}</h3>
                         <h5 class="card-text">$${producto.precio.toFixed(2)}</h5>
                         <p class="card-text text-muted description">${descripcion}</p>
+                        <button class="btn-add-front">Agregar</button>
                     </div>
                 </div>
                 <!-- Contenido trasero (visible al hacer hover) -->

@@ -139,7 +139,7 @@ body{
 }
 
 .product-card .card {
-    height: 450px;
+    height: 400px;
     display: flex;
     flex-direction: column;
     transition: all 0.3s ease;
@@ -242,7 +242,7 @@ body{
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-between; 
+    justify-content: flex-start !important; 
 }
 
 .product-card .card-title {
@@ -252,12 +252,12 @@ body{
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
-    height: 3.6em;          
+    height: 3em;          
 }
 
 .product-card .card-text {
     flex-grow: 1;
-    min-height: 4.5em; 
+    min-height: 2em; 
     display: -webkit-box;
     line-clamp: 3;  
     -webkit-line-clamp: 3; 
@@ -270,7 +270,7 @@ body{
     font-size: 1.5rem;
     font-weight: bold;
     color: #ba0202;
-    margin: 0.5rem 0.5;
+    margin: 0.5rem;
     flex-shrink: 0;
 }
 
@@ -384,8 +384,17 @@ select:disabled {
     display: none !important;
 }
 
+.product-card .front-content .card-body {
+    padding-bottom: 0 !important; /* Elimina solo el padding inferior */
+}
+
 .btn-add-front{
-    width: 100%;
+    width: 100vw; /* Ancho completo del viewport (temporal) */
+    max-width: calc(100% + 2rem); /* Compensa el padding del card-body (1rem a cada lado) */
+    margin-left: -1rem; /* Elimina el padding izquierdo */
+    margin-right: -1rem; /* Elimina el padding derecho */
+    position: relative;
+    left: 0;
     height: 38px;             
     border: none;
     background:#ba0202;
@@ -399,6 +408,21 @@ select:disabled {
 .product-card:hover .btn-add-front{
     background:#960000;       
 }
+
+/* Espaciado compacto dentro de la tarjeta */
+.product-card .front-content .card-body h3.card-title{
+    margin-bottom: .25rem !important;    /* reduce espacio bajo el título */
+}
+
+.product-card .front-content .card-body h5.card-text{
+    margin-top: 0 !important;            /* junta precio con el título   */
+    margin-bottom: .25rem !important;    /* junta precio con descripción */
+}
+
+.product-card .front-content .card-body p.description{
+    margin-top: 0 !important;            /* elimina hueco extra          */
+}
+
 
 
 @media (max-width: 992px) {

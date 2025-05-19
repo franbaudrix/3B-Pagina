@@ -8,8 +8,16 @@ const app = express();
 const path = require('path');
 const fs = require('fs');
 
+const corsOptions = {
+  origin: process.env.NODE_ENV === 'development' 
+    ? ['http://localhost:3000', 'http://127.0.0.1:5500'] 
+    : 'https://threeb-pagina.onrender.com', 
+  credentials: true,
+};
+
 // Middlewares
 app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 app.use(bodyParser.json());
