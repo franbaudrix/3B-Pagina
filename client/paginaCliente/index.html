@@ -11,6 +11,7 @@
 
 <body>
     <!-- Header -->
+    <!-- Header -->
     <header class="header">
         <div class="container">
             <div class="row">
@@ -21,56 +22,24 @@
                 </div>
                 <div class="col-lg-9">
                     <nav class="header__menu">
-                        <ul>
-                            <li class="active"><a href="./index.html">Inicio</a></li>
+                        <ul class="d-none d-lg-flex">
+                            <li  class="active"><a href="./index.html">Inicio</a></li>
                             <li><a href="./shop.html">Hacer un pedido</a></li>
-                            <li><a href="./nosotros.html">Nosotros</a></li>
                             <li><a href="./contact.html">Contacto</a></li>
                         </ul>
+                        
+                        <!-- Añade esto para la versión móvil -->
+                        <div class="d-flex d-lg-none w-100 justify-content-between" id="header-mobile-buttons">
+                            <a href="./index.html" class="active-mobile btn btn-sm btn-outline-light flex-grow-1 mx-1">Inicio</a>
+                            <a href="./shop.html" class="btn btn-sm btn-outline-light flex-grow-1 mx-1">Crear pedido</a>
+                            <a href="./contact.html" class="btn btn-sm btn-outline-light flex-grow-1 mx-1">Contacto</a>
+                        </div>
                     </nav>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Botón del carrito -->
-    <button id="cart-toggle" class="btn position-fixed" style="right: 20px; top: 20px; z-index: 1000; background-color: var(--primary-color); color: white;">
-        <i class="fas fa-shopping-cart"></i> <span id="cart-count" class="badge bg-danger">0</span>
-    </button>
-
-    <!-- Carrito -->
-    <div id="cart-container" class="position-fixed end-0 top-0 vh-100 bg-white shadow-lg" style="width: 400px; max-width: 100%; z-index: 999; overflow-y: auto;">
-        <div class="p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h4>Tu Carrito</h4>
-                <button id="close-cart" class="btn btn-sm btn-outline-danger">×</button>
-            </div>
-            <table id="tablaCarrito" class="table">
-                <thead class="table-light">
-                    <tr>
-                        <th>Producto</th>
-                        <th>Precio</th>
-                        <th>Cantidad</th>
-                        <th>Total</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            <div class="mt-3 p-3 bg-light rounded">
-                <h5 class="d-flex justify-content-between">
-                    <span>Total:</span>
-                    <span id="total-price">$0.00</span>
-                </h5>
-                <button class="btn btn-primary w-100 mt-2">Finalizar Compra</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Hero Section / Carrusel -->
-    <!-- Hero Section / Carrusel -->
-<!-- Hero Section / Carrusel -->
-<!-- Hero Section / Carrusel -->
 <section class="hero">
     <div id="heroCarousel" class="carousel slide h-100" data-bs-ride="carousel" data-bs-interval="5000">
         <div class="carousel-inner h-100">

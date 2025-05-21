@@ -4,9 +4,11 @@ let allProducts = [];
 const totalDisplay = document.getElementById('total-price'); // Elemento donde se mostrará el total
 let iterations_agregar_button = 0; //Variable para agregar los nombres de las columnas solo una vez
 const cartCountDisplay = document.getElementById('cart-count');
+const cartCountDisplayMobile = document.getElementById('cart-count-mobile');
 let cartItemCount = 0
 const cartContainer = document.getElementById('cart-container');
 const cartToggle = document.getElementById('cart-toggle');
+const cartToggleMobile = document.getElementById('cart-toggle-mobile');
 const closeCart = document.getElementById('close-cart');
 let pedidoItems = []; // Para almacenar temporalmente los items del pedido
 let pedidoTotal = 0; // Para almacenar temporalmente el total del pedido
@@ -17,19 +19,39 @@ const API_BASE_URL = window.location.host.includes('localhost') || window.locati
   ? 'http://localhost:3000/api'  
   : '/api';      
 
+// Función para actualizar el contador del carrito en ambas versiones
+function updateCartCount() {
+    if (cartCountDisplay) cartCountDisplay.textContent = cartItemCount;
+    if (cartCountDisplayMobile) cartCountDisplayMobile.textContent = cartItemCount;
+}
+
 // Función para mostrar/ocultar el carrito
 function toggleCart() {
-    cartContainer.classList.toggle('cart-visible');
-    document.body.style.overflow = cartContainer.classList.contains('cart-visible') ? 'hidden' : '';
+    if (cartContainer.style.display === 'none' || !cartContainer.style.display) {
+        cartContainer.style.display = 'block';
+        setTimeout(() => {
+            cartContainer.classList.add('cart-visible');
+        }, 10);
+        document.body.style.overflow = 'hidden';
+    } else {
+        cartContainer.classList.remove('cart-visible');
+        setTimeout(() => {
+            cartContainer.style.display = 'none';
+        }, 300); // Match this with your CSS transition duration
+        document.body.style.overflow = '';
+    }
 }
 
 // Event listeners para el carrito
-cartToggle.addEventListener('click', toggleCart);
-closeCart.addEventListener('click', toggleCart);
+if (cartToggle) cartToggle.addEventListener('click', toggleCart);
+if (closeCart) closeCart.addEventListener('click', toggleCart);
+if (cartToggleMobile) cartToggleMobile.addEventListener('click', toggleCart);
 
-document.getElementById('cart-toggle-mobile')?.addEventListener('click', function() {
-    document.getElementById('cart-container').classList.toggle('cart-visible');
-});
+// Inicialización del carrito
+if (cartContainer) {
+    cartContainer.style.display = 'none';
+    cartContainer.classList.remove('cart-visible');
+}
 
 // Opciones de peso
 const weightOptions = {
@@ -195,6 +217,9 @@ function updateSubcategorias() {
 }
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+
+        cartContainer.style.display = 'none';
+        cartContainer.classList.remove('cart-visible');
         // 1. Cargar productos
         await loadCategories();
 
@@ -372,7 +397,7 @@ function displayProducts(productos) {
                         <h3 class="card-title">${producto.nombre}</h3>
                         <h5 class="card-text">$${producto.precio.toFixed(2)}</h5>
                         <p class="card-text text-muted description">${descripcion}</p>
-                        <button class="btn-add-front">Agregar</button>
+                        <label class="btn-add-front">Agregar</label>
                     </div>
                 </div>
                 <!-- Contenido trasero (visible al hacer hover) -->
@@ -382,7 +407,7 @@ function displayProducts(productos) {
                         <h5 class="card-text mb-2">$${producto.precio.toFixed(2)}</h5>
                     </div>
                     ${producto.unidadMedida === 'kg' ? `
-                    <div class="px-3 pb-1">
+                    <div class="p-3">
                         <label for="weight" class="form-label small mb-1">Peso:</label>
                         <select name="weight" class="form-select form-select-sm weight-select mb-2">
                             <option value="half-kg">500g</option>
@@ -391,16 +416,6 @@ function displayProducts(productos) {
                             <option value="other-kg">Otro</option>
                         </select>
                         <input type="number" class="form-control custom-weight-input mt-2" placeholder="Ingrese el peso en kg" style="display: none;">
-                    </div>
-                    
-                    <div class="p-3">
-                        <label for="amount" class="form-label">Cantidad bolsas:</label>
-                        <select name="amount" class="form-select form-select-sm amount-select">
-                            <option value="1">1 bolsa</option>
-                            <option value="2">2 bolsas</option>
-                            <option value="3">3 bolsas</option>
-                            <option value="4">4 bolsas</option>
-                        </select>
                     </div>
                     ` : `
                     <div class="p-3">
@@ -437,7 +452,6 @@ function initializeProductCards() {
         const productName = card.getAttribute('data-product-name');
         const unidadMedida = card.getAttribute('data-unidad-medida') || 'kg'; // Asegurar valor por defecto
         const priceDisplay = card.querySelector('.price-display');
-        const amountSelect = card.querySelector('.amount-select');
         const addButton = card.querySelector('button');
         
         // Elementos específicos por kg
@@ -449,24 +463,7 @@ function initializeProductCards() {
 
         // Función para calcular el precio de la tarjeta actual
         function calculateCurrentPrice() {
-            const selectedAmount = parseInt(amountSelect.value, 10);
             
-            if (unidadMedida === 'kg') {
-                const selectedWeight = weightSelect.value;
-                let weightFactor = weightOptions[selectedWeight];
-
-                if (selectedWeight === "other-kg") {
-                    weightFactor = parseFloat(customWeightInput.value) || 0;
-                }
-
-                return basePrice * weightFactor * selectedAmount;
-            } else {
-                return basePrice * selectedAmount;
-            }
-        }
-
-        // Función para calcular el subtotal (precio por bolsa)
-        function calculateSubtotal() {
             if (unidadMedida === 'kg') {
                 const selectedWeight = weightSelect.value;
                 let weightFactor = weightOptions[selectedWeight];
@@ -484,9 +481,7 @@ function initializeProductCards() {
         // Función para actualizar el precio mostrado en la tarjeta
         function updatePriceDisplay() {
             const currentPrice = calculateCurrentPrice();
-            const subtotal = calculateSubtotal();
             priceDisplay.innerHTML = `
-                <small>Subtotal (por ${unidadMedida === 'kg' ? 'bolsa' : 'unidad'}): $${subtotal.toFixed(2)}</small><br>
                 <strong>Total: $${currentPrice.toFixed(2)}</strong>
             `;
         }
@@ -503,14 +498,10 @@ function initializeProductCards() {
             const productName = productCard.dataset.productName;
             const basePrice = parseFloat(productCard.dataset.basePrice);
             const unidadMedida = productCard.dataset.unidadMedida || 'kg';
-            
-            // Obtener el valor seleccionado correctamente
-            const amountSelect = productCard.querySelector('.amount-select');
-            const selectedAmount = parseInt(amountSelect.value);  // Esto obtiene el valor numérico seleccionado
-            
+
             let weightText = 'unidad';
             let subtotal = basePrice;
-            let totalPriceForItem = basePrice * selectedAmount;
+            let totalPriceForItem = basePrice;
         
             if (unidadMedida === 'kg') {
                 const weightSelect = productCard.querySelector('.weight-select');
@@ -526,7 +517,7 @@ function initializeProductCards() {
                 }
         
                 subtotal = basePrice * weightFactor;
-                totalPriceForItem = subtotal * selectedAmount;
+                totalPriceForItem = subtotal;
             }
         
             // Obtener o crear el tbody de la tabla
@@ -540,7 +531,7 @@ function initializeProductCards() {
             if (tableBody.rows.length === 0) {
                 const headerRow = tableBody.insertRow();
                 headerRow.className = 'table-header';
-                const headers = ['Producto', 'Precio Unitario', 'Peso', 'Cantidad', 'Total', 'Acción'];
+                const headers = ['Producto', 'Precio Unitario', 'Peso'];
                 headers.forEach(text => {
                     const cell = headerRow.insertCell();
                     cell.innerHTML = `<strong>${text}</strong>`;
@@ -555,11 +546,9 @@ function initializeProductCards() {
             newRow.insertCell(0).textContent = productName;
             newRow.insertCell(1).textContent = `$${subtotal.toFixed(2)}`;
             newRow.insertCell(2).textContent = weightText;
-            newRow.insertCell(3).textContent = selectedAmount;  // Aquí usamos el valor numérico ya obtenido
-            newRow.insertCell(4).textContent = `$${totalPriceForItem.toFixed(2)}`;
             
             // Celda de acción con botón para eliminar
-            const actionCell = newRow.insertCell(5);
+            const actionCell = newRow.insertCell(3);
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
             removeBtn.className = 'btn btn-sm btn-danger';
@@ -575,23 +564,8 @@ function initializeProductCards() {
         
             // Actualizar contador del carrito
             cartItemCount++;
-            cartCountDisplay.textContent = cartItemCount;
-        
-            // Agregar botón de guardar pedido (solo una vez)
-            const cartFooter = document.querySelector('#cart-container .bg-light');
-            if (cartFooter && !document.querySelector('#save-order-btn')) {
-                const saveBtn = document.createElement('button');
-                saveBtn.id = 'save-order-btn';
-                saveBtn.className = 'btn btn-success w-100 mt-2';
-                saveBtn.textContent = 'Guardar Pedido';
-                saveBtn.addEventListener('click', prepararPedido);
-                cartFooter.appendChild(saveBtn);
-            }
-        
-            // Mostrar el carrito si está oculto
-            if (!cartContainer.classList.contains('cart-visible')) {
-                toggleCart();
-            }
+            updateCartCount();
+    
         }
 
         // Event listeners
@@ -609,8 +583,6 @@ function initializeProductCards() {
 
             customWeightInput.addEventListener('input', updatePriceDisplay);
         }
-
-        amountSelect.addEventListener('change', updatePriceDisplay);
         addButton.addEventListener('click', () => {
             addToCart(addButton);
         });
@@ -627,17 +599,33 @@ function subtractToTotal(price) {
 function borrarProducto(boton) {
     let tabla = document.getElementById('tablaCarrito');
     let fila = boton.parentNode.parentNode;
-    let precio = parseFloat(fila.cells[4].textContent.replace('$', ''));
+    let precioTexto = fila.cells[1].textContent;
+    let precio = parseFloat(precioTexto.replace('$', '')) || 0;
+
     tabla.deleteRow(fila.rowIndex);
 
     subtractToTotal(precio);
     
     // Actualizar contador
     cartItemCount--;
-    cartCountDisplay.textContent = cartItemCount;
+    updateCartCount();
     
-    // Si no hay más productos, ocultar el carrito
-    if (cartItemCount === 0) {
+    // Si no hay más productos, limpiar todo
+    const tbody = tabla.querySelector('tbody');
+    if (tbody && tbody.rows.length <= 1) { // solo queda el header o está vacío
+        totalPrice = 0;
+        totalDisplay.textContent = '$0.00';
+        cartItemCount = 0;
+        updateCartCount();
+
+        // Limpiar tabla
+        tbody.innerHTML = '';
+
+        // Ocultar carrito
         cartContainer.classList.remove('cart-visible');
+        setTimeout(() => {
+            cartContainer.style.display = 'none';
+        }, 300);
+        document.body.style.overflow = '';
     }
 }
