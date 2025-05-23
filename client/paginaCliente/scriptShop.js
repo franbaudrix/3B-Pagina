@@ -404,8 +404,9 @@ function displayProducts(productos) {
                 <!-- Contenido trasero (visible al hacer hover) -->
                 <div class="back-content">
                     <div class="card-body p-2">
-                        <h3 class="card-title mb-1">${producto.nombre}</h3>
+                        <h2 class="card-title mb-1">${producto.nombre}</h2>
                         <h5 class="card-text mb-2">$${producto.precio.toFixed(2)}</h5>
+                        <h2 class="bg-danger text-white p-1 rounded">Precio pago en EFECTIVO. Para pagar con otro medio aclarar en observaciones.</h2>
                     </div>
                     ${producto.unidadMedida === 'kg' ? `
                     <div class="p-3">
