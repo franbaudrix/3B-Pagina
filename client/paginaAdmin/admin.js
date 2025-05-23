@@ -976,7 +976,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             
             document.getElementById('cliente-contacto').innerHTML = `
-                <strong>WhatsApp:</strong> <a href="https://wa.me/${pedido.cliente.whatsapp}" target="_blank">${pedido.cliente.whatsapp}</a><br>
+                <strong>WhatsApp:</strong> <a href="https://wa.me/${pedido.cliente.whatsapp}?text=${encodeURIComponent(generarMensajeWhatsApp(pedido))}" target="_blank">${pedido.cliente.whatsapp}</a><br>
                 <strong>Email:</strong> ${pedido.cliente.email}
             `;
             
@@ -1092,6 +1092,41 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error al cargar detalle:', error);
             mostrarAlerta('Error al cargar detalles del pedido', 'danger');
         }
+    }
+
+    function generarMensajeWhatsApp(pedido) {
+        let mensaje = `¡Hola ${pedido.cliente.nombre}! 👋\n\n`;
+        mensaje += `Aquí tienes los detalles de tu pedido #${pedido._id.toString().substring(18, 24)}:\n\n`;
+        
+        // Lista de productos
+        mensaje += `📦 *Productos:*\n`;
+        pedido.items.forEach(item => {
+            const completado = pedido.estado === 'completado' ? item.completado : true;
+            const precioLinea = completado ? 
+                                `= $${item.precioTotal.toLocaleString('es-AR')}` : 
+                                `= no agregado${item.motivoIncompleto ? ` (${item.motivoIncompleto})` : ''}`;
+            
+            mensaje += `- ${item.nombre} (${item.cantidad} x $${item.precioUnitario.toLocaleString('es-AR')}) ${precioLinea}\n`;
+        });
+        
+        // Calcular total solo de los productos completados
+        const totalCompletado = pedido.estado === 'completado' ? 
+                            pedido.items.reduce((sum, item) => sum + (item.completado ? item.precioTotal : 0), 0) :
+                            pedido.total;
+        
+        // Total
+        mensaje += `\n💰 *Total:* $${totalCompletado.toLocaleString('es-AR')}\n\n`;
+        
+        // Información de envío
+        mensaje += `🚚 *Método de entrega:* `;
+        mensaje += pedido.tipoEnvio === 'retiro' ? 'Retiro en local' :
+                pedido.tipoEnvio === 'bahia-blanca' ? 'Envío en Bahía Blanca' :
+                'Envío a otra localidad';
+        
+        
+        mensaje += `\n\n¡Gracias por tu compra! ❤️`;
+        
+        return mensaje;
     }
 
     // Función para generar el remito en PDF

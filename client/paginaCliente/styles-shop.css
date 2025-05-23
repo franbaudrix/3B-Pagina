@@ -472,6 +472,20 @@ select:disabled {
     .btn-add-front {
         display: inline-block;
     }
+
+            /* Estilo inicial del logo en móviles */
+    .logo-mobile {
+        transition: all 0.3s ease; /* Transición suave */
+    }
+
+    /* Clase que oculta el logo y elimina su espacio */
+    .logo-mobile.hidden {
+        opacity: 0;
+        height: 0 !important; /* Elimina el espacio */
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
+    }
 }
 
 @media (max-width: 768px) {
@@ -484,6 +498,20 @@ select:disabled {
 
     .header__logo img {
         width: 20% !important;
+    }
+
+            /* Estilo inicial del logo en móviles */
+    .logo-mobile {
+        transition: all 0.3s ease; /* Transición suave */
+    }
+
+    /* Clase que oculta el logo y elimina su espacio */
+    .logo-mobile.hidden {
+        opacity: 0;
+        height: 0 !important; /* Elimina el espacio */
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
     }
 }
 
@@ -511,5 +539,19 @@ select:disabled {
     #header-mobile-buttons button {
         font-size: 0.8rem;
         padding: 0.4rem;
+    }
+
+            /* Estilo inicial del logo en móviles */
+    .logo-mobile {
+        transition: all 0.3s ease; /* Transición suave */
+    }
+
+    /* Clase que oculta el logo y elimina su espacio */
+    .logo-mobile.hidden {
+        opacity: 0;
+        height: 0 !important; /* Elimina el espacio */
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
     }
 }

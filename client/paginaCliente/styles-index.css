@@ -5,6 +5,15 @@
     --light: #ffffff;
 }
 
+header{
+    position: sticky;
+    background-color: #ba0202;
+    top: 0; /* Esto es esencial para que funcione */
+    z-index: 1000; /* Asegura que el header esté por encima de otros elementos */
+    background-color: #ba0202;
+    width: 100%; /* Asegura que ocupe todo el ancho */
+}
+
 .header__menu {
     padding: 1; /* Eliminamos el padding original */
     display: flex;
@@ -83,10 +92,6 @@
 	font-weight: 700;
 }
 
-.header{
-	background-color: #ba0202;
-}
-
 .btn{
     background-color: #ba0202;
 }
@@ -160,6 +165,8 @@
     transition: transform 0.3s;
     margin-bottom: 20px;
     height: 100%;
+    background: black;
+    color: white;
 }
         
 .feature-card:hover {
@@ -257,6 +264,21 @@ a, button {
 
     .header__logo img {
         width: 15% !important;
+
+    }
+
+        /* Estilo inicial del logo en móviles */
+    .logo-mobile {
+        transition: all 0.3s ease; /* Transición suave */
+    }
+
+    /* Clase que oculta el logo y elimina su espacio */
+    .logo-mobile.hidden {
+        opacity: 0;
+        height: 0 !important; /* Elimina el espacio */
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden;
     }
 
 }

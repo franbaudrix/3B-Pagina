@@ -69,14 +69,15 @@ async function prepararPedido() {
         
         filas.forEach(fila => {
             const celdas = fila.cells;
+            const tipoUnidad = fila.dataset.tipoUnidad;
             items.push({
                 producto: fila.dataset.productId,
                 nombre: celdas[0].textContent.trim(),
                 precioUnitario: parseFloat(celdas[1].textContent.replace('$', '')),
                 subtotal: parseFloat(celdas[1].textContent.replace('$', '')),
-                peso: celdas[2].textContent.trim(),
-                cantidad: parseInt(celdas[3].textContent),
-                precioTotal: parseFloat(celdas[4].textContent.replace('$', ''))
+                peso: tipoUnidad === 'kg' ? fila.cells[2].textContent.trim() : "N/A",
+                cantidad: tipoUnidad === 'kg' ? 1 : parseInt(fila.dataset.cantidad || 1),
+                precioTotal: parseFloat(fila.dataset.itemTotal)
             });
         });
 
@@ -426,8 +427,10 @@ function displayProducts(productos) {
                             <option value="3">3 unidades</option>
                             <option value="4">4 unidades</option>
                             <option value="5">5 unidades</option>
-                            <option value="6">6 unidades</option>
+                            <option value="custom">Otra cantidad</option>
                         </select>
+                        <input type="number" min="1" class="form-control custom-amount-input mt-2" 
+                           placeholder="Ingrese cantidad" style="display: none;">
                     </div>
                     `}
                     <div class="mb-2 p-3 price-display text-end fw-bold"></div>
@@ -453,12 +456,31 @@ function initializeProductCards() {
         const unidadMedida = card.getAttribute('data-unidad-medida') || 'kg'; // Asegurar valor por defecto
         const priceDisplay = card.querySelector('.price-display');
         const addButton = card.querySelector('button');
+        const amountSelect = unidadMedida !== 'kg' ? card.querySelector('.amount-select') : null;
+        const customAmountInput = unidadMedida !== 'kg' ? card.querySelector('.custom-amount-input') : null;
         
+        if (amountSelect) {amountSelect.addEventListener('change', updatePriceDisplay);}
+
         // Elementos específicos por kg
         let weightSelect, customWeightInput;
         if (unidadMedida === 'kg') {
             weightSelect = card.querySelector('.weight-select');
             customWeightInput = card.querySelector('.custom-weight-input');
+        }else {
+            const amountSelect = card.querySelector('.amount-select');
+            
+            amountSelect.addEventListener('change', () => {
+                if (amountSelect.value === 'custom') {
+                    customAmountInput.style.display = 'block';
+                    customAmountInput.focus();
+                } else {
+                    customAmountInput.style.display = 'none';
+                    customAmountInput.value = '';
+                }
+                updatePriceDisplay();
+            });
+            
+            customAmountInput.addEventListener('input', updatePriceDisplay);
         }
 
         // Función para calcular el precio de la tarjeta actual
@@ -474,7 +496,11 @@ function initializeProductCards() {
 
                 return basePrice * weightFactor;
             } else {
-                return basePrice;
+                const selectedValue = parseInt(amountSelect.value);
+                if (amountSelect.value === 'custom') {
+                    selectedValue = parseInt(customAmountInput.value) || 1;
+                }
+                return basePrice * selectedValue;
             }
         }
 
@@ -499,8 +525,9 @@ function initializeProductCards() {
             const basePrice = parseFloat(productCard.dataset.basePrice);
             const unidadMedida = productCard.dataset.unidadMedida || 'kg';
 
-            let weightText = 'unidad';
+            let weightText = '1 unidad';
             let subtotal = basePrice;
+            let selectedAmount = 1;
             let totalPriceForItem = basePrice;
         
             if (unidadMedida === 'kg') {
@@ -518,6 +545,19 @@ function initializeProductCards() {
         
                 subtotal = basePrice * weightFactor;
                 totalPriceForItem = subtotal;
+            } else {
+                const amountSelect = productCard.querySelector('.amount-select');
+                const customAmountInput = productCard.querySelector('.custom-amount-input');
+                
+                if (amountSelect.value === 'custom') {
+                    selectedAmount = parseInt(customAmountInput.value) || 1;
+                    weightText = `${selectedAmount} unidades`;
+                } else {
+                    selectedAmount = parseInt(amountSelect.value) || 1;
+                    weightText = `${selectedAmount} unidad${selectedAmount > 1 ? 'es' : ''}`;
+                }
+                
+                totalPriceForItem = basePrice * selectedAmount;
             }
         
             // Obtener o crear el tbody de la tabla
@@ -546,6 +586,9 @@ function initializeProductCards() {
             newRow.insertCell(0).textContent = productName;
             newRow.insertCell(1).textContent = `$${subtotal.toFixed(2)}`;
             newRow.insertCell(2).textContent = weightText;
+            newRow.dataset.itemTotal = totalPriceForItem.toFixed(2);
+            newRow.dataset.tipoUnidad = unidadMedida; // 'kg' o 'unidad'
+            newRow.dataset.cantidad = selectedAmount;
             
             // Celda de acción con botón para eliminar
             const actionCell = newRow.insertCell(3);
@@ -565,6 +608,17 @@ function initializeProductCards() {
             // Actualizar contador del carrito
             cartItemCount++;
             updateCartCount();
+
+            // Agregar botón de guardar pedido (solo una vez)
+            const cartFooter = document.querySelector('#cart-container .bg-light');
+            if (cartFooter && !document.querySelector('#save-order-btn')) {
+                const saveBtn = document.createElement('button');
+                saveBtn.id = 'save-order-btn';
+                saveBtn.className = 'btn btn-success w-100 mt-2';
+                saveBtn.textContent = 'Guardar Pedido';
+                saveBtn.addEventListener('click', prepararPedido);
+                cartFooter.appendChild(saveBtn);
+            }
     
         }
 
