@@ -4,6 +4,9 @@ const router = express.Router();
 const Pedido = require('../models/pedidos');
 const { auth } = require('../middleware/auth');
 
+// Middleware de autenticación
+router.use(auth);
+
 // Todas las rutas requieren autenticación
 router.use((req, res, next) => {
   if (req.method === 'POST' && req.path === '/') {
@@ -14,7 +17,31 @@ router.use((req, res, next) => {
 
 router.get('/', async (req, res) => {
   try {
-    const pedidos = await Pedido.find().populate('cliente'); // Obtiene todos los pedidos
+    const { estado, nombre, fecha } = req.query;
+    const query = { estado: { $ne: 'revision' } }; // Excluir pedidos en revisión
+
+    // Filtro por estado
+    if (estado && estado !== 'todos') {
+      query.estado = estado;
+    }
+
+    // Filtro por nombre de cliente
+    if (nombre) {
+      query['cliente.nombre'] = { $regex: nombre, $options: 'i' };
+    }
+
+    // Filtro por fecha
+    if (fecha) {
+      const startDate = new Date(fecha);
+      const endDate = new Date(fecha);
+      endDate.setDate(endDate.getDate() + 1);
+      query.fecha = { $gte: startDate, $lt: endDate };
+    }
+
+    const pedidos = await Pedido.find(query)
+      .populate('cliente')
+      .sort({ fecha: -1 });
+
     res.json(pedidos);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -25,11 +52,8 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const pedido = await Pedido.findById(req.params.id)
-      .populate('items.producto')
-      .populate({
-        path: 'completadoPor',
-        select: 'name email' 
-      });
+      .populate('cliente')
+      .populate('completadoPor', 'nombre email');
 
     if (!pedido) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
@@ -44,49 +68,56 @@ router.get('/:id', async (req, res) => {
 // PUT /api/pedidos/:id - Actualizar pedido
 router.put('/:id', async (req, res) => {
   try {
-      // Validación mejorada
-      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-          return res.status(400).json({ 
-              success: false,
-              message: "ID de pedido inválido"
-          });
-      }
+    const { estado, items, esActualizacion } = req.body;
+    const pedido = await Pedido.findById(req.params.id);
 
-      const { estado } = req.body;
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
 
-      // Validar el estado
-      const estadosPermitidos = ['revision', 'pendiente', 'en_proceso' , 'completado', 'cancelado'];
-      if (!estadosPermitidos.includes(estado)) {
-          return res.status(400).json({
-              success: false,
-              message: "Estado no válido"
-          });
-      }
-
-      const pedido = await Pedido.findByIdAndUpdate(
-          req.params.id,
-          { estado },
-          { new: true, runValidators: true }
-      );
-
-      if (!pedido) {
-          return res.status(404).json({
-              success: false,
-              message: "Pedido no encontrado"
-          });
-      }
-
-      res.json({
-          success: true,
-          pedido
+    // Actualización de items
+    if (items && Array.isArray(items)) {
+      items.forEach(itemUpdate => {
+        const item = pedido.items.id(itemUpdate._id);
+        if (item) {
+          item.completado = itemUpdate.completado;
+          item.motivoIncompleto = itemUpdate.completado ? null : itemUpdate.motivoIncompleto;
+          item.observaciones = itemUpdate.completado ? null : itemUpdate.observaciones;
+        }
       });
+    }
+
+    // Actualización de estado (excepto para actualizaciones de completados)
+    if (estado && !esActualizacion) {
+      const estadosValidos = ['pendiente', 'en_proceso', 'completado', 'cancelado'];
+      if (!estadosValidos.includes(estado)) {
+        return res.status(400).json({ error: 'Estado inválido' });
+      }
+      pedido.estado = estado;
+
+      // Registrar completado
+      if (estado === 'completado') {
+        pedido.fechaCompletado = new Date();
+        pedido.completadoPor = req.user._id;
+      }
+    }
+
+    // Guardar cambios
+    const updatedPedido = await pedido.save();
+    const populatedPedido = await Pedido.findById(pedido._id)
+      .populate('cliente')
+      .populate('completadoPor', 'nombre email');
+
+    res.json({
+      success: true,
+      pedido: populatedPedido
+    });
 
   } catch (error) {
-      console.error("Error en PUT /pedidos:", error);
-      res.status(500).json({
-          success: false,
-          message: error.message || "Error interno del servidor"
-      });
+    res.status(500).json({ 
+      success: false,
+      message: error.message 
+    });
   }
 });
 
@@ -125,56 +156,43 @@ router.put('/:id/items', async (req, res) => {
 });
 
 router.put('/:id/completar', async (req, res) => {
-    try {
-      const { estado = 'completado', itemsCompletados } = req.body;
-      
-      const pedido = await Pedido.findById(req.params.id);
-      if (!pedido) {
-        return res.status(404).json({ 
-          success: false,
-          message: "Pedido no encontrado" 
-        });
-      }
-  
-      // Actualizar estado de cada item
-      if (itemsCompletados && itemsCompletados.length > 0) {
-        itemsCompletados.forEach(itemUpdate => {
-            const item = pedido.items.id(itemUpdate._id);
-            if (item) {
-                item.completado = itemUpdate.completado;
-                item.motivoIncompleto = itemUpdate.motivoIncompleto;
-                item.observaciones = itemUpdate.observaciones;
-            }
-        });
-      }
-      
-      const nuevoTotal = pedido.items.reduce((total, item) => {
-        return item.completado ? total + item.precioTotal : total;
-      }, 0);
+  try {
+    const pedido = await Pedido.findById(req.params.id);
+    
+    if (!pedido) {
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
 
-      // Marcar pedido como completado
-      pedido.estado = estado;
-      pedido.total = nuevoTotal;
-      pedido.fechaCompletado = new Date();
-      pedido.completadoPor = req.user._id;
-      
-      await pedido.save();
-  
-      res.json({
-        success: true,
-        message: "Pedido completado exitosamente",
-        pedido: await Pedido.findById(pedido._id)
-          .populate('items.producto')
-          .populate('completadoPor', 'name email')
-      });
-  
-    } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: error.message
+    // Marcar todos los items como completados si no se especifican
+    if (!req.body.items || req.body.items.length === 0) {
+      pedido.items.forEach(item => {
+        item.completado = true;
+        item.motivoIncompleto = null;
+        item.observaciones = null;
       });
     }
-  });
+
+    // Actualizar estado
+    pedido.estado = 'completado';
+    pedido.fechaCompletado = new Date();
+    pedido.completadoPor = req.user._id;
+
+    await pedido.save();
+
+    res.json({
+      success: true,
+      pedido: await Pedido.findById(pedido._id)
+        .populate('cliente')
+        .populate('completadoPor', 'nombre email')
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+});
 
 router.post('/', async (req, res) => {
   try {

@@ -3,94 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3B - Empleados</title>
+    <title>Panel de Empleados - Gestión de Pedidos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles-empleados.css">
 </head>
 <body>
-    <header class="d-flex justify-content-between align-items-center mb-4">
-        <button class="btn btn-danger btn-logout">
-            <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-        </button>
-    </header>
+    <div class="container-fluid">
+        <header class="d-flex justify-content-between align-items-center py-3 mb-4 border-bottom">
+            <h1 class="h4 mb-0"><i class="fas fa-clipboard-list me-2"></i>Panel de Pedidos</h1>
+            <button id="btn-logout" class="btn btn-outline-danger btn-sm">
+                <i class="fas fa-sign-out-alt me-1"></i>Cerrar sesión
+            </button>
+        </header>
 
-    <div class="container">
-        <h1 class="text-center mb-4">Pedidos Actuales</h1>
-        
         <!-- Filtros -->
-        <div class="filtros shadow-sm">
-            <div class="row">
+        <div class="filtros shadow-sm mb-4">
+            <div class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">Filtrar por estado:</label>
-                    <select id="filtro-estado" class="form-select">
-                        <option value="todos">Todos</option>
-                        <option value="pendiente">Pendiente</option>
+                    <label for="buscar-nombre" class="form-label">Buscar por nombre</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        <input type="text" class="form-control" id="buscar-nombre" placeholder="Nombre del cliente">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label for="filtro-estado" class="form-label">Estado del pedido</label>
+                    <select class="form-select" id="filtro-estado">
+                        <option value="todos">Todos los estados</option>
+                        <option value="pendiente">Pendientes</option>
                         <option value="en_proceso">En proceso</option>
-                        <option value="completado">Completado</option>
-                        <option value="cancelado">Cancelado</option>
+                        <option value="completado">Completados</option>
                     </select>
                 </div>
-                <div class="col-md-4">
-                    <label class="form-label">Buscar por nombre:</label>
-                    <input type="text" id="buscar-nombre" class="form-control" placeholder="Ingrese nombre del pedido">
+                <div class="col-md-3">
+                    <label for="filtro-fecha" class="form-label">Filtrar por fecha</label>
+                    <input type="date" class="form-control" id="filtro-fecha">
                 </div>
-                <div class="col-md-4 d-flex align-items-end">
+                <div class="col-md-2 d-flex align-items-end">
                     <button id="btn-refrescar" class="btn btn-primary w-100">
-                        <i class="fas fa-sync-alt me-2"></i>Refrescar
+                        <i class="fas fa-sync-alt me-1"></i>Actualizar
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- Contenedor de pedidos -->
-        <div id="pedidos-container" class="row">
+        <!-- Lista de pedidos -->
+        <div class="row" id="pedidos-container">
             <!-- Los pedidos se cargarán aquí dinámicamente -->
         </div>
+    </div>
 
-        <!-- Modal para detalles -->
-        <div class="modal fade" id="detallesModal" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Detalles del Pedido <span id="modal-pedido-id"></span></h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <p><strong>Fecha:</strong> <span id="modal-fecha"></span></p>
-                                <p><strong>Estado:</strong> <span id="modal-estado" class="badge"></span></p>
-                            </div>
-                            <div class="col-md-6">
-                                <p><strong>Total:</strong> $<span id="modal-total"></span></p>
-                            </div>
+    <!-- Modal de detalles del pedido -->
+    <div class="modal fade" id="detallesModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles del Pedido</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>ID:</strong> <span id="modal-pedido-id"></span></p>
+                            <p><strong>Cliente:</strong> <span id="modal-cliente"></span></p>
                         </div>
-                        <h6>Productos:</h6>
-                        <div id="modal-productos" class="mb-3"></div>
-                        <div class="mb-3">
-                            <label class="form-label">Cambiar estado:</label>
-                            <select id="cambiar-estado" class="form-select">
+                        <div class="col-md-6">
+                            <p><strong>Fecha:</strong> <span id="modal-fecha"></span></p>
+                            <p><strong>Total:</strong> $<span id="modal-total"></span></p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6>Productos del pedido</h6>
+                        <span class="badge" id="modal-estado"></span>
+                    </div>
+
+                    <div id="modal-productos" class="mb-4">
+                        <!-- Los productos se cargarán aquí dinámicamente -->
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="cambiar-estado" class="form-label">Cambiar estado del pedido</label>
+                            <select class="form-select" id="cambiar-estado">
                                 <option value="pendiente">Pendiente</option>
                                 <option value="en_proceso">En proceso</option>
                                 <option value="completado">Completado</option>
-                                <option value="cancelado">Cancelado</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
-                        <button type="button" id="btn-guardar-estado" class="btn btn-primary">Guardar Cambios</button>
-                        <button type="button" class="btn btn-success" id="btn-completar-pedido">
-                            <i class="fas fa-check-circle me-1"></i> Completar pedido
-                        </button>
+                        <div class="col-md-6 d-flex align-items-end">
+                            <button id="btn-guardar-estado" class="btn btn-primary me-2">
+                                <i class="fas fa-save me-1"></i>Guardar estado
+                            </button>
+                            <button id="btn-completar-pedido" class="btn btn-success">
+                                <i class="fas fa-check-circle me-1"></i>Completar pedido
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="auth.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="empleadosScript.js"></script>
 </body>

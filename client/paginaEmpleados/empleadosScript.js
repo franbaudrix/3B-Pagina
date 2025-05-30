@@ -1,79 +1,71 @@
+// Variables globales
 let pedidosContainer;
 let filtroEstado;
 let buscarNombre;
+let filtroFecha;
 let btnRefrescar;
 let detallesModal;
+let btnLogout;
 
-//Variables de estado
+// Datos
 let pedidosData = [];
 let pedidoActual = null;
+let cambiosPendientes = false;
 
+// Inicialización
 document.addEventListener('DOMContentLoaded', function() {
     // Verificar autenticación
-    const auth = checkAuth();
-    if (!auth || auth.user.role !== 'employee') {
+    if (!checkAuth() || checkAuth().user.role !== 'employee') {
         window.location.href = 'login.html';
         return;
     }
 
+    // Elementos del DOM
     pedidosContainer = document.getElementById('pedidos-container');
     filtroEstado = document.getElementById('filtro-estado');
     buscarNombre = document.getElementById('buscar-nombre');
+    filtroFecha = document.getElementById('filtro-fecha');
     btnRefrescar = document.getElementById('btn-refrescar');
+    btnLogout = document.getElementById('btn-logout');
     detallesModal = new bootstrap.Modal(document.getElementById('detallesModal'));
-
-    // Cargar pedidos iniciales
-    cargarPedidos();
 
     // Event listeners
     filtroEstado.addEventListener('change', filtrarPedidos);
     buscarNombre.addEventListener('input', filtrarPedidos);
+    filtroFecha.addEventListener('change', filtrarPedidos);
     btnRefrescar.addEventListener('click', cargarPedidos);
-    document.getElementById('btn-guardar-estado').addEventListener('click', actualizarEstadoPedido);
+    btnLogout.addEventListener('click', logout);
+    document.getElementById('btn-guardar-estado').addEventListener('click', guardarEstadoPedido);
+    document.getElementById('btn-completar-pedido').addEventListener('click', completarPedido);
 
-    // Evento para checkboxes
-    document.addEventListener('change', (e) => {
-        if (e.target.classList.contains('item-completado')) {
-            const index = Array.from(document.querySelectorAll('.item-completado')).indexOf(e.target);
-            const motivoContainer = document.getElementById(`motivo-container-${index}`);
-            if (motivoContainer) {
-                motivoContainer.classList.toggle('d-none', e.target.checked);
-            }
-        }
-    });
-
-    document.body.addEventListener('click', function(e) {
-        const btnCompletar = e.target.closest('#btn-completar-pedido');
-        if (btnCompletar) {
-            e.preventDefault();
-            completarPedido();
-        }
-    });
-
-    // Evento para guardar cambios
-    document.getElementById('btn-guardar-items').addEventListener('click', guardarEstadoItems);
+    // Cargar pedidos iniciales
+    cargarPedidos();
 });
 
-// FUNCIONES PRINCIPALES
-// Carga y Visualización de Pedidos
+// Función para cargar pedidos desde la API
 async function cargarPedidos() {
     try {
-        const response = await fetch('http://localhost:3000/api/pedidos', {
-            headers: { 
-                'Content-Type': 'application/json',
-                ...getAuthHeader()
-            }
+        btnRefrescar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Cargando...';
+        btnRefrescar.disabled = true;
+
+        const response = await fetch('http://localhost:3000/api/pedidos?estado=confirmado', {
+            headers: getAuthHeader()
         });
+
         if (!response.ok) throw new Error('Error al cargar pedidos');
-        
-        pedidosData = (await response.json()).filter(pedido => pedido.estado !== 'revision');
+
+        pedidosData = await response.json();
         mostrarPedidos(pedidosData);
     } catch (error) {
         console.error('Error:', error);
         mostrarError('Error al cargar los pedidos. Intente nuevamente.');
+    } finally {
+        btnRefrescar.innerHTML = '<i class="fas fa-sync-alt me-1"></i> Actualizar';
+        btnRefrescar.disabled = false;
     }
 }
 
+// Mostrar pedidos en el grid
 function mostrarPedidos(pedidos) {
     pedidosContainer.innerHTML = '';
     
@@ -88,29 +80,33 @@ function mostrarPedidos(pedidos) {
     }
 
     pedidos.forEach(pedido => {
-        const fecha = new Date(pedido.fecha).toLocaleString();
+        const fecha = new Date(pedido.fecha).toLocaleDateString();
         const estadoClass = getEstadoClass(pedido.estado);
+        const itemsCompletados = pedido.items.filter(item => item.completado).length;
         
         const pedidoCard = document.createElement('div');
         pedidoCard.className = 'col-md-6 col-lg-4 mb-4';
         pedidoCard.innerHTML = `
-            <div class="pedido-card card shadow-sm h-100">
+            <div class="pedido-card card h-100">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h5 class="card-title mb-0">Nombre: ${pedido.cliente.nombre}</h5>
+                        <h5 class="card-title mb-0">${pedido.cliente.nombre}</h5>
                         <span class="badge ${estadoClass}">${formatEstado(pedido.estado)}</span>
                     </div>
                     <p class="text-muted small mb-2">${fecha}</p>
                     <p class="mb-2"><strong>Total:</strong> $${pedido.total.toFixed(2)}</p>
-                    <p class="mb-3"><strong>Productos:</strong> ${pedido.items.length}</p>
-                    <div class="d-flex justify-content-between">
-                        <button class="btn btn-sm btn-outline-primary btn-ver-detalles" data-id="${pedido._id}">
-                            <i class="fas fa-eye me-1"></i> Ver detalles
-                        </button>
-                        <button class="btn btn-sm btn-outline-success btn-imprimir" data-id="${pedido._id}">
-                            <i class="fas fa-print me-1"></i> Imprimir
-                        </button>
+                    <div class="progress mb-3" style="height: 8px;">
+                        <div class="progress-bar bg-success" 
+                             role="progressbar" 
+                             style="width: ${(itemsCompletados / pedido.items.length) * 100}%">
+                        </div>
                     </div>
+                    <p class="small text-muted mb-3">
+                        ${itemsCompletados} de ${pedido.items.length} productos completados
+                    </p>
+                    <button class="btn btn-sm btn-outline-primary w-100 btn-ver-detalles" data-id="${pedido._id}">
+                        <i class="fas fa-eye me-1"></i> Ver detalles
+                    </button>
                 </div>
             </div>
         `;
@@ -127,71 +123,96 @@ function mostrarPedidos(pedidos) {
     });
 }
 
+// Filtrar pedidos según los criterios
 function filtrarPedidos() {
     const estado = filtroEstado.value;
     const nombreBusqueda = buscarNombre.value.toLowerCase();
+    const fechaSeleccionada = filtroFecha.value;
     
-    let pedidosFiltrados = pedidosData.filter(p => p.estado !== 'revision');
+    let pedidosFiltrados = [...pedidosData];
     
+    // Filtrar por estado
     if (estado !== 'todos') {
         pedidosFiltrados = pedidosFiltrados.filter(p => p.estado === estado);
     }
     
+    // Filtrar por nombre
     if (nombreBusqueda) {
         pedidosFiltrados = pedidosFiltrados.filter(p => 
             p.cliente.nombre.toLowerCase().includes(nombreBusqueda)
         );
     }
     
+    // Filtrar por fecha
+    if (fechaSeleccionada) {
+        pedidosFiltrados = pedidosFiltrados.filter(p => {
+            const fechaPedido = new Date(p.fecha).toISOString().split('T')[0];
+            return fechaPedido === fechaSeleccionada;
+        });
+    }
+    
     mostrarPedidos(pedidosFiltrados);
 }
 
-//Gestion detalles pedido
+// Mostrar detalles del pedido en el modal
 async function mostrarDetallesPedido(id) {
     try {
-        const response = await fetch(`http://localhost:3000/api/pedidos/${id}`,{
-            headers: { 
-                'Content-Type': 'application/json',
-                ...getAuthHeader()
-            }
+        cambiosPendientes = false;
+        
+        // Obtener el pedido de la API
+        const response = await fetch(`http://localhost:3000/api/pedidos/${id}`, {
+            headers: getAuthHeader()
         });
         
-        if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.message || 'Error al cargar pedido');
-        }
+        if (!response.ok) throw new Error('Error al cargar el pedido');
         
         pedidoActual = await response.json();
         
-        // Llenar modal
+        // Actualizar la información básica del modal
         document.getElementById('modal-pedido-id').textContent = pedidoActual._id;
+        document.getElementById('modal-cliente').textContent = pedidoActual.cliente.nombre;
         document.getElementById('modal-fecha').textContent = new Date(pedidoActual.fecha).toLocaleString();
         document.getElementById('modal-total').textContent = pedidoActual.total.toFixed(2);
         
-        // Estado
+        // Actualizar el estado
         const estadoElement = document.getElementById('modal-estado');
         estadoElement.textContent = formatEstado(pedidoActual.estado);
         estadoElement.className = 'badge ' + getEstadoClass(pedidoActual.estado);
-        document.getElementById('cambiar-estado').value = pedidoActual.estado;
         
-        // Productos
+        // Configurar el select de estado
+        const cambiarEstado = document.getElementById('cambiar-estado');
+        cambiarEstado.value = pedidoActual.estado;
+        
+        // Mostrar/ocultar botones según el estado
+        const btnCompletar = document.getElementById('btn-completar-pedido');
+        const btnGuardar = document.getElementById('btn-guardar-estado');
+        
+        if (pedidoActual.estado === 'completado') {
+            btnCompletar.classList.add('d-none');
+            btnGuardar.textContent = 'Actualizar pedido';
+        } else {
+            btnCompletar.classList.remove('d-none');
+            btnGuardar.textContent = 'Guardar estado';
+        }
+        
+        // Mostrar los productos
         const productosContainer = document.getElementById('modal-productos');
         productosContainer.innerHTML = '';
         
         pedidoActual.items.forEach((item, index) => {
             const productoDiv = document.createElement('div');
-            productoDiv.className = `producto-item mb-3 p-3 border rounded ${item.completado ? '' : 'bg-light text-danger'}`;
+            productoDiv.className = `producto-item ${item.completado ? 'completado' : 'incompleto'}`;
             
             productoDiv.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="form-check">
                         <input class="form-check-input item-completado" 
-                               type="checkbox" 
-                               id="item-${index}"
-                               ${item.completado ? 'checked' : ''}>
+                            type="checkbox" 
+                            data-id="${item._id}"
+                            ${item.completado ? 'checked' : ''}>
                         <label class="form-check-label" for="item-${index}">
-                            <h6 class="mb-1 ${item.completado ? '' : 'text-decoration-line-through'}">${item.nombre}</h6>
-                            <small class="text-muted">${item.peso} • ${item.cantidad} unidad(es)</small>
+                            <h6 class="mb-1">${item.nombre}</h6>
+                            <small class="text-muted">${item.cantidad} unidad(es) • ${item.peso || 'N/A'}</small>
                         </label>
                     </div>
                     <div class="text-end">
@@ -201,16 +222,16 @@ async function mostrarDetallesPedido(id) {
                 </div>
                 
                 <!-- Sección de motivo (solo visible si no está completado) -->
-                <div class="mt-2 ${item.completado ? 'd-none' : ''}" id="motivo-container-${index}">
-                    <select class="form-select form-select-sm motivo-select" ${item.completado ? 'disabled' : ''}>
-                        <option value="" ${!item.motivoIncompleto ? 'selected' : ''}>Seleccione motivo...</option>
+                <div class="motivo-section ${item.completado ? 'd-none' : ''}" id="motivo-container-${index}">
+                    <select class="form-select form-select-sm motivo-select mb-2" ${item.completado ? 'disabled' : ''}>
+                        <option value="">Seleccione motivo...</option>
                         <option value="sin stock" ${item.motivoIncompleto === 'sin stock' ? 'selected' : ''}>Sin stock</option>
                         <option value="dañado" ${item.motivoIncompleto === 'dañado' ? 'selected' : ''}>Producto dañado</option>
                         <option value="no solicitado" ${item.motivoIncompleto === 'no solicitado' ? 'selected' : ''}>No fue solicitado</option>
                         <option value="otro" ${item.motivoIncompleto === 'otro' ? 'selected' : ''}>Otro</option>
                     </select>
-                    <textarea class="form-control mt-2 observaciones" 
-                              placeholder="Observaciones" 
+                    <textarea class="form-control observaciones" 
+                              placeholder="Observaciones (opcional)" 
                               rows="2" 
                               ${item.completado ? 'disabled' : ''}>${item.observaciones || ''}</textarea>
                 </div>
@@ -218,7 +239,8 @@ async function mostrarDetallesPedido(id) {
             
             productosContainer.appendChild(productoDiv);
         });
-
+        
+        // Agregar eventos a los checkboxes
         document.querySelectorAll('.item-completado').forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 const index = this.id.split('-')[1];
@@ -227,275 +249,166 @@ async function mostrarDetallesPedido(id) {
                 if (motivoContainer) {
                     motivoContainer.classList.toggle('d-none', this.checked);
                     
-                    // Deshabilitar/activar selects y textareas según el estado
-                    const selects = motivoContainer.querySelectorAll('.motivo-select');
-                    const textareas = motivoContainer.querySelectorAll('.observaciones');
-                    
-                    selects.forEach(select => select.disabled = this.checked);
-                    textareas.forEach(textarea => textarea.disabled = this.checked);
-                    
                     // Actualizar estilo del ítem
                     const itemDiv = this.closest('.producto-item');
                     if (itemDiv) {
-                        itemDiv.classList.toggle('bg-light', !this.checked);
-                        itemDiv.classList.toggle('text-danger', !this.checked);
+                        itemDiv.classList.toggle('completado', this.checked);
+                        itemDiv.classList.toggle('incompleto', !this.checked);
                     }
                 }
+                
+                cambiosPendientes = true;
             });
         });
         
+        // Agregar eventos a los selects y textareas
+        document.querySelectorAll('.motivo-select, .observaciones').forEach(element => {
+            element.addEventListener('change', () => cambiosPendientes = true);
+            element.addEventListener('input', () => cambiosPendientes = true);
+        });
+        
+        // Mostrar el modal
         detallesModal.show();
+        
     } catch (error) {
         console.error('Error:', error);
-        mostrarError(error.message || 'Error al cargar los detalles del pedido');
+        mostrarError('Error al cargar los detalles del pedido');
     }
 }
 
-function actualizarVistaItems(items) {
-    items.forEach((item, index) => {
-        const checkbox = document.querySelector(`#item-${index}`);
-        if (checkbox) {
-            checkbox.checked = item.completado;
-            
-            // Actualizar estilo del ítem
-            const itemDiv = checkbox.closest('.producto-item');
-            if (itemDiv) {
-                itemDiv.classList.toggle('bg-light', !item.completado);
-                itemDiv.classList.toggle('text-danger', !item.completado);
-                
-                // Actualizar motivo y observaciones
-                const motivoSelect = itemDiv.querySelector('.motivo-select');
-                const observacionesTextarea = itemDiv.querySelector('.observaciones');
-                
-                if (motivoSelect) motivoSelect.value = item.motivoIncompleto || '';
-                if (observacionesTextarea) observacionesTextarea.value = item.observaciones || '';
-                
-                // Mostrar/ocultar sección de motivo
-                const motivoContainer = itemDiv.querySelector(`#motivo-container-${index}`);
-                if (motivoContainer) {
-                    motivoContainer.classList.toggle('d-none', item.completado);
-                }
-            }
-        }
-    });
-}
-
-//Operaciones con pedidos
-async function guardarEstadoItems() {
+// Guardar el estado del pedido (incluyendo items)
+async function guardarEstadoPedido() {
+    const btn = document.getElementById('btn-guardar-estado');
+    if (!btn || !pedidoActual) return;
+    
     try {
-        // Mostrar estado de carga en el botón de completar
-        const btnCompletar = document.getElementById('btn-completar-pedido');
-        if (btnCompletar) {
-            btnCompletar.disabled = true;
-            btnCompletar.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Guardando ítems...';
-        }
-
-        const itemsActualizados = Array.from(document.querySelectorAll('.item-completado')).map((checkbox, index) => {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Guardando...';
+        
+        // 1. Obtener los items actualizados
+        const itemsActualizados = Array.from(document.querySelectorAll('.item-completado')).map((checkbox) => {
+            const id = checkbox.getAttribute('data-id');
+            const index = checkbox.getAttribute('data-index');
             const completado = checkbox.checked;
             const motivoContainer = document.getElementById(`motivo-container-${index}`);
-            
+
             return {
-                _id: pedidoActual.items[index]._id,
+                _id: id,
                 completado,
                 motivoIncompleto: completado ? null : (motivoContainer?.querySelector('.motivo-select')?.value || null),
                 observaciones: completado ? null : (motivoContainer?.querySelector('.observaciones')?.value || null)
             };
         });
-
-        const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoActual._id}/items`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json',
-                ...getAuthHeader()
-            },
-            body: JSON.stringify({ items: itemsActualizados })
-        });
-
-        if (!response.ok) throw new Error(await response.text());
-
-        const data = await response.json();
         
-        // Actualizar el pedidoActual con los nuevos datos
-        if (data.pedido) {
-            pedidoActual = data.pedido;
-            // Actualizar visualmente los ítems
-            actualizarVistaItems(data.pedido.items);
-        }
+        // 2. Determinar si es una actualización de pedido completado
+        const esActualizacion = pedidoActual.estado === 'completado';
         
-        return data;
+        // 3. Obtener el nuevo estado (mantener 'completado' si es actualización)
+        const estadoSelect = document.getElementById('cambiar-estado').value;
+        const estadosValidos = ['pendiente', 'en_proceso', 'completado', 'cancelado'];
+        const nuevoEstado = esActualizacion ? 'completado' : (estadosValidos.includes(estadoSelect) ? estadoSelect : pedidoActual.estado);
 
-    } catch (error) {
-        console.error('Error al guardar ítems:', error);
-        mostrarError(error.message);
-        throw error;
-    }
-}
-
-async function completarPedido() {
-    const btn = document.getElementById('btn-completar-pedido');
-    if (!btn) throw new Error('Botón no encontrado');
-
-    try {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Completando...';
-
-        // 1. Primero guarda el estado de los ítems
-        const itemsCompletados = await guardarEstadoItems();
-
-        // 2. Marcar el pedido como completado
-        const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoActual._id}/completar`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json',
-                ...getAuthHeader()
-            },
-            body: JSON.stringify({ itemsCompletados }) // Add this line
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText || 'Error en la solicitud');
-        }
-
-        const data = await response.json();
         
-        if (!data) {
-            throw new Error('Respuesta vacía del servidor');
-        }
-
-        // Actualizar la vista
-        const index = pedidosData.findIndex(p => p._id === pedidoActual._id);
-        if (index !== -1) {
-            pedidosData[index] = data.pedido || data;
-            pedidoActual = data.pedido || data;
-            mostrarPedidos(pedidosData);
-        }
-
-        mostrarExito('Pedido completado correctamente');
-        setTimeout(() => detallesModal.hide(), 1000);
-
-    } catch (error) {
-        console.error('Error en completarPedido:', error);
-        mostrarError(error.message || 'Error al completar el pedido');
-        throw error;
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-check-circle"></i> Completar pedido';
-    }
-}
-
-async function actualizarEstadoPedido() {
-    const btn = document.getElementById('btn-guardar-estado');
-    if (!btn) {
-        console.error('Botón no encontrado');
-        return;
-    }
-
-    try {
-        // Mostrar loading
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Actualizando...';
-
-        const nuevoEstado = document.getElementById('cambiar-estado').value;
+        // 4. Actualizar el pedido en la API
         const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoActual._id}`, {
             method: 'PUT',
-            headers: { 
+            headers: {
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
             },
-            body: JSON.stringify({ estado: nuevoEstado })
+            body: JSON.stringify({
+                estado: nuevoEstado,
+                items: itemsActualizados,
+                esActualizacion: esActualizacion // Informar al backend que es una actualización
+            })
         });
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-            throw new Error(data.message || 'Error al actualizar');
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Error al guardar el pedido');
         }
+        
+        const data = await response.json();
+        pedidoActual = data.pedido;
 
-        // Actualizar la vista
+        await mostrarDetallesPedido(pedidoActual._id);
+        
+        // 5. Actualizar la lista de pedidos
         const index = pedidosData.findIndex(p => p._id === pedidoActual._id);
         if (index !== -1) {
-            pedidosData[index] = data.pedido;
-            mostrarPedidos(pedidosData);
+            pedidosData[index] = pedidoActual;
         }
-
-        // Cerrar modal después de 1 segundo para que el usuario vea el feedback
-        setTimeout(() => {
-            detallesModal.hide();
-            mostrarExito('Estado actualizado correctamente');
-        }, 1000);
-
-    } catch (error) {
-        console.error('Error al actualizar:', error);
-        mostrarError(error.message);
-    }finally{
         
-        // Restaurar botón inmediatamente en caso de error
+        // 6. Mostrar feedback al usuario
+        mostrarExito(esActualizacion ? 'Pedido actualizado correctamente' : 'Estado guardado correctamente');
+        cambiosPendientes = false;
+        
+        // 7. Si el pedido fue completado, cerrar el modal después de 1 segundo
+        if (pedidoActual.estado === 'completado') {
+            setTimeout(() => detallesModal.hide(), 1000);
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarError(error.message || 'Error al guardar el pedido');
+    } finally {
         btn.disabled = false;
-        btn.innerHTML = '<i class="fas fa-save"></i> Guardar estado';
+        btn.innerHTML = pedidoActual.estado === 'completado' ? 
+            '<i class="fas fa-save me-1"></i> Actualizar pedido' : 
+            '<i class="fas fa-save me-1"></i> Guardar estado';
     }
 }
 
-//FUNCIONES AUXILIARES
-//Notificaciones
-function mostrarExito(mensaje) {
-    const toast = document.createElement('div');
-    toast.className = 'position-fixed bottom-0 end-0 p-3';
-    toast.innerHTML = `
-        <div class="toast show" role="alert">
-            <div class="toast-header bg-success text-white">
-                <i class="fas fa-check-circle me-2"></i>
-                <strong class="me-auto">Éxito</strong>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body">
-                ${mensaje}
-            </div>
-        </div>
-    `;
-    document.body.appendChild(toast);
+// Completar el pedido
+async function completarPedido() {
+    const btn = document.getElementById('btn-completar-pedido');
+    if (!btn || !pedidoActual) return;
     
-    setTimeout(() => toast.remove(), 3000);
+    try {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Completando...';
+        
+        // Primero guardar los cambios si hay
+        if (cambiosPendientes) {
+            await guardarEstadoPedido();
+        }
+        
+        // Marcar el pedido como completado
+        const response = await fetch(`/api/pedidos/${pedidoActual._id}/completar`, {
+            method: 'PUT',
+            headers: getAuthHeader(),
+            body: JSON.stringify({
+            items: obtenerItemsActualizados()
+            })
+        });
+        
+        if (!response.ok) throw new Error('Error al completar el pedido');
+        
+        const data = await response.json();
+        pedidoActual = data;
+        
+        // Actualizar la lista de pedidos
+        const index = pedidosData.findIndex(p => p._id === pedidoActual._id);
+        if (index !== -1) {
+            pedidosData[index] = pedidoActual;
+            mostrarPedidos(pedidosData);
+        }
+        
+        mostrarExito('Pedido completado correctamente');
+        
+        // Cerrar el modal después de 1 segundo
+        setTimeout(() => detallesModal.hide(), 1000);
+        
+    } catch (error) {
+        console.error('Error:', error);
+        mostrarError(error.message || 'Error al completar el pedido');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Completar pedido';
+    }
 }
 
-function mostrarError(mensaje) {
-    const alert = document.getElementById('error-alert') || document.createElement('div');
-    alert.id = 'error-alert';
-    alert.className = 'alert alert-danger position-fixed top-0 start-50 translate-middle-x mt-3';
-    alert.innerHTML = `
-        <i class="fas fa-exclamation-triangle me-2"></i>
-        ${mensaje}
-        <button type="button" class="btn-close float-end" data-bs-dismiss="alert"></button>
-    `;
-    document.body.appendChild(alert);
-}
-
-function mostrarExito(mensaje) {
-    const alerta = document.createElement('div');
-    alerta.className = 'alert alert-success position-fixed top-0 end-0 m-3';
-    alerta.style.zIndex = '1100';
-    alerta.innerHTML = `
-        <i class="fas fa-check-circle me-2"></i>
-        ${mensaje}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    `;
-    document.body.appendChild(alerta);
-    setTimeout(() => alerta.remove(), 3000);
-}
-
-function mostrarError(mensaje) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'alert alert-danger';
-    errorDiv.textContent = mensaje;
-    pedidosContainer.prepend(errorDiv);
-    
-    setTimeout(() => {
-        errorDiv.remove();
-    }, 5000);
-}
-
-
-//Helpers
+// Funciones de ayuda
 function getEstadoClass(estado) {
     const clases = {
         pendiente: 'bg-secondary',
@@ -514,4 +427,68 @@ function formatEstado(estado) {
         cancelado: 'Cancelado'
     };
     return nombres[estado] || estado;
+}
+
+function getAuthHeader() {
+    const token = localStorage.getItem('token');
+    return token ? { 'Authorization': `Bearer ${token}` } : {};
+}
+
+function checkAuth() {
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+    
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return { user: payload };
+    } catch (e) {
+        return false;
+    }
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    window.location.href = 'login.html';
+}
+
+function mostrarExito(mensaje) {
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed bottom-0 end-0 p-3';
+    toast.style.zIndex = '1100';
+    toast.innerHTML = `
+        <div class="toast show" role="alert">
+            <div class="toast-header bg-success text-white">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong class="me-auto">Éxito</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                ${mensaje}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function mostrarError(mensaje) {
+    const toast = document.createElement('div');
+    toast.className = 'position-fixed bottom-0 end-0 p-3';
+    toast.style.zIndex = '1100';
+    toast.innerHTML = `
+        <div class="toast show" role="alert">
+            <div class="toast-header bg-danger text-white">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong class="me-auto">Error</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body">
+                ${mensaje}
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.remove(), 3000);
 }

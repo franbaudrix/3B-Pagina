@@ -345,6 +345,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Error al cargar productos:', error);
         document.getElementById('productos-container').innerHTML = '<p class="text-danger">Error al cargar los productos. Intenta más tarde.</p>';
     }
+
 });
 
 async function filterProducts() {
@@ -405,8 +406,8 @@ function displayProducts(productos) {
                 <div class="back-content">
                     <div class="card-body p-2">
                         <h2 class="card-title mb-1">${producto.nombre}</h2>
-                        <h5 class="card-text mb-2">$${producto.precio.toFixed(2)}</h5>
-                        <h2 class="bg-danger text-white p-1 rounded">Precio pago en EFECTIVO. Para pagar con otro medio aclarar en observaciones.</h2>
+                        <h4 class="card-text mb-2">$${producto.precio.toFixed(2)}</h4>
+                        <!--<h5 class="bg-danger text-white p-1 rounded">Precio e</h5>-->
                     </div>
                     ${producto.unidadMedida === 'kg' ? `
                     <div class="p-3">
@@ -616,7 +617,7 @@ function initializeProductCards() {
                 const saveBtn = document.createElement('button');
                 saveBtn.id = 'save-order-btn';
                 saveBtn.className = 'btn btn-success w-100 mt-2';
-                saveBtn.textContent = 'Guardar Pedido';
+                saveBtn.textContent = 'Confirmar Pedido';
                 saveBtn.addEventListener('click', prepararPedido);
                 cartFooter.appendChild(saveBtn);
             }
