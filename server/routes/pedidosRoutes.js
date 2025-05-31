@@ -2,7 +2,53 @@ const express = require('express');
 const mongoose = require('mongoose'); 
 const router = express.Router();
 const Pedido = require('../models/pedidos');
+const Usuario = require('../models/usuarios');
 const { auth } = require('../middleware/auth');
+
+
+router.post('/', async (req, res) => {
+  try {
+      // Validar campos obligatorios
+      if (!req.body.items || req.body.items.length === 0) {
+          return res.status(400).json({ message: "El pedido debe contener items" });
+      }
+      
+      if (!req.body.tipoEnvio || !req.body.cliente || !req.body.cliente.nombre || 
+          !req.body.cliente.whatsapp || !req.body.cliente.email) {
+          return res.status(400).json({ message: "Faltan datos obligatorios del cliente" });
+      }
+      
+      // Validar dirección según tipo de envío
+      if (req.body.tipoEnvio === 'bahia-blanca') {
+          if (!req.body.cliente.direccion || !req.body.cliente.direccion.calle || !req.body.cliente.direccion.numero) {
+              return res.status(400).json({ message: "Falta la dirección para envío en Bahía Blanca" });
+          }
+      }
+      
+      if (req.body.tipoEnvio === 'otra-localidad') {
+          if (!req.body.cliente.direccion || !req.body.cliente.direccion.calle || 
+              !req.body.cliente.direccion.numero || !req.body.cliente.direccion.localidad || 
+              !req.body.cliente.direccion.provincia || !req.body.cliente.direccion.codigoPostal) {
+              return res.status(400).json({ message: "Faltan datos de dirección para envío a otra localidad" });
+          }
+      }
+
+      const nuevoPedido = new Pedido({
+          ...req.body,
+          usuario: req.userId // Si tienes autenticación
+      });
+
+      const pedidoGuardado = await nuevoPedido.save();
+      res.status(201).json(pedidoGuardado);
+
+  } catch (error) {
+      console.error("Error al crear pedido:", error);
+      res.status(500).json({ 
+          message: error.message || "Error interno del servidor al crear el pedido" 
+      });
+  }
+});
+
 
 // Middleware de autenticación
 router.use(auth);
@@ -45,6 +91,16 @@ router.get('/', async (req, res) => {
     res.json(pedidos);
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+router.get('/empleados/listado', async (req, res) => {
+  try {
+    const empleados = await Usuario.find({ role: 'employee' }).select('_id name email');
+    res.json(empleados);
+  } catch (error) {
+    console.error('Error al obtener empleados:', error);
+    res.status(500).json({ message: 'Error al obtener empleados' });
   }
 });
 
@@ -161,6 +217,9 @@ router.put('/:id/items', async (req, res) => {
 
 router.put('/:id/completar', async (req, res) => {
   try {
+
+    const { estado = 'completado', itemsCompletados = [], asignados = [], bultos = []} = req.body;
+
     const pedido = await Pedido.findById(req.params.id);
     
     if (!pedido) {
@@ -180,6 +239,9 @@ router.put('/:id/completar', async (req, res) => {
     pedido.estado = 'completado';
     pedido.fechaCompletado = new Date();
     pedido.completadoPor = req.user._id;
+    pedido.asignados = asignados;
+    pedido.bultos = bultos;
+
 
     await pedido.save();
 
@@ -195,49 +257,6 @@ router.put('/:id/completar', async (req, res) => {
       success: false,
       message: error.message
     });
-  }
-});
-
-router.post('/', async (req, res) => {
-  try {
-      // Validar campos obligatorios
-      if (!req.body.items || req.body.items.length === 0) {
-          return res.status(400).json({ message: "El pedido debe contener items" });
-      }
-      
-      if (!req.body.tipoEnvio || !req.body.cliente || !req.body.cliente.nombre || 
-          !req.body.cliente.whatsapp || !req.body.cliente.email) {
-          return res.status(400).json({ message: "Faltan datos obligatorios del cliente" });
-      }
-      
-      // Validar dirección según tipo de envío
-      if (req.body.tipoEnvio === 'bahia-blanca') {
-          if (!req.body.cliente.direccion || !req.body.cliente.direccion.calle || !req.body.cliente.direccion.numero) {
-              return res.status(400).json({ message: "Falta la dirección para envío en Bahía Blanca" });
-          }
-      }
-      
-      if (req.body.tipoEnvio === 'otra-localidad') {
-          if (!req.body.cliente.direccion || !req.body.cliente.direccion.calle || 
-              !req.body.cliente.direccion.numero || !req.body.cliente.direccion.localidad || 
-              !req.body.cliente.direccion.provincia || !req.body.cliente.direccion.codigoPostal) {
-              return res.status(400).json({ message: "Faltan datos de dirección para envío a otra localidad" });
-          }
-      }
-
-      const nuevoPedido = new Pedido({
-          ...req.body,
-          usuario: req.userId // Si tienes autenticación
-      });
-
-      const pedidoGuardado = await nuevoPedido.save();
-      res.status(201).json(pedidoGuardado);
-
-  } catch (error) {
-      console.error("Error al crear pedido:", error);
-      res.status(500).json({ 
-          message: error.message || "Error interno del servidor al crear el pedido" 
-      });
   }
 });
 

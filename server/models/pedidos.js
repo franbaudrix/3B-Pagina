@@ -18,7 +18,8 @@ const ItemSchema = new mongoose.Schema({
 });
 
 const PedidoSchema = new mongoose.Schema({
-  usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' },
+  usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }, 
+  asignados: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }],
   items: [ItemSchema],
   total: { type: Number, required: true },
   estado: { 
@@ -46,6 +47,18 @@ const PedidoSchema = new mongoose.Schema({
   },
   observaciones: String,
   completadoPor: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  bultos: [{
+    tipo: {
+      type: String,
+      enum: ['bolsa', 'caja', 'bolson'],
+      required: true
+    },
+    cantidad: {
+      type: Number,
+      required: true,
+      min: 1
+    }
+  }],
   fechaCompletado: { type: Date }
 }, { versionKey: false });
 

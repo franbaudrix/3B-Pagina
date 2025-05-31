@@ -7,6 +7,7 @@ let detallesModal;
 //Variables de estado
 let pedidosData = [];
 let pedidoActual = null;
+let estadoOriginal = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     // Verificar autenticación
@@ -51,6 +52,53 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    document.getElementById('btn-agregar-bulto').addEventListener('click', () => {
+      const container = document.getElementById('bultos-container');
+
+      const div = document.createElement('div');
+      div.className = 'd-flex align-items-center mb-2 gap-2';
+
+      div.innerHTML = `
+        <select class="form-select form-select-sm tipo-bulto" style="max-width: 150px;">
+          <option value="bolsa">Bolsa</option>
+          <option value="caja">Caja</option>
+          <option value="bolson">Bolsón</option>
+        </select>
+        <input type="number" min="1" class="form-control form-control-sm cantidad-bulto" placeholder="Cantidad" style="max-width: 100px;">
+        <button type="button" class="btn btn-sm btn-danger btn-quitar-bulto">
+          <i class="fas fa-trash"></i>
+        </button>
+      `;
+
+      container.appendChild(div);
+
+      div.querySelector('.btn-quitar-bulto').addEventListener('click', () => {
+        div.remove();
+      });
+    });
+
+    const modalEl = document.getElementById('detallesModal');
+    modalEl.addEventListener('hidden.bs.modal', async () => {
+      // Si estaba pendiente originalmente y no se completó, volver a pendiente
+      if (estadoOriginal === 'pendiente' && pedidoActual.estado === 'en_proceso') {
+        try {
+          await fetch(`http://localhost:3000/api/pedidos/${pedidoActual._id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              ...getAuthHeader()
+            },
+            body: JSON.stringify({
+              estado: 'pendiente',
+              esActualizacion: false
+            })
+          });
+          pedidoActual.estado = 'pendiente';
+        } catch (error) {
+          console.error('Error al revertir pedido a pendiente:', error);
+        }
+      }
+    });
 });
 
 // FUNCIONES PRINCIPALES
@@ -166,11 +214,64 @@ async function mostrarDetallesPedido(id) {
         }
         
         pedidoActual = await response.json();
+        estadoOriginal = pedidoActual.estado;
         
+        document.getElementById('bultos-container').innerHTML = '';
+
+        if (pedidoActual.bultos && Array.isArray(pedidoActual.bultos)) {
+          pedidoActual.bultos.forEach(bulto => {
+            const container = document.getElementById('bultos-container');
+
+            const div = document.createElement('div');
+            div.className = 'd-flex align-items-center mb-2 gap-2';
+
+            div.innerHTML = `
+              <select class="form-select form-select-sm tipo-bulto" style="max-width: 150px;">
+                <option value="bolsa">Bolsa</option>
+                <option value="caja">Caja</option>
+                <option value="bolson">Bolsón</option>
+              </select>
+              <input type="number" min="1" class="form-control form-control-sm cantidad-bulto" placeholder="Cantidad" style="max-width: 100px;">
+              <button type="button" class="btn btn-sm btn-danger btn-quitar-bulto">
+                <i class="fas fa-trash"></i>
+              </button>
+            `;
+
+            div.querySelector('.tipo-bulto').value = bulto.tipo;
+            div.querySelector('.cantidad-bulto').value = bulto.cantidad;
+
+            div.querySelector('.btn-quitar-bulto').addEventListener('click', () => {
+              div.remove();
+            });
+
+            container.appendChild(div);
+          });
+        }
+
+        // Si el pedido no está completado, marcarlo como en_proceso
+        if (pedidoActual.estado !== 'completado') {
+          await fetch(`http://localhost:3000/api/pedidos/${pedidoActual._id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              ...getAuthHeader()
+            },
+            body: JSON.stringify({
+              estado: 'en_proceso',
+              esActualizacion: false
+            })
+          });
+
+          // Actualizar visualmente
+          pedidoActual.estado = 'en_proceso';
+          document.getElementById('cambiar-estado').value = 'en_proceso';
+        }
+
         // Llenar modal
-        document.getElementById('modal-pedido-id').textContent = pedidoActual._id;
+        document.getElementById('modal-pedido-id').textContent = pedidoActual.cliente.nombre;
         document.getElementById('modal-fecha').textContent = new Date(pedidoActual.fecha).toLocaleString();
         document.getElementById('modal-total').textContent = pedidoActual.total.toFixed(2);
+        document.getElementById('modal-envio').textContent = pedidoActual.tipoEnvio;
         
         // Estado
         const estadoElement = document.getElementById('modal-estado');
@@ -248,12 +349,51 @@ async function mostrarDetallesPedido(id) {
             });
         });
         
+        await cargarEmpleados();
+
         detallesModal.show();
     } catch (error) {
         console.error('Error:', error);
         mostrarError(error.message || 'Error al cargar los detalles del pedido');
     }
 }
+
+async function cargarEmpleados() {
+    try {
+        const response = await fetch('http://localhost:3000/api/pedidos/empleados/listado', {
+            headers: {
+                'Content-Type': 'application/json',
+                ...getAuthHeader()
+            }
+        });
+
+        if (!response.ok) throw new Error('Error al cargar empleados');
+
+        const empleados = await response.json();
+        const select = document.getElementById('select-asignados');
+        select.innerHTML = '';
+
+        empleados.forEach(usuario => {
+            const option = document.createElement('option');
+            option.value = usuario._id;
+            option.textContent = usuario.name || usuario.email;
+            select.appendChild(option);
+        });
+
+        // Seleccionar los que ya están asignados al pedido
+        if (pedidoActual?.asignados) {
+            pedidoActual.asignados.forEach(id => {
+                const opt = select.querySelector(`option[value="${id}"]`);
+                if (opt) opt.selected = true;
+            });
+        }
+
+    } catch (error) {
+        console.error('Error al cargar empleados:', error);
+        mostrarError(error.message);
+    }
+}
+
 
 function actualizarVistaItems(items) {
     items.forEach((item, index) => {
@@ -343,13 +483,31 @@ async function completarPedido() {
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Completando...';
 
-        // 1. Guardar ítems actualizados
         const itemsGuardados = await guardarEstadoItems();
 
-        // 2. Tomar el estado seleccionado del <select>
         const estadoSeleccionado = document.getElementById('cambiar-estado').value;
 
-        // 3. Enviar ambos al backend
+        const select = document.getElementById('select-asignados');
+        const asignados = Array.from(select.selectedOptions).map(opt => opt.value);
+        
+        const bultos = Array.from(document.querySelectorAll('#bultos-container > div')).map(div => {
+          const tipo = div.querySelector('.tipo-bulto')?.value;
+          const cantidad = parseInt(div.querySelector('.cantidad-bulto')?.value);
+          return { tipo, cantidad };
+        }).filter(b => b.tipo && b.cantidad > 0);
+
+        // Calcular total
+        const totalBultos = bultos.reduce((sum, b) => sum + (b.cantidad || 0), 0);
+
+        // Validar
+        if (bultos.length === 0 || totalBultos === 0) {
+          mostrarError('Debés especificar al menos un bulto con su tipo y cantidad para completar el pedido.');
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-check-circle me-1"></i> Completar pedido';
+          return;
+        }
+
+
         const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoActual._id}/completar`, {
             method: 'PUT',
             headers: { 
@@ -358,7 +516,9 @@ async function completarPedido() {
             },
             body: JSON.stringify({ 
                 estado: estadoSeleccionado,
-                itemsCompletados: itemsGuardados.items || [] // fallback defensivo
+                itemsCompletados: itemsGuardados.items || [],
+                asignados,
+                bultos
             })
         });
 

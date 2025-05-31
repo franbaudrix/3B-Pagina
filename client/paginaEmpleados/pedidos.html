@@ -53,7 +53,7 @@
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title">Detalles del Pedido <span id="modal-pedido-id"></span></h5>
+                        <h5 class="modal-title">Nombre: <span id="modal-pedido-id"></span></h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
@@ -64,6 +64,7 @@
                             </div>
                             <div class="col-md-6">
                                 <p><strong>Total:</strong> $<span id="modal-total"></span></p>
+                                <p><strong>Tipo envio:</strong> <span id="modal-envio"></span></p>
                             </div>
                         </div>
                         <h6>Productos:</h6>
@@ -75,6 +76,20 @@
                                 <option value="completado">Completado</option>
                                 <option value="cancelado">Cancelado</option>
                             </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Asignar empleado(s):</label>
+                            <select id="select-asignados" class="form-select" multiple>
+                                <!-- Opciones se cargarán dinámicamente -->
+                            </select>
+                            <small class="text-muted">Podés seleccionar uno o más empleados.</small>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Bultos utilizados:</label>
+                            <div id="bultos-container"></div>
+                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" id="btn-agregar-bulto">
+                                <i class="fas fa-plus-circle me-1"></i> Agregar bulto
+                            </button>
                         </div>
                     </div>
                     <div class="modal-footer">
