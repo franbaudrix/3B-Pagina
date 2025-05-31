@@ -56,10 +56,6 @@ body {
     border-top: 1px dashed #eee;
 }
 
-#btn-completar-pedido {
-    display: none;
-}
-
 /* Estilos para los checkboxes */
 .form-check-input:checked {
     background-color: #28a745;

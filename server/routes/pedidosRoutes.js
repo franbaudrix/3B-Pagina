@@ -83,9 +83,13 @@ router.put('/:id', async (req, res) => {
           item.completado = itemUpdate.completado;
           item.motivoIncompleto = itemUpdate.completado ? null : itemUpdate.motivoIncompleto;
           item.observaciones = itemUpdate.completado ? null : itemUpdate.observaciones;
+          item.markModified?.('completado');
+          item.markModified?.('motivoIncompleto');
+          item.markModified?.('observaciones');
         }
       });
     }
+
 
     // Actualización de estado (excepto para actualizaciones de completados)
     if (estado && !esActualizacion) {
