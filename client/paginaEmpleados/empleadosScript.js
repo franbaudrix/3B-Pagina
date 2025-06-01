@@ -9,9 +9,9 @@ let pedidosData = [];
 let pedidoActual = null;
 let estadoOriginal = null;
 
-const API_URL = window.location.hostname === 'localhost'
+window.API_URL = window.API_URL || (window.location.hostname === 'localhost'
   ? 'http://localhost:3000'
-  : 'https://threeb-pagina.onrender.com';
+  : 'https://threeb-pagina.onrender.com');
 
 document.addEventListener('DOMContentLoaded', function() {
     // Verificar autenticación
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // Si estaba pendiente originalmente y no se completó, volver a pendiente
       if (estadoOriginal === 'pendiente' && pedidoActual.estado === 'en_proceso') {
         try {
-          await fetch(`${API_URL}/api/pedidos/${pedidoActual._id}`, {
+          await fetch(`${window.API_URL}/api/pedidos/${pedidoActual._id}`, {
             method: 'PUT',
             credentials: 'include',
             headers: {
@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // Carga y Visualización de Pedidos
 async function cargarPedidos() {
     try {
-        const response = await fetch(`${API_URL}/api/pedidos`, {
+        const response = await fetch(`${window.API_URL}/api/pedidos`, {
             credentials: 'include',
             headers: { 
                 'Content-Type': 'application/json',
@@ -207,7 +207,7 @@ function filtrarPedidos() {
 //Gestion detalles pedido
 async function mostrarDetallesPedido(id) {
     try {
-        const response = await fetch(`${API_URL}/api/pedidos/${id}`,{
+        const response = await fetch(`${window.API_URL}/api/pedidos/${id}`,{
             credentials: 'include',
             headers: { 
                 'Content-Type': 'application/json',
@@ -257,7 +257,7 @@ async function mostrarDetallesPedido(id) {
 
         // Si el pedido no está completado, marcarlo como en_proceso
         if (pedidoActual.estado !== 'completado') {
-          await fetch(`${API_URL}/api/pedidos/${pedidoActual._id}`, {
+          await fetch(`${window.API_URL}/api/pedidos/${pedidoActual._id}`, {
             method: 'PUT',
             credentials: 'include',
             headers: {
@@ -368,7 +368,7 @@ async function mostrarDetallesPedido(id) {
 
 async function cargarEmpleados() {
     try {
-        const response = await fetch(`${API_URL}/api/pedidos/empleados/listado`, {
+        const response = await fetch(`${window.API_URL}/api/pedidos/empleados/listado`, {
             credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
@@ -455,7 +455,7 @@ async function guardarEstadoItems() {
             };
         });
 
-        const response = await fetch(`${API_URL}/api/pedidos/${pedidoActual._id}/items`, {
+        const response = await fetch(`${window.API_URL}/api/pedidos/${pedidoActual._id}/items`, {
             method: 'PUT',
             credentials: 'include',
             headers: { 
@@ -518,7 +518,7 @@ async function completarPedido() {
         }
 
 
-        const response = await fetch(`${API_URL}/api/pedidos/${pedidoActual._id}/completar`, {
+        const response = await fetch(`${window.API_URL}/api/pedidos/${pedidoActual._id}/completar`, {
             method: 'PUT',
             credentials: 'include',
             headers: { 
