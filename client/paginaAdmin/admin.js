@@ -3,6 +3,10 @@ let subcategoriasDisponibles = [];
 let allProducts = [];
 let allUsers = [];
 
+window.API_URL = window.API_URL || (window.location.hostname === 'localhost'
+  ? 'http://localhost:3000'
+  : 'https://threeb-pagina.onrender.com');
+
 // Función para mostrar alertas
 function mostrarAlerta(mensaje, tipo = 'success') {
     const alerta = document.createElement('div');
@@ -18,7 +22,8 @@ function mostrarAlerta(mensaje, tipo = 'success') {
 // Función para cargar categorías
 async function loadCategories() {
     try {
-        const response = await fetch('http://localhost:3000/api/admin/categorias', {
+        const response = await fetch(`${window.API_URL}/api/admin/categorias`, {
+            credentials: 'include',
             headers: { 
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
@@ -73,7 +78,8 @@ async function loadSubcategories(categoriaId) {
     if (!categoriaId) return;
     
     try {
-        const response = await fetch(`http://localhost:3000/api/admin/categorias/${categoriaId}`, {
+        const response = await fetch(`${window.API_URL}/api/admin/categorias/${categoriaId}`, {
+            credentials:'include',
             headers: { 
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
@@ -106,8 +112,9 @@ async function agregarNuevaCategoria(nombre) {
             return false;
         }
 
-        const response = await fetch('http://localhost:3000/api/admin/categorias', {
+        const response = await fetch(`${window.API_URL}/api/admin/categorias`, {
             method: 'POST',
+            credentials:'include',
             headers: { 
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
@@ -142,8 +149,9 @@ async function agregarNuevaSubcategoria(categoriaId, nombreSubcategoria) {
             return;
         }
 
-        const response = await fetch(`http://localhost:3000/api/admin/categorias/${categoriaId}/subcategorias`, {
+        const response = await fetch(`${window.API_URL}/api/admin/categorias/${categoriaId}/subcategorias`, {
             method: 'POST',
+            credentials:'include',
             headers: { 
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
@@ -313,7 +321,8 @@ function actualizarBotonesAccion(fila, pedidoId, nuevoEstado) {
 
 async function cargarUsuarios() {
     try {
-        const response = await fetch('http://localhost:3000/api/auth/users', {
+        const response = await fetch(`${window.API_URL}/api/auth/users`, {
+            credentials:'include',
             headers: { 
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
@@ -391,8 +400,9 @@ async function crearUsuario(e) {
     };
 
     try {
-        const response = await fetch('http://localhost:3000/api/auth/register', {
+        const response = await fetch(`${window.API_URL}/api/auth/register`, {
             method: 'POST',
+            credentials:'include',
             headers: { 
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
@@ -424,8 +434,9 @@ async function eliminarUsuario(e) {
     if (!confirm('¿Estás seguro de eliminar este usuario?')) return;
     
     try {
-        const response = await fetch(`http://localhost:3000/api/auth/users/${usuarioId}`, {
+        const response = await fetch(`${window.API_URL}/api/auth/users/${usuarioId}`, {
             method: 'DELETE',
+            credentials:'include',
             headers: { 
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
@@ -447,7 +458,8 @@ async function editarUsuario(e) {
     const usuarioId = e.currentTarget.dataset.id;
     
     try {
-        const response = await fetch(`http://localhost:3000/api/auth/users/${usuarioId}`, {
+        const response = await fetch(`${window.API_URL}/api/auth/users/${usuarioId}`, {
+            credentials:'include',
             headers: { 
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
@@ -532,8 +544,9 @@ async function actualizarUsuario(usuarioId, e) {
     };
 
     try {
-        const response = await fetch(`http://localhost:3000/api/auth/users/${usuarioId}`, {
+        const response = await fetch(`${window.API_URL}/api/auth/users/${usuarioId}`, {
             method: 'PUT',
+            credentials:'include',
             headers: { 
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
@@ -611,19 +624,21 @@ document.addEventListener('DOMContentLoaded', () => {
     
             // Ahora crea el producto
             const url = editingId 
-                ? `http://localhost:3000/api/admin/producto/${editingId}`
-                : 'http://localhost:3000/api/admin/producto';
-    
+            ? `${window.API_URL}/api/admin/producto/${editingId}`
+            : `${window.API_URL}/api/admin/producto`;
+
             const method = editingId ? 'PUT' : 'POST';
-    
+
             const response = await fetch(url, {
                 method,
+                credentials: 'include', 
                 headers: { 
                     'Content-Type': 'application/json',
                     ...getAuthHeader()
                 },
                 body: JSON.stringify(productoData)
             });
+
     
             if (!response.ok) {
                 const errorData = await response.json();
@@ -736,7 +751,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cargar productos desde la API
     async function cargarProductos() {
         try {
-            const response = await fetch('http://localhost:3000/api/producto', {
+            const response = await fetch(`${window.API_URL}/api/producto`, {
+                credentials:'include',
                 headers: { 
                     'Content-Type': 'application/json',
                     ...getAuthHeader()
@@ -761,7 +777,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!id || id.length !== 24) {
                 throw new Error("ID de producto inválido");
             }
-            const response = await fetch(`http://localhost:3000/api/admin/producto/${id}`, {
+            const response = await fetch(`${window.API_URL}/api/admin/producto/${id}`, {
+                credentials:'include',
                 headers: { 
                     'Content-Type': 'application/json',
                     ...getAuthHeader()
@@ -807,8 +824,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!confirm('¿Estás seguro de eliminar este producto?')) return;
         
         try {
-          const response = await fetch(`http://localhost:3000/api/admin/producto/${id}`, {
+          const response = await fetch(`${window.API_URL}/api/admin/producto/${id}`, {
             method: 'DELETE',
+            credentials:'include',
             headers: { 
                 'Content-Type': 'application/json',
                 ...getAuthHeader()
@@ -854,12 +872,13 @@ document.addEventListener('DOMContentLoaded', () => {
     async function cargarPedidos() {
         try {
             // Construir URL con filtros
-            let url = 'http://localhost:3000/api/admin/pedidos?';
+            let url = `${window.API_URL}/api/admin/pedidos?`;
             if (filtroEstado.value !== 'todos') url += `estado=${filtroEstado.value}&`;
             if (filtroEnvio.value !== 'todos') url += `tipoEnvio=${filtroEnvio.value}&`;
             if (filtroFecha.value) url += `fecha=${filtroFecha.value}&`;
             
             const response = await fetch(url, {
+                credentials:'include',
                 headers: { 
                     'Content-Type': 'application/json',
                     ...getAuthHeader()
@@ -952,7 +971,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const pedidoId = e.currentTarget.dataset.id;
         
         try {
-            const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoId}`, {
+            const response = await fetch(`${window.API_URL}/api/pedidos/${pedidoId}`, {
+                credentials:'include',
                 headers: { 
                     'Content-Type': 'application/json',
                     ...getAuthHeader()
@@ -1063,8 +1083,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             
                 try {
-                    const response = await fetch(`/api/admin/pedidos/${pedidoId}`, {
+                    const response = await fetch(`${window.API_URL}/api/admin/pedidos/${pedidoId}`, {
                         method: 'DELETE',
+                        credentials:'include',
                         headers: { 
                             'Content-Type': 'application/json',
                             ...getAuthHeader()
@@ -1134,7 +1155,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const pedidoId = e.currentTarget.dataset.id;
         
         try {
-            const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoId}`, {
+            const response = await fetch(`${window.API_URL}/api/pedidos/${pedidoId}`, {
+                credentials:'include',
                 headers: { 
                     'Content-Type': 'application/json',
                     ...getAuthHeader()
@@ -1249,11 +1271,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const endpoint = nuevoEstado === 'completado' 
-            ? `http://localhost:3000/api/admin/pedidos/${pedidoId}/completar`
-            : `http://localhost:3000/api/admin/pedidos/${pedidoId}/estado`;
+            ? `${window.API_URL}/api/admin/pedidos/${pedidoId}/completar`
+            : `${window.API_URL}/api/admin/pedidos/${pedidoId}/estado`;
 
             const response = await fetch(endpoint, {
                 method: 'PUT',
+                credentials:'include',
                 headers: { 
                     'Content-Type': 'application/json',
                     ...getAuthHeader()
@@ -1325,8 +1348,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            const response = await fetch(`http://localhost:3000/api/admin/pedidos/${pedidoId}`, {
+            const response = await fetch(`${window.API_URL}/api/admin/pedidos/${pedidoId}`, {
                 method: 'DELETE',
+                credentials:'include',
                 headers: { 
                     'Content-Type': 'application/json',
                     ...getAuthHeader()

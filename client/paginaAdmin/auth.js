@@ -1,10 +1,13 @@
-const API_URL = 'http://localhost:3000/api';
+window.API_URL = window.API_URL || (window.location.hostname === 'localhost'
+  ? 'http://localhost:3000'
+  : 'https://threeb-pagina.onrender.com');
 
 // Función para iniciar sesión
 async function login(email, password) {
     try {
-        const response = await fetch(`${API_URL}/auth/login`, {
+        const response = await fetch(`${window.API_URL}/auth/login`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json'
             },

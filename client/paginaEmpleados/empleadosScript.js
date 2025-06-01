@@ -165,9 +165,6 @@ function mostrarPedidos(pedidos) {
                         <button class="btn btn-sm btn-outline-primary btn-ver-detalles" data-id="${pedido._id}">
                             <i class="fas fa-eye me-1"></i> Ver detalles
                         </button>
-                        <button class="btn btn-sm btn-outline-success btn-imprimir" data-id="${pedido._id}">
-                            <i class="fas fa-print me-1"></i> Imprimir
-                        </button>
                     </div>
                 </div>
             </div>
