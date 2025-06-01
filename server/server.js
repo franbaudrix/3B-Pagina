@@ -9,12 +9,24 @@ const path = require('path');
 const fs = require('fs');
 const { auth, admin } = require('./middleware/auth');
 
-const CLIENT_ORIGIN = 'https://threeb-clientes.onrender.com'; 
+const allowedOrigins = [
+  'https://threeb-clientes.onrender.com',
+  'https://threeb-pagina.onrender.com',
+  'http://127.0.0.1:5500',
+  'http://localhost:5500'
+];
 
 app.use(cors({
-  origin: CLIENT_ORIGIN,
-  credentials: true 
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS no permitido: ' + origin));
+    }
+  },
+  credentials: true
 }));
+
 
 // Middlewares
 app.use(express.json());
