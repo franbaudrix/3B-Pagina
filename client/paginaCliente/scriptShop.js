@@ -16,8 +16,8 @@ let categoriasDisponibles = [];
 let subcategoriasDisponibles = [];
 
 const API_BASE_URL = window.location.host.includes('localhost') || window.location.host.includes('127.0.0.1')
-  ? 'http://localhost:3000/api'  
-  : '/api';      
+  ? 'http://localhost:3000/api'
+  : 'https://threeb-pagina.onrender.com/api';
 
 // Función para actualizar el contador del carrito en ambas versiones
 function updateCartCount() {
