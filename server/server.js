@@ -44,8 +44,8 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/pedidos', pedidosRoutes);
 app.use('/api/auth', authRoutes);
 
-app.use('/admin', auth, express.static(path.join(__dirname, '../client/paginaAdmin')));
-app.use('/empleado', auth, express.static(path.join(__dirname, '../client/paginaEmpleados')));
+app.use('/admin', express.static(path.join(__dirname, '../client/paginaAdmin')));
+app.use('/empleado', express.static(path.join(__dirname, '../client/paginaEmpleados')));
 
 // Ruta de información del servidor
 app.get('/server-info', (req, res) => {
