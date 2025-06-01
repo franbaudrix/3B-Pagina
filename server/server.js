@@ -7,6 +7,8 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const path = require('path');
 const fs = require('fs');
+const { auth, admin } = require('./middleware/auth');
+const auth = require('./middleware/auth');
 
 const CLIENT_ORIGIN = 'https://threeb-clientes.onrender.com'; 
 
