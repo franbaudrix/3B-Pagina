@@ -5,7 +5,7 @@ window.API_URL = window.API_URL || (window.location.hostname === 'localhost'
 // Función para iniciar sesión
 async function login(email, password) {
     try {
-        const response = await fetch(`${window.API_URL}/auth/login`, {
+        const response = await fetch(`${window.API_URL}/api/auth/login`, {
             method: 'POST',
             credentials: 'include',
             headers: {
