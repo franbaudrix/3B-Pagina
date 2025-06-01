@@ -3,11 +3,6 @@ let subcategoriasDisponibles = [];
 let allProducts = [];
 let allUsers = [];
 
-const token = localStorage.getItem('token');
-if (!token) {
-  window.location.href = '/admin/login.html'; 
-}
-
 // Función para mostrar alertas
 function mostrarAlerta(mensaje, tipo = 'success') {
     const alerta = document.createElement('div');
@@ -26,7 +21,7 @@ async function loadCategories() {
         const response = await fetch('http://localhost:3000/api/admin/categorias', {
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                ...getAuthHeader()
             }
         });
         
@@ -81,7 +76,7 @@ async function loadSubcategories(categoriaId) {
         const response = await fetch(`http://localhost:3000/api/admin/categorias/${categoriaId}`, {
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                ...getAuthHeader()
             }
         });
         
@@ -115,7 +110,7 @@ async function agregarNuevaCategoria(nombre) {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                ...getAuthHeader()
             },
             body: JSON.stringify({ nombre })
         });
@@ -151,7 +146,7 @@ async function agregarNuevaSubcategoria(categoriaId, nombreSubcategoria) {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                ...getAuthHeader()
             },
             body: JSON.stringify({ nombre: nombreSubcategoria.trim() })
         });
@@ -321,7 +316,7 @@ async function cargarUsuarios() {
         const response = await fetch('http://localhost:3000/api/auth/users', {
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                ...getAuthHeader()
             }
         });
 
@@ -400,7 +395,7 @@ async function crearUsuario(e) {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                ...getAuthHeader()
             },
             body: JSON.stringify(usuario)
         });
@@ -433,7 +428,7 @@ async function eliminarUsuario(e) {
             method: 'DELETE',
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                ...getAuthHeader()
             }
         });
 
@@ -455,7 +450,7 @@ async function editarUsuario(e) {
         const response = await fetch(`http://localhost:3000/api/auth/users/${usuarioId}`, {
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                ...getAuthHeader()
             }
         });
 
@@ -541,7 +536,7 @@ async function actualizarUsuario(usuarioId, e) {
             method: 'PUT',
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                ...getAuthHeader()
             },
             body: JSON.stringify(usuario)
         });
@@ -625,7 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method,
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    ...getAuthHeader()
                 },
                 body: JSON.stringify(productoData)
             });
@@ -744,7 +739,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch('http://localhost:3000/api/producto', {
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    ...getAuthHeader()
                 }
             });
     
@@ -769,7 +764,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`http://localhost:3000/api/admin/producto/${id}`, {
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    ...getAuthHeader()
                 }
               });
             if (!response.ok) throw new Error('Error al cargar producto');
@@ -816,7 +811,7 @@ document.addEventListener('DOMContentLoaded', () => {
             method: 'DELETE',
             headers: { 
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                ...getAuthHeader()
             }
           });
       
@@ -867,7 +862,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(url, {
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    ...getAuthHeader()
                 }
             });
             
@@ -960,7 +955,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoId}`, {
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    ...getAuthHeader()
                 }
             });
             
@@ -1072,7 +1067,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         method: 'DELETE',
                         headers: { 
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
+                            ...getAuthHeader()
                         }
                     });
             
@@ -1142,7 +1137,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(`http://localhost:3000/api/pedidos/${pedidoId}`, {
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    ...getAuthHeader()
                 }
             });
             
@@ -1261,7 +1256,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'PUT',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    ...getAuthHeader()
                 },
                 body: JSON.stringify(body)
             });
@@ -1334,7 +1329,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 method: 'DELETE',
                 headers: { 
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    ...getAuthHeader()
                 }
             });
 
