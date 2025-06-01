@@ -8,12 +8,12 @@ const app = express();
 const path = require('path');
 const fs = require('fs');
 
-const corsOptions = {
-  origin: process.env.NODE_ENV === 'development' 
-    ? ['http://localhost:3000', 'http://127.0.0.1:5500'] 
-    : 'https://threeb-pagina.onrender.com', 
-  credentials: true,
-};
+const CLIENT_ORIGIN = 'https://threeb-clientes.onrender.com'; 
+
+app.use(cors({
+  origin: CLIENT_ORIGIN,
+  credentials: true 
+}));
 
 // Middlewares
 app.use(cors());
