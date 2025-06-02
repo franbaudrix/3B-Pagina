@@ -15,7 +15,7 @@ let pedidoTotal = 0; // Para almacenar temporalmente el total del pedido
 let categoriasDisponibles = [];
 let subcategoriasDisponibles = [];
 let currentPage = 1;
-const productsPerPage = 12;
+const productsPerPage = 500;
 let loadingProducts = false;
 let noMoreProducts = false;
 
@@ -24,26 +24,43 @@ const API_BASE_URL = window.location.host.includes('localhost') || window.locati
   : 'https://threeb-pagina.onrender.com/api';
 
 
+const SIMULACION_ACTIVA = true; 
+
 async function loadNextProducts() {
   if (loadingProducts || noMoreProducts) return;
   loadingProducts = true;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/producto?page=${currentPage}&limit=${productsPerPage}`);
-    
-    if (!response.ok) {
-      throw new Error('Error al obtener productos');
+    if (SIMULACION_ACTIVA) {
+      const productosFalsos = Array.from({ length: productsPerPage }, (_, i) => {
+        const index = (currentPage - 1) * productsPerPage + i + 1;
+        return {
+          _id: `fake-${index}`,
+          nombre: `Producto Simulado ${index}`,
+          precio: 50 + index,
+          categoria: 'simulada',
+          subcategoria: 'test',
+          imagen: 'img/almendra.jpg', 
+        };
+      });
+
+      allProducts.push(...productosFalsos);
+      displayProducts(productosFalsos);
+      currentPage++;
+
+      if (currentPage > 10) noMoreProducts = true; // limitar para no hacerlo infinito
+      loadingProducts = false;
+      return;
     }
 
+    // 👇 flujo real si SIMULACION_ACTIVA es false
+    const response = await fetch(`${API_BASE_URL}/producto?page=${currentPage}&limit=${productsPerPage}`);
     const data = await response.json();
 
-    if (!data || data.length < productsPerPage) {
-      noMoreProducts = true;
-    }
-
+    if (!data || data.length < productsPerPage) noMoreProducts = true;
     if (data.length > 0) {
       allProducts.push(...data);
-      displayProducts(data); 
+      displayProducts(data);
       currentPage++;
     }
 
@@ -53,6 +70,21 @@ async function loadNextProducts() {
     loadingProducts = false;
   }
 }
+
+window.addEventListener('scroll', () => {
+    console.log('scroll detectado');
+  const scrollY = window.scrollY;
+  const innerHeight = window.innerHeight;
+  const bodyHeight = document.body.offsetHeight;
+
+  const threshold = 300; 
+
+  if (scrollY + innerHeight + threshold >= bodyHeight) {
+    console.log('Cargando más productos...');
+    loadNextProducts();
+  }
+});
+
 
 // Función para actualizar el contador del carrito en ambas versiones
 function updateCartCount() {
