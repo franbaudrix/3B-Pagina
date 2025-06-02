@@ -919,9 +919,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button class="btn btn-sm btn-success btn-confirmar me-2" data-id="${pedido._id}">
                             <i class="bi bi-check"></i>
                         </button>
-                        <button class="btn btn-sm btn-danger btn-cancelar" data-id="${pedido._id}">
-                            <i class="bi bi-x"></i>
-                        </button>
                     ` : ''}
                     ${pedido.estado === 'pendiente' ? `
                         <button class="btn btn-sm btn-primary btn-completar" data-id="${pedido._id}">
@@ -947,10 +944,6 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.querySelectorAll('.btn-confirmar').forEach(btn => {
             btn.addEventListener('click', () => cambiarEstadoPedido(btn.dataset.id, 'pendiente'));
-        });
-        
-        document.querySelectorAll('.btn-cancelar').forEach(btn => {
-            btn.addEventListener('click', () => cambiarEstadoPedido(btn.dataset.id, 'cancelado'));
         });
         
         document.querySelectorAll('.btn-completar').forEach(btn => {

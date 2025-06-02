@@ -2,17 +2,40 @@ body{
     font-family: 'Montserrat', sans-serif;
 }
 
+#sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  background-color: #a00809;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+}
 
+.logo-floating {
+  padding: 10px !important;   
+  height: 400px;
+  width: 400px;
+}
+
+.logo-floating img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(0,0,0,0.4);
+}
+
+.col-lg-12{
+    background-color: #ba0202;
+}
 
 .cart-visible {
     transform: translateX(0) !important;
 }
 
 .header__menu {
-    padding: 1; /* Eliminamos el padding original */
     display: flex;
-    align-items: center; /* Centrado vertical */
-    height: 100%; /* Ocupa toda la altura del contenedor padre */
+    align-items: center; 
+    height: 100%; 
 }
 
 .header__menu ul {
@@ -37,7 +60,7 @@ body{
     font-weight: 700;
     letter-spacing: 2px;
     transition: all 0.3s;
-    padding: 5px 0;
+    padding: 20px;
     display: block;
     text-decoration: none !important; /* Elimina el subrayado */
 }
@@ -54,12 +77,10 @@ body{
     height: 100%; /* Ocupa toda la altura del header */
 }
 
-/* Opcional: ajustar el logo para que esté alineado con el menú */
 .header__logo {
     display: flex;
     align-items: center;
     height: 100%;
-    padding: 0;
 }
 
 .header__cart .header__cart__price {
@@ -85,9 +106,22 @@ header{
     z-index: 999; /* Asegura que esté sobre otros elementos */
 }
 
+.custom-btn{
+    background-color: transparent !important;
+}
+
 .btn{
     background-color: #ba0202;
 }
+
+.btn-custom {
+  background: none;
+  border: none;
+  padding: 0.1rem 1px;
+  font-size: 20px !important;
+  color: white;
+}
+
 
 #cart-toggle{
     background-color: #fbe70b !important;
@@ -315,30 +349,41 @@ header{
     border-top: 1px solid #f0f0f0;
 }
 
-/* Estilo del botón */
-.product-card .btn-product-card {
-    border-radius: 0 !important;
-    padding: 8px 0;
+/* Estado inicial - Front visible */
+.front-content {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
-/* Efecto hover */
+/* Estado hover - Back visible */
+.product-card:hover .front-content {
+    opacity: 0;
+    visibility: hidden;
+}
+
 .product-card:hover .back-content {
     opacity: 1;
     visibility: visible;
 }
 
-/* Asegurar que el botón siempre sea visible */
+.back-content {
+    opacity: 0;
+    visibility: hidden;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+/* Botón fijo (sin cambios) */
 .product-card .fixed-bottom-btn {
     position: sticky;
     bottom: 0;
     z-index: 1;
 }
-
-.product-card .front-content {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-} 
 
 
 /* Estilos para los filtros */
@@ -383,10 +428,8 @@ select:disabled {
 }
 
 #cart-toggle-mobile {
-    padding: 5px 10px;
-    background-color: #fbe70b !important;
-    color: #ba0202 !important;
-    border-radius: 10px;
+    background-color: #fbe70ba9 !important;
+    color: #ffffff !important;
 }
 
 .product-card .front-content .card-body {
@@ -431,7 +474,24 @@ select:disabled {
     margin-top: 0 !important;            /* elimina hueco extra          */
 }
 
+@keyframes buttonPulse {
+  0% {
+    transform: scale(1);
+    background-color: #dc3545; /* rojo original */
+  }
+  50% {
+    transform: scale(1.08);
+    background-color: #ff6b6b;
+  }
+  100% {
+    transform: scale(1);
+    background-color: #dc3545;
+  }
+}
 
+.btn-pulse {
+  animation: buttonPulse 0.4s ease;
+}
 
 @media (max-width: 992px) {
     header .row {
@@ -447,7 +507,6 @@ select:disabled {
 
     .header__logo {
         text-align: center;
-        margin-bottom: 1rem;
     }
 
     .header__logo img {

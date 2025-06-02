@@ -14,10 +14,45 @@ let pedidoItems = []; // Para almacenar temporalmente los items del pedido
 let pedidoTotal = 0; // Para almacenar temporalmente el total del pedido
 let categoriasDisponibles = [];
 let subcategoriasDisponibles = [];
+let currentPage = 1;
+const productsPerPage = 12;
+let loadingProducts = false;
+let noMoreProducts = false;
 
 const API_BASE_URL = window.location.host.includes('localhost') || window.location.host.includes('127.0.0.1')
   ? 'http://localhost:3000/api'
   : 'https://threeb-pagina.onrender.com/api';
+
+
+async function loadNextProducts() {
+  if (loadingProducts || noMoreProducts) return;
+  loadingProducts = true;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/producto?page=${currentPage}&limit=${productsPerPage}`);
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener productos');
+    }
+
+    const data = await response.json();
+
+    if (!data || data.length < productsPerPage) {
+      noMoreProducts = true;
+    }
+
+    if (data.length > 0) {
+      allProducts.push(...data);
+      displayProducts(data); 
+      currentPage++;
+    }
+
+  } catch (error) {
+    console.error('Error al cargar productos:', error);
+  } finally {
+    loadingProducts = false;
+  }
+}
 
 // Función para actualizar el contador del carrito en ambas versiones
 function updateCartCount() {
@@ -216,6 +251,12 @@ function updateSubcategorias() {
         });
     }
 }
+
+window.addEventListener('scroll', () => {
+  const scrollBottom = window.innerHeight + window.scrollY >= document.body.offsetHeight - 300;
+  if (scrollBottom) loadNextProducts();
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
     try {
 
@@ -224,9 +265,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 1. Cargar productos
         await loadCategories();
 
-        const response = await fetch(`${API_BASE_URL}/producto`);
-        allProducts = await response.json();
-        displayProducts(allProducts);
+        await loadNextProducts();
         
         // Configurar eventos de filtrado
         document.getElementById('categoria-filter').addEventListener('change', () => {
@@ -407,7 +446,6 @@ function displayProducts(productos) {
                     <div class="card-body p-2">
                         <h2 class="card-title mb-1">${producto.nombre}</h2>
                         <h4 class="card-text mb-2">$${producto.precio.toFixed(2)}</h4>
-                        <!--<h5 class="bg-danger text-white p-1 rounded">Precio e</h5>-->
                     </div>
                     ${producto.unidadMedida === 'kg' ? `
                     <div class="p-3">
@@ -422,7 +460,7 @@ function displayProducts(productos) {
                     </div>
                     ` : `
                     <div class="p-3">
-                        <label for="amount" class="form-label">Cantidad:</label>
+                        <label for="amount" class="form-label small mb-1">Cantidad:</label>
                         <select name="amount" class="form-select form-select-sm amount-select">
                             <option value="1">1 unidad</option>
                             <option value="2">2 unidades</option>
@@ -498,7 +536,7 @@ function initializeProductCards() {
 
                 return basePrice * weightFactor;
             } else {
-                const selectedValue = parseInt(amountSelect.value);
+                let selectedValue = parseInt(amountSelect.value);
                 if (amountSelect.value === 'custom') {
                     selectedValue = parseInt(customAmountInput.value) || 1;
                 }
@@ -516,11 +554,22 @@ function initializeProductCards() {
 
         // Función para añadir producto al carrito
         function addToCart(button) {
+            button.classList.add('btn-pulse');
+            setTimeout(() => button.classList.remove('btn-pulse'), 400);
             const productCard = button.closest('.product-card');
+            const frontContent = productCard.querySelector('.front-content');
+            const backContent = productCard.querySelector('.back-content');
+
             if (!productCard) {
                 console.error('No se encontró el elemento product-card');
                 return;
             }
+
+            // Restaurar visibilidad mediante clases/estilos compatibles con hover
+            frontContent.style.removeProperty('opacity');
+            frontContent.style.removeProperty('visibility');
+            backContent.style.removeProperty('opacity');
+            backContent.style.removeProperty('visibility');
         
             const productId = productCard.dataset.productId;
             const productName = productCard.dataset.productName;
@@ -531,7 +580,7 @@ function initializeProductCards() {
             let subtotal = basePrice;
             let selectedAmount = 1;
             let totalPriceForItem = basePrice;
-        
+
             if (unidadMedida === 'kg') {
                 const weightSelect = productCard.querySelector('.weight-select');
                 const customWeightInput = productCard.querySelector('.custom-weight-input');
@@ -539,7 +588,11 @@ function initializeProductCards() {
                 const selectedWeight = weightSelect.value;
                 let weightFactor = weightOptions[selectedWeight];
                 weightText = weightSelect.options[weightSelect.selectedIndex].text;
-        
+                
+                weightSelect.value = 'one-kg'; // Peso por defecto: 1kg
+                productCard.querySelector('.weight-select').value = 'one-kg';
+                productCard.querySelector('.custom-weight-input').style.display = 'none';
+
                 if (selectedWeight === "other-kg") {
                     weightFactor = parseFloat(customWeightInput.value) || 0;
                     weightText = `${customWeightInput.value} kg`;
@@ -551,6 +604,10 @@ function initializeProductCards() {
                 const amountSelect = productCard.querySelector('.amount-select');
                 const customAmountInput = productCard.querySelector('.custom-amount-input');
                 
+                amountSelect.value = '1'; // Cantidad por defecto: 1 unidad
+                productCard.querySelector('.amount-select').value = '1';
+                productCard.querySelector('.custom-amount-input').style.display = 'none';
+
                 if (amountSelect.value === 'custom') {
                     selectedAmount = parseInt(customAmountInput.value) || 1;
                     weightText = `${selectedAmount} unidades`;
@@ -561,6 +618,8 @@ function initializeProductCards() {
                 
                 totalPriceForItem = basePrice * selectedAmount;
             }
+
+            void productCard.offsetHeight;
         
             // Obtener o crear el tbody de la tabla
             let tableBody = document.querySelector('#tablaCarrito tbody');
@@ -573,7 +632,7 @@ function initializeProductCards() {
             if (tableBody.rows.length === 0) {
                 const headerRow = tableBody.insertRow();
                 headerRow.className = 'table-header';
-                const headers = ['Producto', 'Precio Unitario', 'Peso'];
+                const headers = ['Producto', 'Precio Unitario', 'Peso / Unidad'];
                 headers.forEach(text => {
                     const cell = headerRow.insertCell();
                     cell.innerHTML = `<strong>${text}</strong>`;
@@ -597,7 +656,7 @@ function initializeProductCards() {
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
             removeBtn.className = 'btn btn-sm btn-danger';
-            removeBtn.textContent = 'Remover';
+            removeBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
             removeBtn.onclick = function() {
                 borrarProducto(this);
             };
@@ -621,6 +680,8 @@ function initializeProductCards() {
                 saveBtn.addEventListener('click', prepararPedido);
                 cartFooter.appendChild(saveBtn);
             }
+
+            updatePriceDisplay();
     
         }
 

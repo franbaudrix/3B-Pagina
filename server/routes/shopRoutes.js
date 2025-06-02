@@ -6,9 +6,9 @@ const Categoria = require('../models/categorias');
 // GET: Obtener todos los productos (con filtros opcionales)
 router.get('/producto', async (req, res) => {
   try {
-    const { categoria, subcategoria, search } = req.query;
-    let query = {};
-    
+    const { categoria, subcategoria, search, page = 1, limit = 12 } = req.query;
+    const query = {};
+
     if (categoria) query.categoria = categoria;
     if (subcategoria) query.subcategoria = subcategoria;
     if (search) {
@@ -17,13 +17,17 @@ router.get('/producto', async (req, res) => {
         { descripcion: { $regex: search, $options: 'i' } }
       ];
     }
-    
-    const productos = await Producto.find(query);
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const productos = await Producto.find(query).skip(skip).limit(parseInt(limit));
+
     res.json(productos);
   } catch (error) {
-    res.status(500).json({ error: "Error al obtener productos" });
+    console.error('Error al obtener productos paginados:', error);
+    res.status(500).json({ error: 'Error al obtener productos' });
   }
 });
+
 
 // GET: Obtener categorías y subcategorías disponibles (versión mejorada)
 router.get('/categorias', async (req, res) => {

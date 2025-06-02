@@ -14,8 +14,37 @@ header{
     width: 100%; /* Asegura que ocupe todo el ancho */
 }
 
+#sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 1020;
+  background-color: #a00809;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+}
+
+.logo-floating {
+  padding: 10px !important;   
+  height: 400px;
+  width: 400px;
+}
+
+.logo-floating img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 0 5px rgba(0,0,0,0.4);
+}
+
+.custom-row{
+    background-color: #ba0202 !important;
+}
+
+.col-4 h5{
+    color: white;
+}
+
 .header__menu {
-    padding: 1; /* Eliminamos el padding original */
     display: flex;
     align-items: center; /* Centrado vertical */
     height: 100%; /* Ocupa toda la altura del contenedor padre */
@@ -25,7 +54,6 @@ header{
     width: 100%;
     display: flex;
     justify-content: center; /* Centrado horizontal */
-    padding: 0;
     margin: 0;
 }
 
@@ -37,17 +65,16 @@ header{
 }
 
 .header__menu ul li a {
-    font-size: 16px; 
+    font-size: 16px; /* Tamaño más grande (original era 14px) */
     color: white;
     text-transform: uppercase;
     font-weight: 700;
     letter-spacing: 2px;
     transition: all 0.3s;
-    padding: 5px 0;
+    padding: 20px;
     display: block;
     text-decoration: none !important; /* Elimina el subrayado */
 }
-
 .header__menu ul li a:hover,
 .header__menu ul li.active a {
     color: #fbe70b;
@@ -57,15 +84,12 @@ header{
 .header__menu .btn-outline-light {
     color: #ffffff;
     border: none;
-    padding: 5px 10px;
     font-size: 1.2rem !important;
 }
 
 .active-mobile{
     color: #fbe70b !important;
 }
-
-
 
 /* Ajustamos el contenedor principal para que todo esté alineado */
 .row {
@@ -78,7 +102,6 @@ header{
     display: flex;
     align-items: center;
     height: 100%;
-    padding: 0;
 }
 
 .header__cart .header__cart__price {
@@ -92,6 +115,10 @@ header{
 	font-weight: 700;
 }
 
+.custom-btn {
+    background-color: transparent !important;
+}
+
 .btn{
     background-color: #ba0202;
 }
@@ -102,8 +129,8 @@ header{
         
 .hero {
     position: relative;
-    height: 50vh; /* Cambiado de 80vh a 50vh */
-    min-height: 500px; /* Reducido de 500px */
+    height: 50vh; 
+    min-height: 500px; 
     overflow: hidden;
 }
 
@@ -259,7 +286,6 @@ a, button {
 
     .header__logo {
         text-align: center;
-        margin-bottom: 1rem;
     }
 
     .header__logo img {
@@ -270,15 +296,6 @@ a, button {
         /* Estilo inicial del logo en móviles */
     .logo-mobile {
         transition: all 0.3s ease; /* Transición suave */
-    }
-
-    /* Clase que oculta el logo y elimina su espacio */
-    .logo-mobile.hidden {
-        opacity: 0;
-        height: 0 !important; /* Elimina el espacio */
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden;
     }
 
 }
@@ -294,11 +311,5 @@ a, button {
 
     .header__logo img {
         width: 25% !important;
-    }
-
-    #header-mobile-buttons a,
-    #header-mobile-buttons button {
-        font-size: 0.8rem;
-        padding: 0.4rem;
     }
 }

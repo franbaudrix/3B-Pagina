@@ -29,7 +29,7 @@ async function login(email, password) {
         if (data.user.role === 'admin') {
             window.location.href = 'admin.html';
         } else {
-            window.location.href = './paginaEmpleados/pedidos.html';
+            window.location.href = 'pedidos.html';
         }
         
         return data;
