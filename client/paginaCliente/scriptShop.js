@@ -99,6 +99,14 @@ const weightOptions = {
 // Función para guardar el pedido en la base de datos
 async function prepararPedido() {
     try {
+        if (cartContainer.classList.contains('cart-visible')) {
+            cartContainer.classList.remove('cart-visible');
+            setTimeout(() => {
+                cartContainer.style.display = 'none';
+            }, 300); 
+            document.body.style.overflow = ''; 
+        }
+
         const items = [];
         const filas = document.querySelectorAll('#tablaCarrito tbody tr:not(.table-header)');
         

@@ -127,6 +127,17 @@ header{
     background-color: #fbe70b !important;
 }
 
+#cart-container {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+#cart-container.cart-visible {
+    transform: translateX(0);
+    opacity: 1;
+}
+
 /* Estilos para el modal de datos del cliente */
 .envio-fields {
     background-color: rgba(255, 255, 255, 0.05);
