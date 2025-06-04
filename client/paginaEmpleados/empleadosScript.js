@@ -9,9 +9,12 @@ let pedidosData = [];
 let pedidoActual = null;
 let estadoOriginal = null;
 
-window.API_URL = window.API_URL || (window.location.hostname === 'localhost'
-  ? 'http://localhost:3000'
-  : 'https://threeb-pagina.onrender.com');
+window.API_URL = window.API_URL || (
+  ['localhost', '127.0.0.1', '0.0.0.0'].includes(window.location.hostname)
+    ? 'http://localhost:3000'
+    : 'https://threeb-pagina.onrender.com'
+);
+
 
 document.addEventListener('DOMContentLoaded', function() {
     // Verificar autenticación
@@ -300,7 +303,7 @@ async function mostrarDetallesPedido(id) {
                                id="item-${index}"
                                ${item.completado ? 'checked' : ''}>
                         <label class="form-check-label" for="item-${index}">
-                            <h6 class="mb-1 ${item.completado ? '' : 'text-decoration-line-through'}">${item.nombre}</h6>
+                            <h6 class="mb-1 ${item.completado}">${item.nombre}</h6>
                             <small class="text-muted">${item.peso} • ${item.cantidad} unidad(es)</small>
                         </label>
                     </div>
@@ -524,7 +527,12 @@ async function completarPedido() {
             },
             body: JSON.stringify({ 
                 estado: estadoSeleccionado,
-                items: itemsGuardados.items || [],
+                items: pedidoActual.items.map(item => ({
+                    _id: item._id,
+                    completado: item.completado,
+                    motivoIncompleto: item.motivoIncompleto,
+                    observaciones: item.observaciones
+                })),
                 asignados,
                 bultos
             })

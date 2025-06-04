@@ -772,7 +772,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Funciones globales para botones
     window.editarProducto = async (id) => {
         try {
-            console.log("Editando producto ID:", id); // Debug
         
             if (!id || id.length !== 24) {
                 throw new Error("ID de producto inválido");
@@ -790,6 +789,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('nombre').value = producto.nombre;
             document.getElementById('precio').value = producto.precio;
             document.getElementById('imagen').value = producto.imagen;
+            document.getElementById('categoria').value = producto.categoria;
+            document.getElementById('subcategoria').value = producto.subcategoria;
             document.getElementById('descripcion').value = producto.descripcion || '';
             document.getElementById('unidadMedida').value = producto.unidadMedida || 'kg';
             editingId = producto._id;
@@ -864,36 +865,47 @@ document.addEventListener('DOMContentLoaded', () => {
     [filtroEstado, filtroEnvio, filtroFecha].forEach(filter => {
         filter.addEventListener('change', cargarPedidos);
     });
-    
+
+    // Event listener para búsqueda por nombre
+    document.getElementById('filtro-nombre').addEventListener('input', cargarPedidos);
+
     // Cargar pedidos cuando se muestra la pestaña
     document.getElementById('pedidos-tab').addEventListener('shown.bs.tab', cargarPedidos);
-    
+
     // Función para cargar pedidos
     async function cargarPedidos() {
         try {
-            // Construir URL con filtros
+            // Construir URL con filtros de estado, envío y fecha
             let url = `${window.API_URL}/api/admin/pedidos?`;
             if (filtroEstado.value !== 'todos') url += `estado=${filtroEstado.value}&`;
             if (filtroEnvio.value !== 'todos') url += `tipoEnvio=${filtroEnvio.value}&`;
             if (filtroFecha.value) url += `fecha=${filtroFecha.value}&`;
-            
+
             const response = await fetch(url, {
-                credentials:'include',
-                headers: { 
+                credentials: 'include',
+                headers: {
                     'Content-Type': 'application/json',
                     ...getAuthHeader()
                 }
             });
-            
+
             if (!response.ok) throw new Error('Error al cargar pedidos');
-            const pedidos = await response.json();
-            
+            let pedidos = await response.json();
+
+            const filtroNombre = document.getElementById('filtro-nombre').value.trim().toLowerCase();
+            if (filtroNombre) {
+                pedidos = pedidos.filter(p =>
+                    p.cliente?.nombre?.toLowerCase().includes(filtroNombre)
+                );
+            }
+
             renderPedidos(pedidos);
         } catch (error) {
             console.error('Error al cargar pedidos:', error);
             mostrarAlerta('Error al cargar pedidos', 'danger');
         }
     }
+
     
     // Función para renderizar la tabla de pedidos
     function renderPedidos(pedidos) {
@@ -988,10 +1000,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 ` : ''}
             `;
             
+            const mensajeWhatsApp = pedido.estado === 'completado'
+                ? generarMensajeWhatsApp(pedido)
+                : `\u{1F44B} ¡Hola ${pedido.cliente.nombre}! Gracias por tu pedido \u{1F4E6}\u{1F4B0}`;
+
             document.getElementById('cliente-contacto').innerHTML = `
-                <strong>WhatsApp:</strong> <a href="https://wa.me/${pedido.cliente.whatsapp}?text=${encodeURIComponent(generarMensajeWhatsApp(pedido))}" target="_blank">${pedido.cliente.whatsapp}</a><br>
+                <strong>WhatsApp:</strong> <a href="https://wa.me/${pedido.cliente.whatsapp}?text=${encodeURIComponent(mensajeWhatsApp)}" target="_blank">${pedido.cliente.whatsapp}</a><br>
                 <strong>Email:</strong> ${pedido.cliente.email}
             `;
+
             
             // Información de envío
             document.getElementById('envio-info').textContent = 
@@ -1043,8 +1060,15 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             
-            document.getElementById('pedido-total').textContent = pedido.total.toLocaleString('es-AR');
+            //document.getElementById('pedido-subtotal').textContent = pedido.total.toLocaleString('es-AR');
             
+            const totalMostrado = pedido.estado === 'completado'
+                ? pedido.items.reduce((sum, item) => sum + (item.completado ? item.precioTotal : 0), 0)
+                : pedido.total;
+
+            document.getElementById('pedido-total').textContent = totalMostrado.toLocaleString('es-AR');
+
+
             // Configurar acciones según estado
             const accionesDiv = document.getElementById('acciones-pedido');
             accionesDiv.innerHTML = '';
@@ -1114,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function generarMensajeWhatsApp(pedido) {
         let mensaje = `¡Hola ${pedido.cliente.nombre}! 👋\n\n`;
-        mensaje += `Aquí tienes los detalles de tu pedido #${pedido._id.toString().substring(18, 24)}:\n\n`;
+        mensaje += `Te comento los detalles de tu pedido #${pedido._id.toString().substring(18, 24)}:\n\n`;
         
         // Lista de productos
         mensaje += `📦 *Productos:*\n`;

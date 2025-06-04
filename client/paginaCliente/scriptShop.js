@@ -339,86 +339,74 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         // Manejar confirmación de pedido
-        document.getElementById('confirmar-pedido').addEventListener('click', async function() {
+        document.getElementById('confirmar-pedido').addEventListener('click', async function () {
+            const form = document.getElementById('client-data-form');
+
+            // Forzar validación HTML5 del navegador
+            if (!form.checkValidity()) {
+                form.classList.add('was-validated');
+                return; // Detener si hay campos inválidos
+            }
+
             const tipoEnvio = document.getElementById('tipo-envio').value;
             const nombre = document.getElementById('nombre-cliente').value;
             const whatsapp = document.getElementById('whatsapp-cliente').value;
             const email = document.getElementById('email-cliente').value;
             const observaciones = document.getElementById('observaciones').value;
-        
-            // Validar campos comunes
-            if (!tipoEnvio || !nombre || !whatsapp || !email) {
-                alert('Por favor complete todos los campos obligatorios');
-                return;
-            }
-        
-            // Preparar objeto con datos del cliente
+
             const clienteData = {
-                tipoEnvio: tipoEnvio,
-                nombre: nombre,
-                whatsapp: whatsapp,
-                email: email,
-                observaciones: observaciones
+                tipoEnvio,
+                nombre,
+                whatsapp,
+                email,
+                observaciones
             };
-        
-            // Agregar datos específicos según el tipo de envío
+
+            // Recolectar dirección según tipo de envío
             if (tipoEnvio === 'bahia-blanca') {
                 clienteData.calle = document.getElementById('calle-bahia').value;
                 clienteData.numero = document.getElementById('numero-bahia').value;
-                
-                if (!clienteData.calle || !clienteData.numero) {
-                    alert('Por favor complete la dirección para envío en Bahía Blanca');
-                    return;
-                }
-            } 
-            else if (tipoEnvio === 'otra-localidad') {
+            } else if (tipoEnvio === 'otra-localidad') {
                 clienteData.localidad = document.getElementById('localidad-otra').value;
                 clienteData.provincia = document.getElementById('provincia-otra').value;
                 clienteData.codigoPostal = document.getElementById('cp-otra').value;
                 clienteData.calle = document.getElementById('calle-otra').value;
                 clienteData.numero = document.getElementById('numero-otra').value;
-                
-                if (!clienteData.localidad || !clienteData.provincia || !clienteData.codigoPostal || 
-                    !clienteData.calle || !clienteData.numero) {
-                    alert('Por favor complete todos los campos de dirección para envío a otra localidad');
-                    return;
-                }
             }
-        
+
+            // Procesar envío
             try {
-                // Mostrar spinner o indicador de carga
                 this.disabled = true;
                 this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Procesando...';
-                
+
                 const resultado = await enviarPedidoCompleto(clienteData);
-                
-                // Limpiar carrito después de éxito
+
+                // Limpiar carrito
                 document.querySelector('#tablaCarrito tbody').innerHTML = '';
                 totalPrice = 0;
                 totalDisplay.textContent = '$0.00';
                 cartItemCount = 0;
                 cartCountDisplay.textContent = '0';
-                
-                // Eliminar botón de guardar si existe
+
                 const saveBtn = document.querySelector('#save-order-btn');
                 if (saveBtn) saveBtn.remove();
-                
-                // Mostrar mensaje de éxito
-                alert(`Pedido #${resultado._id} guardado correctamente!`);
-                
-                // Cerrar modal
+
+                const confirmModal = new bootstrap.Modal(document.getElementById('pedido-confirmado-modal'));
+                confirmModal.show();
+
                 const modal = bootstrap.Modal.getInstance(document.getElementById('client-data-modal'));
                 modal.hide();
-                
+                this.disabled = false;
+                this.textContent = 'Confirmar Pedido';
+
             } catch (error) {
                 console.error('Error al enviar pedido:', error);
                 alert('Error al guardar el pedido: ' + error.message);
-                
-                // Restaurar botón
                 this.disabled = false;
                 this.textContent = 'Confirmar Pedido';
             }
         });
+
 
     } catch (error) {
         console.error('Error al cargar productos:', error);
