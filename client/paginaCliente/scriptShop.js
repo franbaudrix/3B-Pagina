@@ -24,7 +24,7 @@ const API_BASE_URL = window.location.host.includes('localhost') || window.locati
   : 'https://threeb-pagina.onrender.com/api';
 
 
-const SIMULACION_ACTIVA = true; 
+const SIMULACION_ACTIVA = false; 
 
 async function loadNextProducts() {
   if (loadingProducts || noMoreProducts) return;

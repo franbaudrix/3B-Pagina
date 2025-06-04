@@ -899,12 +899,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPedidos(pedidos) {
         tablaPedidos.innerHTML = pedidos.map(pedido => `
             <tr data-id="${pedido._id}">
-                <td>${pedido._id.toString().substring(18)}</td>
                 <td>${pedido.cliente.nombre}</td>
                 <td>
                     ${pedido.tipoEnvio === 'retiro' ? 'Retiro en local' : 
                       pedido.cliente.direccion?.localidad || 'Bahía Blanca'}
                 </td>
+                <td>${new Date(pedido.fecha).toLocaleString()}</td>
                 <td>$${pedido.total.toLocaleString('es-AR')}</td>
                 <td>
                     <span class="badge badge-estado ${getEstadoClass(pedido.estado)}">
@@ -964,7 +964,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const pedidoId = e.currentTarget.dataset.id;
         
         try {
-            const response = await fetch(`${window.API_URL}/api/pedidos/${pedidoId}`, {
+            const response = await fetch(`${window.API_URL}/api/admin/pedidos/${pedidoId}`, {
                 credentials:'include',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -973,8 +973,8 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (!response.ok) throw new Error('Error al cargar pedido');
-            const pedido = await response.json();
-            
+            const pedido = await response.json();   
+            console.log('pedido.completadoPor:', pedido.completadoPor);
             // Llenar modal con datos del pedido
             document.getElementById('pedido-id').textContent = pedido._id.toString().substring(18);
             
@@ -1025,19 +1025,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 </tr>
             `).join('');
 
-            if (pedido.estado === 'completado') {
-                const completados = pedido.items.filter(item => item.completado).length;
-                const noCompletados = pedido.items.length - completados;
-                
-                itemsBody.insertAdjacentHTML('afterend', `
-                    <div class="mt-3">
-                        <h5>Resumen de Entrega</h5>
-                        <p><strong>Completado por:</strong> ${pedido.completadoPor?.name}</p>
-                        <p><strong>Fecha de completado:</strong> ${new Date(pedido.fechaCompletado).toLocaleString()}</p>
-                        <p><strong>Observaciones generales:</strong> ${pedido.observaciones || 'Ninguna'}</p>
-                    </div>
-                `);
-            }
+            const resumenEntrega = document.getElementById('resumen-entrega');
+            resumenEntrega.innerHTML = `
+                <h5>Resumen de Entrega</h5>
+                <p><strong>Completado por:</strong> ${pedido.completadoPor ? pedido.completadoPor.name : 'No completado aún'}</p>
+                <p><strong>Asignados:</strong> ${
+                    pedido.asignados && pedido.asignados.length > 0
+                    ? pedido.asignados.map(user => user.name).join(', ')
+                    : 'Ninguno'
+                }</p>
+                <p><strong>Fecha de completado:</strong> ${
+                    pedido.fechaCompletado
+                    ? new Date(pedido.fechaCompletado).toLocaleString()
+                    : 'No completado aún'
+                }</p>
+                <p><strong>Observaciones generales:</strong> ${pedido.observaciones || 'Ninguna'}</p>
+            `;
+
             
             document.getElementById('pedido-total').textContent = pedido.total.toLocaleString('es-AR');
             
@@ -1148,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const pedidoId = e.currentTarget.dataset.id;
         
         try {
-            const response = await fetch(`${window.API_URL}/api/pedidos/${pedidoId}`, {
+            const response = await fetch(`${window.API_URL}/api/admin/pedidos/${pedidoId}`, {
                 credentials:'include',
                 headers: { 
                     'Content-Type': 'application/json',

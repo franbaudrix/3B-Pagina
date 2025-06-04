@@ -18,8 +18,8 @@ const ItemSchema = new mongoose.Schema({
 });
 
 const PedidoSchema = new mongoose.Schema({
-  usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }, 
-  asignados: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Usuario' }],
+  usuario: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, 
+  asignados: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   items: [ItemSchema],
   total: { type: Number, required: true },
   estado: { 

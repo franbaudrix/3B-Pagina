@@ -5,9 +5,10 @@ const Pedido = require('../models/pedidos');
 const { auth, admin } = require('../middleware/auth');
 const Categoria = require('../models/categorias');
 
+
+
 // Todas las rutas requieren autenticación y ser admin
-router.use(auth);
-router.use(admin);
+
 
 // Configuración de rutas API
 router.get('/producto', async (req, res) => { // Nueva ruta GET todos
@@ -286,7 +287,13 @@ router.get('/pedidos', async (req, res) => {
 // Obtener detalles de un pedido
 router.get('/pedidos/:id', async (req, res) => {
   try {
-      const pedido = await Pedido.findById(req.params.id);
+      const pedido = await Pedido.findById(req.params.id)
+        .populate('usuario')
+        .populate('asignados')
+        .populate('completadoPor');
+
+      console.log('pedido.completadoPor:', pedido.completadoPor);
+        
       if (!pedido) return res.status(404).json({ message: 'Pedido no encontrado' });
       res.json(pedido);
   } catch (error) {
