@@ -524,7 +524,7 @@ async function completarPedido() {
             },
             body: JSON.stringify({ 
                 estado: estadoSeleccionado,
-                itemsCompletados: itemsGuardados.items || [],
+                items: itemsGuardados.items || [],
                 asignados,
                 bultos
             })
