@@ -404,7 +404,10 @@ router.put('/pedidos/:id/items', async (req, res) => {
     // Mapear productos actuales por ID para mantener estado si existe
     const itemsAnteriores = new Map();
     pedido.items.forEach(item => {
-      itemsAnteriores.set(item.productoId.toString(), item);
+      const id = item.productoId?.toString?.();
+      if (id) {
+        itemsAnteriores.set(id, item);
+      }
     });
 
     const nuevosItems = [];
