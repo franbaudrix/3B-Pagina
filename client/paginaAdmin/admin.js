@@ -7,6 +7,23 @@ window.API_URL = window.API_URL || (window.location.hostname === 'localhost'
   ? 'http://localhost:3000'
   : 'https://threeb-pagina.onrender.com');
 
+
+// Interceptar todas las peticiones fetch para detectar sesión expirada
+const originalFetch = window.fetch;
+
+window.fetch = async (...args) => {
+    const response = await originalFetch(...args);
+    
+    if (response.status === 401) {
+        console.warn('Sesión expirada. Redirigiendo a login...');
+        window.location.href = 'login.html';
+        throw new Error('Sesión expirada');
+    }
+
+    return response;
+};
+
+
 // Función para mostrar alertas
 function mostrarAlerta(mensaje, tipo = 'success') {
     const alerta = document.createElement('div');

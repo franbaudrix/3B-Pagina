@@ -8,7 +8,8 @@ const Categoria = require('../models/categorias');
 
 
 // Todas las rutas requieren autenticación y ser admin
-
+router.use(auth);
+router.use(admin);
 
 // Configuración de rutas API
 router.get('/producto', async (req, res) => { // Nueva ruta GET todos
