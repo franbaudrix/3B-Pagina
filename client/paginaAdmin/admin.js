@@ -1176,17 +1176,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // Evento agregar
             btnAgregar.onclick = () => {
                 const id = selector.value;
-                const producto = allProducts.find(p => p._id === id);
-                if (!producto) return;
+                const producto = allProducts.find(p => p._id === selector.value);
+                    if (!producto) {
+                    mostrarAlerta('Producto no encontrado', 'danger');
+                    return;
+                }
 
                 const cantidad = parseFloat(cantidadInput.value);
                 if (isNaN(cantidad) || cantidad <= 0) return;
 
-                const yaExiste = itemsEditables.find(i => i.productoId === id);
-                if (yaExiste) {
-                    mostrarAlerta('El producto ya está en la lista', 'warning');
-                    return;
-                }
+                console.log('Producto seleccionado:', producto);
 
                 itemsEditables.push({
                     productoId: producto._id,
