@@ -1143,6 +1143,105 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             
+            // =====================
+            // Sección editor de ítems
+            // =====================
+            const selector = document.getElementById('producto-selector');
+            const cantidadInput = document.getElementById('cantidad-input');
+            const tbodyEditables = document.querySelector('#tabla-items-editables tbody');
+            const btnAgregar = document.getElementById('btn-agregar-item');
+            const btnGuardar = document.getElementById('btn-guardar-items');
+
+            // Cargar productos en el selector
+            selector.innerHTML = '<option value="">Seleccionar producto</option>';
+            allProducts.forEach(prod => {
+                const opt = document.createElement('option');
+                opt.value = prod._id;
+                opt.textContent = `${prod.nombre} ($${prod.precio} / ${prod.unidadMedida})`;
+                selector.appendChild(opt);
+            });
+
+            // Inicializar tabla con ítems existentes
+            let itemsEditables = pedido.items.map(i => ({
+                productoId: i.productoId || i._id,
+                nombre: i.nombre,
+                cantidad: i.cantidad,
+                peso: i.peso,
+            }));
+
+            renderItemsEditables();
+
+            // Evento agregar
+            btnAgregar.onclick = () => {
+                const id = selector.value;
+                const producto = allProducts.find(p => p._id === id);
+                if (!producto) return;
+
+                const cantidad = parseFloat(cantidadInput.value);
+                if (isNaN(cantidad) || cantidad <= 0) return;
+
+                const yaExiste = itemsEditables.find(i => i.productoId === id);
+                if (yaExiste) {
+                    mostrarAlerta('El producto ya está en la lista', 'warning');
+                    return;
+                }
+
+                itemsEditables.push({
+                    productoId: producto._id,
+                    nombre: producto.nombre,
+                    cantidad: producto.unidadMedida === 'kg' ? 0 : cantidad,
+                    peso: producto.unidadMedida === 'kg' ? cantidad : 0
+                });
+
+                renderItemsEditables();
+                selector.value = '';
+                cantidadInput.value = '';
+            };
+
+            // Evento eliminar ítem
+            function eliminarItem(index) {
+                itemsEditables.splice(index, 1);
+                renderItemsEditables();
+            }
+
+            function renderItemsEditables() {
+                tbodyEditables.innerHTML = itemsEditables.map((item, i) => `
+                    <tr>
+                    <td>${item.nombre}</td>
+                    <td>${item.cantidad}</td>
+                    <td>${item.peso}</td>
+                    <td><button class="btn btn-sm btn-danger" onclick="eliminarItem(${i})">Eliminar</button></td>
+                    </tr>
+                `).join('');
+            }
+
+            // Guardar cambios
+            btnGuardar.onclick = async () => {
+            try {
+                const res = await fetch(`${window.API_URL}/api/admin/pedidos/${pedido._id}/items`, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
+                    body: JSON.stringify({ items: itemsEditables })
+                });
+
+                if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.message || 'Error al guardar ítems');
+                }
+
+                mostrarAlerta('Ítems actualizados correctamente');
+                bootstrap.Modal.getInstance(document.getElementById('detallePedidoModal')).hide();
+                cargarPedidos();
+            } catch (err) {
+                console.error('Error al guardar ítems:', err);
+                mostrarAlerta(err.message || 'Error al guardar ítems', 'danger');
+            }
+            };
+
             // Mostrar modal
             const modal = new bootstrap.Modal(document.getElementById('detallePedidoModal'));
             modal.show();

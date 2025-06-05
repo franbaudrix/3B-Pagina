@@ -390,4 +390,75 @@ router.put('/:id/completar', async (req, res) => {
   }
 });
 
+router.put('/pedidos/:id/items', async (req, res) => {
+  try {
+    const pedido = await Pedido.findById(req.params.id);
+    if (!pedido) return res.status(404).json({ message: 'Pedido no encontrado' });
+
+    const { items } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: 'Debe enviar al menos un ítem válido' });
+    }
+
+    // Mapear productos actuales por ID para mantener estado si existe
+    const itemsAnteriores = new Map();
+    pedido.items.forEach(item => {
+      itemsAnteriores.set(item.productoId.toString(), item);
+    });
+
+    const nuevosItems = [];
+    let nuevoTotal = 0;
+
+    for (const item of items) {
+      const producto = await Producto.findById(item.productoId);
+      if (!producto) {
+        return res.status(400).json({ message: `Producto no encontrado: ${item.productoId}` });
+      }
+
+      const cantidad = item.cantidad || 0;
+      const peso = item.peso || 0;
+
+      const precioTotal = producto.unidadMedida === 'kg'
+        ? producto.precio * peso
+        : producto.precio * cantidad;
+
+      nuevoTotal += precioTotal;
+
+      const previo = itemsAnteriores.get(producto._id.toString());
+
+      nuevosItems.push({
+        productoId: producto._id,
+        nombre: producto.nombre,
+        cantidad,
+        peso,
+        precioUnitario: producto.precio,
+        precioTotal,
+        completado: previo?.completado || false,
+        motivoIncompleto: previo?.motivoIncompleto || '',
+        observaciones: previo?.observaciones || ''
+      });
+    }
+
+    // Actualizar ítems y total
+    pedido.items = nuevosItems;
+    pedido.total = nuevoTotal;
+
+    // Si estaba completado, vuelve a estado pendiente
+    if (pedido.estado === 'completado') {
+      pedido.estado = 'pendiente';
+      pedido.fechaCompletado = null;
+      pedido.completadoPor = null;
+    }
+
+    await pedido.save();
+
+    res.json({ message: 'Ítems actualizados correctamente', pedido });
+  } catch (error) {
+    console.error('Error al actualizar ítems del pedido:', error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+
 module.exports = router;
