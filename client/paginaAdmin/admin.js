@@ -1219,8 +1219,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Guardar cambios
             btnGuardar.onclick = async () => {
-            try {
-                const res = await fetch(`${window.API_URL}/api/admin/pedidos/${pedidoActual._id}/items`, {
+                try {
+                    const res = await fetch(`${window.API_URL}/api/admin/pedidos/${pedido._id}/items`, {
                     method: 'PUT',
                     credentials: 'include',
                     headers: {
@@ -1228,7 +1228,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         ...getAuthHeader()
                     },
                     body: JSON.stringify({ items: itemsEditables })
-                });
+                    });
 
                 if (!res.ok) {
                     const error = await res.json();
