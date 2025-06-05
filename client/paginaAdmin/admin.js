@@ -2,6 +2,7 @@ let categoriasDisponibles = [];
 let subcategoriasDisponibles = [];
 let allProducts = [];
 let allUsers = [];
+let pedidoActual = null;
 
 window.API_URL = window.API_URL || (window.location.hostname === 'localhost'
   ? 'http://localhost:3000'
@@ -1003,7 +1004,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!response.ok) throw new Error('Error al cargar pedido');
             const pedido = await response.json();   
-            console.log('pedido.completadoPor:', pedido.completadoPor);
+            pedidoActual = pedido;
+
             // Llenar modal con datos del pedido
             document.getElementById('pedido-id').textContent = pedido._id.toString().substring(18);
             
@@ -1218,7 +1220,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Guardar cambios
             btnGuardar.onclick = async () => {
             try {
-                const res = await fetch(`${window.API_URL}/api/admin/pedidos/${pedido._id}/items`, {
+                const res = await fetch(`${window.API_URL}/api/admin/pedidos/${pedidoActual._id}/items`, {
                     method: 'PUT',
                     credentials: 'include',
                     headers: {
