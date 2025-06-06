@@ -1219,6 +1219,14 @@ document.addEventListener('DOMContentLoaded', () => {
             // Guardar cambios
             btnGuardar.onclick = async () => {
                 try {
+                    const productosValidos = allProducts.map(p => p._id);
+
+                    const itemsFiltrados = itemsEditables.filter(i => productosValidos.includes(i.productoId));
+
+                    if (itemsFiltrados.length !== itemsEditables.length) {
+                        mostrarAlerta('Se eliminaron ítems con productos inexistentes', 'warning');
+                    }
+
                     const res = await fetch(`${window.API_URL}/api/admin/pedidos/${pedido._id}/items`, {
                     method: 'PUT',
                     credentials: 'include',
@@ -1226,7 +1234,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         'Content-Type': 'application/json',
                         ...getAuthHeader()
                     },
-                    body: JSON.stringify({ items: itemsEditables })
+                    body: JSON.stringify({ items: itemsFiltrados })
                     });
 
                 if (!res.ok) {
