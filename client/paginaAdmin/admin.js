@@ -1176,28 +1176,33 @@ document.addEventListener('DOMContentLoaded', () => {
             // Evento agregar
             btnAgregar.onclick = () => {
                 const id = selector.value;
-                const producto = allProducts.find(p => p._id === selector.value);
-                    if (!producto) {
-                    mostrarAlerta('Producto no encontrado', 'danger');
+                const producto = allProducts.find(p => p._id === id);
+                const cantidadIngresada = parseFloat(cantidadInput.value);
+
+                if (!producto || isNaN(cantidadIngresada) || cantidadIngresada <= 0) {
+                    mostrarAlerta('Seleccioná un producto y una cantidad válida', 'warning');
                     return;
                 }
 
-                const cantidad = parseFloat(cantidadInput.value);
-                if (isNaN(cantidad) || cantidad <= 0) return;
-
-                console.log('Producto seleccionado:', producto);
+                const base = producto.precio;
+                const subtotal = base * cantidadIngresada;
 
                 itemsEditables.push({
-                    productoId: producto._id,
+                    producto: producto._id,
                     nombre: producto.nombre,
-                    cantidad: producto.unidadMedida === 'kg' ? 0 : cantidad,
-                    peso: producto.unidadMedida === 'kg' ? cantidad : 0
+                    cantidad: producto.unidadMedida === 'kg' ? 0 : cantidadIngresada,
+                    peso: producto.unidadMedida === 'kg' ? cantidadIngresada : 0,
+                    precioUnitario: producto.precio,
+                    subtotal,
+                    precioTotal: subtotal,
+                    completado: false
                 });
 
                 renderItemsEditables();
                 selector.value = '';
                 cantidadInput.value = '';
             };
+
 
             // Evento eliminar ítem
             function eliminarItem(index) {
