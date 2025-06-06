@@ -1165,7 +1165,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Inicializar tabla con ítems existentes
             let itemsEditables = pedido.items.map(i => ({
-                productoId: i.productoId || i._id,
+                producto: i.producto?._id || i.productoId || i._id,
                 nombre: i.nombre,
                 cantidad: i.cantidad,
                 peso: i.peso,
@@ -1226,7 +1226,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const productosValidos = allProducts.map(p => p._id);
 
-                    const itemsFiltrados = itemsEditables.filter(i => productosValidos.includes(i.productoId));
+                    const itemsFiltrados = itemsEditables.filter(i => productosValidos.includes(i.producto));
 
                     if (itemsFiltrados.length !== itemsEditables.length) {
                         mostrarAlerta('Se eliminaron ítems con productos inexistentes', 'warning');

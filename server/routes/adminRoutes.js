@@ -414,7 +414,8 @@ router.put('/pedidos/:id/items', async (req, res) => {
     let nuevoTotal = 0;
 
     for (const item of items) {
-      const producto = await Producto.findById(item.productoId);
+      const producto = await Producto.findById(item.producto || item.productoId);
+
       if (!producto) {
         return res.status(400).json({ message: `Producto no encontrado: ${item.productoId}` });
       }
