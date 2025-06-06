@@ -431,16 +431,18 @@ router.put('/pedidos/:id/items', async (req, res) => {
       const previo = itemsAnteriores.get(producto._id.toString());
 
       nuevosItems.push({
-        productoId: producto._id,
+        producto: producto._id, 
         nombre: producto.nombre,
         cantidad,
         peso,
         precioUnitario: producto.precio,
-        precioTotal,
+        subtotal: precioTotal,       
+        precioTotal,                 
         completado: previo?.completado || false,
-        motivoIncompleto: previo?.motivoIncompleto || '',
+        motivoIncompleto: previo?.motivoIncompleto || undefined, 
         observaciones: previo?.observaciones || ''
       });
+
     }
 
     // Actualizar ítems y total
