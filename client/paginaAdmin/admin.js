@@ -1165,11 +1165,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Inicializar tabla con ítems existentes
             let itemsEditables = pedido.items.map(i => ({
-                producto: i.producto?._id || i.productoId || i._id,
+                producto: i.producto?._id || i.producto || i.productoId || i._id,
                 nombre: i.nombre,
                 cantidad: i.cantidad,
                 peso: i.peso,
+                precioUnitario: i.precioUnitario,
+                subtotal: i.subtotal || i.precioTotal,
+                precioTotal: i.precioTotal,
+                completado: i.completado || false,
+                motivoIncompleto: i.motivoIncompleto || undefined,
+                observaciones: i.observaciones || ''
             }));
+
 
             renderItemsEditables();
 
