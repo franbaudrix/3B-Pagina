@@ -128,6 +128,22 @@ const weightOptions = {
     "other-kg": 0
 };
 
+function normalizarAPesoEnKg(valor) {
+  valor = valor.toLowerCase().replace(/\s/g, '');
+
+  if (valor.endsWith('kg')) {
+    return parseFloat(valor.replace('kg', '')) || 0;
+  }
+
+  if (valor.endsWith('g')) {
+    const gramos = parseFloat(valor.replace('g', ''));
+    return isNaN(gramos) ? 0 : gramos / 1000;
+  }
+
+  const soloNumero = parseFloat(valor);
+  return isNaN(soloNumero) ? 0 : soloNumero;
+}
+
 // Función para guardar el pedido en la base de datos
 async function prepararPedido() {
     try {
@@ -150,8 +166,8 @@ async function prepararPedido() {
                 nombre: celdas[0].textContent.trim(),
                 precioUnitario: parseFloat(celdas[1].textContent.replace('$', '')),
                 subtotal: parseFloat(celdas[1].textContent.replace('$', '')),
-                peso: tipoUnidad === 'kg' ? fila.cells[2].textContent.trim() : "N/A",
-                cantidad: tipoUnidad === 'kg' ? 1 : parseInt(fila.dataset.cantidad || 1),
+                peso: tipoUnidad === 'kg' ? normalizarAPesoEnKg(fila.cells[2].textContent.trim()) : 0,
+                cantidad: tipoUnidad === 'kg' ? 0 : parseInt(fila.dataset.cantidad || 1),
                 precioTotal: parseFloat(fila.dataset.itemTotal)
             });
         });
