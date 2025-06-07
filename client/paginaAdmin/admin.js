@@ -1164,19 +1164,23 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             // Inicializar tabla con ítems existentes
-            let itemsEditables = pedido.items.map(i => ({
-                producto: i.producto?._id || i.producto || i.productoId || i._id,
-                nombre: i.nombre,
-                cantidad: i.cantidad,
-                peso: i.peso,
-                precioUnitario: i.precioUnitario ?? 0,
-                subtotal: i.subtotal ?? i.precioTotal ?? i.precioUnitario * (i.cantidad || i.peso) ?? 0,
-                precioTotal: i.precioTotal ?? i.subtotal ?? i.precioUnitario * (i.cantidad || i.peso) ?? 0,
-                completado: i.completado || false,
-                motivoIncompleto: i.motivoIncompleto || undefined,
-                observaciones: i.observaciones || ''
-            }));
+            let itemsEditables = pedido.items.map(i => {
+                const peso = parseFloat(i.peso);
+                const cantidad = parseFloat(i.cantidad);
 
+                return {
+                    producto: i.producto?._id || i.producto || i.productoId || i._id,
+                    nombre: i.nombre,
+                    cantidad: isNaN(cantidad) ? 0 : cantidad,
+                    peso: isNaN(peso) ? 0 : peso,
+                    precioUnitario: i.precioUnitario ?? 0,
+                    subtotal: i.subtotal ?? i.precioTotal ?? 0,
+                    precioTotal: i.precioTotal ?? i.subtotal ?? 0,
+                    completado: i.completado || false,
+                    motivoIncompleto: i.motivoIncompleto || undefined,
+                    observaciones: i.observaciones || ''
+                };
+            });
 
             renderItemsEditables();
 
