@@ -1048,19 +1048,39 @@ document.addEventListener('DOMContentLoaded', () => {
             // =====================
             // Sección editor de ítems
             // =====================
-            const selector = document.getElementById('producto-selector');
+            const inputBuscador = document.getElementById('producto-buscador');
+            const listaSugerencias = document.getElementById('producto-sugerencias');
             const cantidadInput = document.getElementById('cantidad-input');
             const tbodyEditables = document.querySelector('#tabla-items-editables tbody');
             const btnAgregar = document.getElementById('btn-agregar-item');
             const btnGuardar = document.getElementById('btn-guardar-items');
 
-            // Cargar productos en el selector
-            selector.innerHTML = '<option value="">Seleccionar producto</option>';
-            allProducts.forEach(prod => {
-                const opt = document.createElement('option');
-                opt.value = prod._id;
-                opt.textContent = `${prod.nombre} ($${prod.precio} / ${prod.unidadMedida})`;
-                selector.appendChild(opt);
+            let productoSeleccionado = null;
+            // Cargar productos buscados para agregar
+            inputBuscador.addEventListener('input', () => {
+                const termino = inputBuscador.value.trim().toLowerCase();
+                listaSugerencias.innerHTML = '';
+
+                if (termino.length === 0) {
+                    productoSeleccionado = null;
+                    return;
+                }
+
+                const coincidencias = allProducts.filter(p =>
+                    p.nombre.toLowerCase().includes(termino)
+                );
+
+                coincidencias.forEach(prod => {
+                    const item = document.createElement('li');
+                    item.className = 'list-group-item list-group-item-action';
+                    item.textContent = `${prod.nombre} ($${prod.precio} / ${prod.unidadMedida})`;
+                    item.onclick = () => {
+                    inputBuscador.value = prod.nombre;
+                    productoSeleccionado = prod;
+                    listaSugerencias.innerHTML = '';
+                    };
+                    listaSugerencias.appendChild(item);
+                });
             });
 
             // Inicializar tabla con ítems existentes
@@ -1087,8 +1107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Evento agregar
             btnAgregar.onclick = () => {
-                const id = selector.value;
-                const producto = allProducts.find(p => p._id === id);
+                const producto = productoSeleccionado;
                 const cantidadIngresada = parseFloat(cantidadInput.value);
 
                 if (!producto || isNaN(cantidadIngresada) || cantidadIngresada <= 0) {
@@ -1122,7 +1141,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 renderItemsEditables();
-                selector.value = '';
+                productoSeleccionado = null;
+                inputBuscador.value = '';
                 cantidadInput.value = '';
             };
 
@@ -1243,9 +1263,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const accionesDiv = document.getElementById('acciones-pedido');
             accionesDiv.innerHTML = '';
             
-            if (pedido.estado === 'pendiente') {
+            if (pedido.estado === 'revision') {
                 accionesDiv.innerHTML = `
-                    <button class="btn btn-success me-2" onclick="cambiarEstadoPedido('${pedido._id}', 'en_proceso', true)">
+                    <button class="btn btn-success me-2" onclick="cambiarEstadoPedido('${pedido._id}', 'pendiente', true)">
                         Confirmar Pedido
                     </button>
                     <button class="btn btn-danger" onclick="cambiarEstadoPedido('${pedido._id}', 'cancelado', true)">
