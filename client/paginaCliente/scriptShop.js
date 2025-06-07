@@ -647,9 +647,7 @@ function initializeProductCards() {
             } else {
                 const amountSelect = productCard.querySelector('.amount-select');
                 const customAmountInput = productCard.querySelector('.custom-amount-input');
-                
-                amountSelect.value = '1'; // Cantidad por defecto: 1 unidad
-                productCard.querySelector('.amount-select').value = '1';
+
                 productCard.querySelector('.custom-amount-input').style.display = 'none';
 
                 if (amountSelect.value === 'custom') {
