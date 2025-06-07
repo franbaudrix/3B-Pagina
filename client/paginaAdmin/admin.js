@@ -1245,16 +1245,38 @@ document.addEventListener('DOMContentLoaded', () => {
                     const productosValidos = allProducts.map(p => p._id);
 
                     const itemsFiltrados = itemsEditables.filter(i => {
-                        const valido = i.producto && !isNaN(i.precioUnitario) && !isNaN(i.subtotal) && !isNaN(i.precioTotal);
-                        if (!valido) {
-                            console.warn('Ítem inválido eliminado antes de guardar:', i);
-                        }
-                        return valido;
+                    const esValido = i.producto && productosValidos.includes(i.producto)
+                        && !isNaN(i.precioUnitario)
+                        && !isNaN(i.peso)
+                        && !isNaN(i.cantidad);
+
+                    if (!esValido) {
+                        console.warn('Ítem inválido:', i);
+                    }
+
+                    return esValido;
                     });
 
+                    // Recalcular subtotales y total
+                    let total = 0;
+                    const itemsCalculados = itemsFiltrados.map(i => {
+                    const cantidadReal = parseFloat(i.cantidad) || 0;
+                    const pesoReal = parseFloat(i.peso) || 0;
+                    const base = parseFloat(i.precioUnitario) || 0;
+                    const subtotal = base * (pesoReal || cantidadReal);
 
-                    if (itemsFiltrados.length !== itemsEditables.length) {
-                        mostrarAlerta('Se eliminaron ítems con productos inexistentes', 'warning');
+                    total += subtotal;
+
+                    return {
+                        ...i,
+                        subtotal,
+                        precioTotal: subtotal,
+                    };
+                    });
+
+                    if (!itemsCalculados.length) {
+                    mostrarAlerta('No hay ítems válidos para guardar', 'danger');
+                    return;
                     }
 
                     const res = await fetch(`${window.API_URL}/api/admin/pedidos/${pedido._id}/items`, {
@@ -1264,22 +1286,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         'Content-Type': 'application/json',
                         ...getAuthHeader()
                     },
-                    body: JSON.stringify({ items: itemsFiltrados })
+                    body: JSON.stringify({ items: itemsCalculados })
                     });
 
-                if (!res.ok) {
+                    if (!res.ok) {
                     const error = await res.json();
                     throw new Error(error.message || 'Error al guardar ítems');
-                }
+                    }
 
-                mostrarAlerta('Ítems actualizados correctamente');
-                bootstrap.Modal.getInstance(document.getElementById('detallePedidoModal')).hide();
-                cargarPedidos();
-            } catch (err) {
-                console.error('Error al guardar ítems:', err);
-                mostrarAlerta(err.message || 'Error al guardar ítems', 'danger');
-            }
+                    mostrarAlerta('Ítems actualizados correctamente');
+                    bootstrap.Modal.getInstance(document.getElementById('detallePedidoModal')).hide();
+                    cargarPedidos();
+
+                } catch (err) {
+                    console.error('Error al guardar ítems:', err);
+                    mostrarAlerta(err.message || 'Error inesperado al guardar', 'danger');
+                }
             };
+
 
             // Mostrar modal
             const modal = new bootstrap.Modal(document.getElementById('detallePedidoModal'));
