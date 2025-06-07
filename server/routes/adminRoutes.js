@@ -404,11 +404,12 @@ router.put('/pedidos/:id/items', async (req, res) => {
     // Mapear productos actuales por ID para mantener estado si existe
     const itemsAnteriores = new Map();
     pedido.items.forEach(item => {
-      const id = item.productoId?.toString?.();
+      const id = item._id?.toString?.();
       if (id) {
         itemsAnteriores.set(id, item);
       }
     });
+
 
     const nuevosItems = [];
     let nuevoTotal = 0;
@@ -429,7 +430,7 @@ router.put('/pedidos/:id/items', async (req, res) => {
 
       nuevoTotal += precioTotal;
 
-      const previo = itemsAnteriores.get(producto._id.toString());
+      const previo = itemsAnteriores.get(item._id?.toString?.());
 
       nuevosItems.push({
         producto: producto._id, 

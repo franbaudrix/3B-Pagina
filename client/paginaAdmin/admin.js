@@ -1045,21 +1045,172 @@ document.addEventListener('DOMContentLoaded', () => {
                 </span>
             `;
             
-            // Items del pedido
-            const itemsBody = document.getElementById('detalle-items');
-            itemsBody.innerHTML = pedido.items.map(item => `
-                <tr>
+            // =====================
+            // Sección editor de ítems
+            // =====================
+            const selector = document.getElementById('producto-selector');
+            const cantidadInput = document.getElementById('cantidad-input');
+            const tbodyEditables = document.querySelector('#tabla-items-editables tbody');
+            const btnAgregar = document.getElementById('btn-agregar-item');
+            const btnGuardar = document.getElementById('btn-guardar-items');
+
+            // Cargar productos en el selector
+            selector.innerHTML = '<option value="">Seleccionar producto</option>';
+            allProducts.forEach(prod => {
+                const opt = document.createElement('option');
+                opt.value = prod._id;
+                opt.textContent = `${prod.nombre} ($${prod.precio} / ${prod.unidadMedida})`;
+                selector.appendChild(opt);
+            });
+
+            // Inicializar tabla con ítems existentes
+            let itemsEditables = pedido.items.map(i => {
+                const peso = parseFloat(i.peso);
+                const cantidad = parseFloat(i.cantidad);
+
+                return {
+                    _id: i._id,
+                    producto: i.producto?._id || i.producto || i.productoId || i._id,
+                    nombre: i.nombre,
+                    cantidad: isNaN(cantidad) ? 0 : cantidad,
+                    peso: isNaN(peso) ? 0 : peso,
+                    precioUnitario: i.precioUnitario ?? 0,
+                    subtotal: i.subtotal ?? i.precioTotal ?? 0,
+                    precioTotal: i.precioTotal ?? i.subtotal ?? 0,
+                    completado: i.completado || false,
+                    motivoIncompleto: i.motivoIncompleto || undefined,
+                    observaciones: i.observaciones || ''
+                };
+            });
+
+            renderItemsEditables();
+
+            // Evento agregar
+            btnAgregar.onclick = () => {
+                const id = selector.value;
+                const producto = allProducts.find(p => p._id === id);
+                const cantidadIngresada = parseFloat(cantidadInput.value);
+
+                if (!producto || isNaN(cantidadIngresada) || cantidadIngresada <= 0) {
+                    mostrarAlerta('Seleccioná un producto y una cantidad válida', 'warning');
+                    return;
+                }
+
+                if (!producto || producto.precio == null || isNaN(producto.precio)) {
+                    mostrarAlerta('Producto inválido o sin precio', 'danger');
+                    return;
+                }
+
+                if (isNaN(cantidadIngresada) || cantidadIngresada <= 0) {
+                    mostrarAlerta('Cantidad inválida', 'warning');
+                    return;
+                }
+
+
+                const base = producto.precio;
+                const subtotal = base * cantidadIngresada;
+
+                itemsEditables.push({
+                    producto: producto._id,
+                    nombre: producto.nombre,
+                    cantidad: producto.unidadMedida === 'kg' ? 0 : cantidadIngresada,
+                    peso: producto.unidadMedida === 'kg' ? cantidadIngresada : 0,
+                    precioUnitario: producto.precio,
+                    subtotal,
+                    precioTotal: subtotal,
+                    completado: false
+                });
+
+                renderItemsEditables();
+                selector.value = '';
+                cantidadInput.value = '';
+            };
+
+            window.eliminarItem = function(index) {
+                itemsEditables.splice(index, 1);
+                renderItemsEditables();
+            };
+            
+            function renderItemsEditables() {
+                tbodyEditables.innerHTML = itemsEditables.map((item, i) => `
+                    <tr>
                     <td>${item.nombre}</td>
                     <td>$${item.precioUnitario.toLocaleString('es-AR')}</td>
-                    <td>${item.cantidad}</td>
-                    <td>${item.peso}</td>
+                    <td>${item.peso > 0 ? `${(item.peso * 1000).toFixed(0)}g` : `${item.cantidad} u`}</td>
                     <td>$${item.precioTotal.toLocaleString('es-AR')}</td>
                     ${pedido.estado === 'completado' ? `
                         <td>${item.completado ? '✅ Si' : '❌ No'}</td>
                         <td>${!item.completado ? (item.motivoIncompleto || '') + (item.observaciones ? ` (${item.observaciones})` : '') : '-'}</td>
                     ` : '<td></td><td></td>'}
-                </tr>
-            `).join('');
+                    <td><button class="btn btn-sm btn-danger" onclick="eliminarItem(${i})">Eliminar</button></td>
+                    </tr>
+                `).join('');
+            }
+
+            // Guardar cambios
+            btnGuardar.onclick = async () => {
+                try {
+                    const productosValidos = allProducts.map(p => p._id);
+
+                    const itemsFiltrados = itemsEditables.filter(i => {
+                    const esValido = i.producto && productosValidos.includes(i.producto)
+                        && !isNaN(i.precioUnitario)
+                        && !isNaN(i.peso)
+                        && !isNaN(i.cantidad);
+
+                    if (!esValido) {
+                        console.warn('Ítem inválido:', i);
+                    }
+
+                    return esValido;
+                    });
+
+                    // Recalcular subtotales y total
+                    let total = 0;
+                    const itemsCalculados = itemsFiltrados.map(i => {
+                    const cantidadReal = parseFloat(i.cantidad) || 0;
+                    const pesoReal = parseFloat(i.peso) || 0;
+                    const base = parseFloat(i.precioUnitario) || 0;
+                    const subtotal = base * (pesoReal || cantidadReal);
+
+                    total += subtotal;
+
+                    return {
+                        ...i,
+                        subtotal,
+                        precioTotal: subtotal,
+                    };
+                    });
+
+                    if (!itemsCalculados.length) {
+                    mostrarAlerta('No hay ítems válidos para guardar', 'danger');
+                    return;
+                    }
+
+                    const res = await fetch(`${window.API_URL}/api/admin/pedidos/${pedido._id}/items`, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    },
+                    body: JSON.stringify({ items: itemsCalculados })
+                    });
+
+                    if (!res.ok) {
+                    const error = await res.json();
+                    throw new Error(error.message || 'Error al guardar ítems');
+                    }
+
+                    mostrarAlerta('Ítems actualizados correctamente');
+                    bootstrap.Modal.getInstance(document.getElementById('detallePedidoModal')).hide();
+                    cargarPedidos();
+
+                } catch (err) {
+                    console.error('Error al guardar ítems:', err);
+                    mostrarAlerta(err.message || 'Error inesperado al guardar', 'danger');
+                }
+            };
 
             const resumenEntrega = document.getElementById('resumen-entrega');
             resumenEntrega.innerHTML = `
@@ -1145,168 +1296,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             
-            // =====================
-            // Sección editor de ítems
-            // =====================
-            const selector = document.getElementById('producto-selector');
-            const cantidadInput = document.getElementById('cantidad-input');
-            const tbodyEditables = document.querySelector('#tabla-items-editables tbody');
-            const btnAgregar = document.getElementById('btn-agregar-item');
-            const btnGuardar = document.getElementById('btn-guardar-items');
-
-            // Cargar productos en el selector
-            selector.innerHTML = '<option value="">Seleccionar producto</option>';
-            allProducts.forEach(prod => {
-                const opt = document.createElement('option');
-                opt.value = prod._id;
-                opt.textContent = `${prod.nombre} ($${prod.precio} / ${prod.unidadMedida})`;
-                selector.appendChild(opt);
-            });
-
-            // Inicializar tabla con ítems existentes
-            let itemsEditables = pedido.items.map(i => {
-                const peso = parseFloat(i.peso);
-                const cantidad = parseFloat(i.cantidad);
-
-                return {
-                    producto: i.producto?._id || i.producto || i.productoId || i._id,
-                    nombre: i.nombre,
-                    cantidad: isNaN(cantidad) ? 0 : cantidad,
-                    peso: isNaN(peso) ? 0 : peso,
-                    precioUnitario: i.precioUnitario ?? 0,
-                    subtotal: i.subtotal ?? i.precioTotal ?? 0,
-                    precioTotal: i.precioTotal ?? i.subtotal ?? 0,
-                    completado: i.completado || false,
-                    motivoIncompleto: i.motivoIncompleto || undefined,
-                    observaciones: i.observaciones || ''
-                };
-            });
-
-            renderItemsEditables();
-
-            // Evento agregar
-            btnAgregar.onclick = () => {
-                const id = selector.value;
-                const producto = allProducts.find(p => p._id === id);
-                const cantidadIngresada = parseFloat(cantidadInput.value);
-
-                if (!producto || isNaN(cantidadIngresada) || cantidadIngresada <= 0) {
-                    mostrarAlerta('Seleccioná un producto y una cantidad válida', 'warning');
-                    return;
-                }
-
-                if (!producto || producto.precio == null || isNaN(producto.precio)) {
-                    mostrarAlerta('Producto inválido o sin precio', 'danger');
-                    return;
-                }
-
-                if (isNaN(cantidadIngresada) || cantidadIngresada <= 0) {
-                    mostrarAlerta('Cantidad inválida', 'warning');
-                    return;
-                }
-
-
-                const base = producto.precio;
-                const subtotal = base * cantidadIngresada;
-
-                itemsEditables.push({
-                    producto: producto._id,
-                    nombre: producto.nombre,
-                    cantidad: producto.unidadMedida === 'kg' ? 0 : cantidadIngresada,
-                    peso: producto.unidadMedida === 'kg' ? cantidadIngresada : 0,
-                    precioUnitario: producto.precio,
-                    subtotal,
-                    precioTotal: subtotal,
-                    completado: false
-                });
-
-                renderItemsEditables();
-                selector.value = '';
-                cantidadInput.value = '';
-            };
-
-
-            // Evento eliminar ítem
-            function eliminarItem(index) {
-                itemsEditables.splice(index, 1);
-                renderItemsEditables();
-            }
-
-            function renderItemsEditables() {
-                tbodyEditables.innerHTML = itemsEditables.map((item, i) => `
-                    <tr>
-                    <td>${item.nombre}</td>
-                    <td>${item.cantidad}</td>
-                    <td>${item.peso}</td>
-                    <td><button class="btn btn-sm btn-danger" onclick="eliminarItem(${i})">Eliminar</button></td>
-                    </tr>
-                `).join('');
-            }
-
-            // Guardar cambios
-            btnGuardar.onclick = async () => {
-                try {
-                    const productosValidos = allProducts.map(p => p._id);
-
-                    const itemsFiltrados = itemsEditables.filter(i => {
-                    const esValido = i.producto && productosValidos.includes(i.producto)
-                        && !isNaN(i.precioUnitario)
-                        && !isNaN(i.peso)
-                        && !isNaN(i.cantidad);
-
-                    if (!esValido) {
-                        console.warn('Ítem inválido:', i);
-                    }
-
-                    return esValido;
-                    });
-
-                    // Recalcular subtotales y total
-                    let total = 0;
-                    const itemsCalculados = itemsFiltrados.map(i => {
-                    const cantidadReal = parseFloat(i.cantidad) || 0;
-                    const pesoReal = parseFloat(i.peso) || 0;
-                    const base = parseFloat(i.precioUnitario) || 0;
-                    const subtotal = base * (pesoReal || cantidadReal);
-
-                    total += subtotal;
-
-                    return {
-                        ...i,
-                        subtotal,
-                        precioTotal: subtotal,
-                    };
-                    });
-
-                    if (!itemsCalculados.length) {
-                    mostrarAlerta('No hay ítems válidos para guardar', 'danger');
-                    return;
-                    }
-
-                    const res = await fetch(`${window.API_URL}/api/admin/pedidos/${pedido._id}/items`, {
-                    method: 'PUT',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        ...getAuthHeader()
-                    },
-                    body: JSON.stringify({ items: itemsCalculados })
-                    });
-
-                    if (!res.ok) {
-                    const error = await res.json();
-                    throw new Error(error.message || 'Error al guardar ítems');
-                    }
-
-                    mostrarAlerta('Ítems actualizados correctamente');
-                    bootstrap.Modal.getInstance(document.getElementById('detallePedidoModal')).hide();
-                    cargarPedidos();
-
-                } catch (err) {
-                    console.error('Error al guardar ítems:', err);
-                    mostrarAlerta(err.message || 'Error inesperado al guardar', 'danger');
-                }
-            };
+            
 
 
             // Mostrar modal

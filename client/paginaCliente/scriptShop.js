@@ -495,9 +495,9 @@ function displayProducts(productos) {
                     <div class="p-3">
                         <label for="weight" class="form-label small mb-1">Peso:</label>
                         <select name="weight" class="form-select form-select-sm weight-select mb-2">
-                            <option value="half-kg">500g</option>
-                            <option value="one-kg" selected>1000g</option>
-                            <option value="two-kg">2000g</option>
+                            <option value="half-kg">0.5Kg</option>
+                            <option value="one-kg" selected>1Kg</option>
+                            <option value="two-kg">2Kg</option>
                             <option value="other-kg">Otro</option>
                         </select>
                         <input type="number" class="form-control custom-weight-input mt-2" placeholder="Ingrese el peso en kg" style="display: none;">

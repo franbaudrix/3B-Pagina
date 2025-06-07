@@ -363,43 +363,28 @@
           
           <h6>Productos</h6>
           <div class="table-responsive">
-            <table class="table table-dark">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Precio Unit.</th>
-                  <th>Cantidad</th>
-                  <th>Peso</th>
-                  <th>Total</th>
-                  <th>Stock</th>
-                  <th>Razón</th>
-                </tr>
-              </thead>
-              <tbody id="detalle-items">
-                <!-- Los items del pedido se cargarán aca -->
-              </tbody>
-              <hr>
-              <div id="editor-items" class="mt-4">
+            <div id="editor-items" class="mt-4">
                 <h5>Editar ítems del pedido</h5>
                 <div class="d-flex align-items-center gap-2 mb-2">
                   <select id="producto-selector" class="form-select" style="max-width: 300px;"></select>
                   <input type="number" id="cantidad-input" class="form-control" placeholder="Cantidad o peso" style="width: 150px;" />
                   <button class="btn btn-success" id="btn-agregar-item">Agregar</button>
                 </div>
-                <table class="table table-bordered table-sm" id="tabla-items-editables">
+                <table class="table table-dark" id="tabla-items-editables">
                   <thead>
                     <tr>
                       <th>Producto</th>
-                      <th>Cantidad</th>
-                      <th>Peso</th>
-                      <th>Acción</th>
+                      <th>Precio Unit.</th>
+                      <th>Peso/Cant</th>
+                      <th>Total</th>
+                      <th>Stock</th>
+                      <th>Razon</th>
+                      <th>Accion</th>
                     </tr>
                   </thead>
                   <tbody></tbody>
                 </table>
                 <button class="btn btn-primary mt-2" id="btn-guardar-items">Guardar cambios</button>
-              </div>
-            </table>
           </div>
           <!-- <div class="text-end mt-3">
             <h5>Subtotal: $<span id="pedido-subtotal"></span></h5>
