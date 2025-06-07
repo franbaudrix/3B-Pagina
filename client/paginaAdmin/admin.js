@@ -1169,9 +1169,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 nombre: i.nombre,
                 cantidad: i.cantidad,
                 peso: i.peso,
-                precioUnitario: i.precioUnitario,
-                subtotal: i.subtotal || i.precioTotal,
-                precioTotal: i.precioTotal,
+                precioUnitario: i.precioUnitario ?? 0,
+                subtotal: i.subtotal ?? i.precioTotal ?? i.precioUnitario * (i.cantidad || i.peso) ?? 0,
+                precioTotal: i.precioTotal ?? i.subtotal ?? i.precioUnitario * (i.cantidad || i.peso) ?? 0,
                 completado: i.completado || false,
                 motivoIncompleto: i.motivoIncompleto || undefined,
                 observaciones: i.observaciones || ''
@@ -1190,6 +1190,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     mostrarAlerta('Seleccioná un producto y una cantidad válida', 'warning');
                     return;
                 }
+
+                if (!producto || producto.precio == null || isNaN(producto.precio)) {
+                    mostrarAlerta('Producto inválido o sin precio', 'danger');
+                    return;
+                }
+
+                if (isNaN(cantidadIngresada) || cantidadIngresada <= 0) {
+                    mostrarAlerta('Cantidad inválida', 'warning');
+                    return;
+                }
+
 
                 const base = producto.precio;
                 const subtotal = base * cantidadIngresada;
@@ -1233,7 +1244,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     const productosValidos = allProducts.map(p => p._id);
 
-                    const itemsFiltrados = itemsEditables.filter(i => productosValidos.includes(i.producto));
+                    const itemsFiltrados = itemsEditables.filter(i => {
+                        const valido = i.producto && !isNaN(i.precioUnitario) && !isNaN(i.subtotal) && !isNaN(i.precioTotal);
+                        if (!valido) {
+                            console.warn('Ítem inválido eliminado antes de guardar:', i);
+                        }
+                        return valido;
+                    });
+
 
                     if (itemsFiltrados.length !== itemsEditables.length) {
                         mostrarAlerta('Se eliminaron ítems con productos inexistentes', 'warning');
