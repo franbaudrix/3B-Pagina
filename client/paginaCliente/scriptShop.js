@@ -465,6 +465,10 @@ function displayProducts(productos) {
     }
     
     container.innerHTML = productos.map(producto => {
+        const sinStock = producto.stock <= 0;
+        const btnClass = sinStock ? 'btn-disabled' : 'btn-product-card';
+        const btnText = sinStock ? 'Sin stock' : 'Agregar';
+        
         // Limitar descripción
         const maxDescLength = 150; 
         const descripcion = producto.descripcion ? 
@@ -474,7 +478,7 @@ function displayProducts(productos) {
             '';
         
         return `
-        <div class="col-md-4 product-card" data-product-id="${producto._id}" data-base-price="${producto.precio}" data-product-name="${producto.nombre}" data-unidad-medida="${producto.unidadMedida || 'kg'}">
+        <div class="col-md-4 product-card" data-product-id="${producto._id}" data-base-price="${producto.precio}" data-product-name="${producto.nombre}" data-unidad-medida="${producto.unidadMedida || 'kg'}" data-stock="${producto.stock || 0}">
             <div class="card h-100">
                 <div class="front-content">
                     <img src="${producto.imagen.toString()}" class="img-fluid card-img-top" alt="${producto.nombre}">
@@ -519,7 +523,10 @@ function displayProducts(productos) {
                     `}
                     <div class="mb-2 p-3 price-display text-end fw-bold"></div>
                     <div class="fixed-bottom-btn">
-                        <button class="btn btn-danger rounded-0 btn-product-card w-100">Agregar</button>
+                        <button class="btn ${btnClass} rounded-0 w-100" 
+                                ${sinStock ? 'disabled' : ''}>
+                            ${btnText}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -603,6 +610,12 @@ function initializeProductCards() {
             const productCard = button.closest('.product-card');
             const frontContent = productCard.querySelector('.front-content');
             const backContent = productCard.querySelector('.back-content');
+            const currentStock = parseFloat(productCard.dataset.stock) || 0;
+    
+            if (currentStock <= 0) {
+                mostrarAlerta('Este producto no tiene stock disponible', 'warning');
+                return;
+            }
 
             if (!productCard) {
                 console.error('No se encontró el elemento product-card');

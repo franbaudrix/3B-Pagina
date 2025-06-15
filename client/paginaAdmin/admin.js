@@ -269,6 +269,7 @@ function renderProductos(productos) {
             <td>$${producto.precio.toFixed(2)}</td>
             <td>${getCategoryName(producto.categoria)}</td>
             <td>${producto.subcategoria || '-'}</td>
+            <td>${(producto.stock || 0).toFixed(2)} kg/unid</td>
             <td>${producto.unidadMedida === 'kg' ? 'Por Kg' : 'Por Unidad'}</td>
             <td>${producto.descripcion ? 
                 (producto.descripcion.length > 50 ? 
@@ -620,7 +621,8 @@ document.addEventListener('DOMContentLoaded', () => {
             descripcion: document.getElementById('descripcion').value,
             categoria: document.getElementById('categoria').value,
             unidadMedida: document.getElementById('unidadMedida').value,
-            subcategoria: document.getElementById('subcategoria').value
+            subcategoria: document.getElementById('subcategoria').value,
+            stock: parseFloat(document.getElementById('stock').value) || 0
         };
     
         try {
@@ -811,6 +813,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('subcategoria').value = producto.subcategoria;
             document.getElementById('descripcion').value = producto.descripcion || '';
             document.getElementById('unidadMedida').value = producto.unidadMedida || 'kg';
+            document.getElementById('stock').value = producto.stock || 0;
             editingId = producto._id;
             
             btnSubmit.textContent = 'Actualizar Producto';

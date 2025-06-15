@@ -11,6 +11,12 @@ const ProductoSchema = new mongoose.Schema({
     type: String, 
     enum: ['kg', 'unidad'], 
     default: 'kg' 
+  },
+  stock: { 
+    type: Number, 
+    required: true, 
+    default: 0,
+    min: 0 
   }
 }, { timestamps: true });
 

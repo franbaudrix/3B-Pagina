@@ -32,7 +32,6 @@ router.get('/producto/:id', async (req, res) => {
 });
 
 router.post('/producto', async (req, res) => {
-  console.log('Datos recibidos:', req.body);
   try {
     const producto = new Producto(req.body);
     await producto.save();
