@@ -303,8 +303,8 @@ async function mostrarDetallesPedido(id) {
                                id="item-${index}"
                                ${item.completado ? 'checked' : ''}>
                         <label class="form-check-label" for="item-${index}">
-                            <h6 class="mb-1 ${item.completado}">${item.nombre}</h6>
-                            <small class="text-muted">${item.peso} • ${item.cantidad} unidad(es)</small>
+                            <h5 class="mb-1 ${item.completado}">${item.nombre}</h5>
+                            <h6 class="text-muted">${item.peso} kg • ${item.cantidad} unidad(es)</h6>
                         </label>
                     </div>
                     <div class="text-end">
