@@ -306,7 +306,7 @@ router.put('/pedidos/:id/estado', async (req, res) => {
   console.log('estoy actualizando el estado XD');
   try {
       const { estado } = req.body;
-      const estadosPermitidos = ['revision', 'pendiente', 'en_proceso', 'completado', 'cancelado'];
+      const estadosPermitidos = ['revision', 'pendiente', 'en_proceso', 'completado', 'cancelado', 'entregado'];
       
       if (!estadosPermitidos.includes(estado)) {
           return res.status(400).json({ message: 'Estado no válido' });

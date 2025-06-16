@@ -1005,6 +1005,10 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', eliminarPedido);
         });
 
+        document.querySelectorAll('.btn-entregar').forEach(btn => {
+            btn.addEventListener('click', () => cambiarEstadoPedido(btn.dataset.id, 'entregado'));
+        });
+
         document.querySelectorAll('.btn-imprimir-remito').forEach(btn => {
             btn.addEventListener('click', generarRemitoPDF);
         });
