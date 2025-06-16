@@ -523,7 +523,7 @@ function displayProducts(productos) {
                     `}
                     <div class="mb-2 p-3 price-display text-end fw-bold"></div>
                     <div class="fixed-bottom-btn">
-                        <button class="btn ${btnClass} rounded-0 w-100" 
+                        <button class="btn btn-danger ${btnClass} rounded-0 w-100" 
                                 ${sinStock ? 'disabled' : ''}>
                             ${btnText}
                         </button>

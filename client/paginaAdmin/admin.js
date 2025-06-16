@@ -269,7 +269,7 @@ function renderProductos(productos) {
             <td>$${producto.precio.toFixed(2)}</td>
             <td>${getCategoryName(producto.categoria)}</td>
             <td>${producto.subcategoria || '-'}</td>
-            <td>${(producto.stock || 0).toFixed(2)} kg/unid</td>
+            <td>${producto.stock || 0}</td>
             <td>${producto.unidadMedida === 'kg' ? 'Por Kg' : 'Por Unidad'}</td>
             <td>${producto.descripcion ? 
                 (producto.descripcion.length > 50 ? 
