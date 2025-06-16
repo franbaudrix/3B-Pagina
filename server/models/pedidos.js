@@ -25,7 +25,7 @@ const PedidoSchema = new mongoose.Schema({
   estado: { 
     type: String, 
     default: 'revision', 
-    enum: ['revision', 'pendiente', 'en_proceso', 'completado', 'cancelado'] 
+    enum: ['revision', 'pendiente', 'en_proceso', 'completado', 'cancelado', 'entregado'] 
   },
   fecha: { type: Date, default: Date.now },
   tipoEnvio: {

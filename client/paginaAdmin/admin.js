@@ -320,7 +320,16 @@ function actualizarBotonesAccion(fila, pedidoId, nuevoEstado) {
                 Completar
             </button>
         `;
-    } else if (nuevoEstado === 'completado' || nuevoEstado === 'cancelado') {
+    } else if (nuevoEstado === 'completado') {
+        accionesTd.innerHTML = `
+            <button class="btn btn-sm btn-info btn-detalle me-2" data-id="${pedidoId}">
+                <i class="bi bi-eye"></i>
+            </button>
+            <button class="btn btn-sm btn-entregar" data-id="${pedidoId}">
+                <i class="bi bi-check-circle"></i> Entregado
+            </button>
+        `;
+    } else if (nuevoEstado === 'entregado' || nuevoEstado === 'cancelado') {
         accionesTd.innerHTML = `
             <button class="btn btn-sm btn-info btn-detalle" data-id="${pedidoId}">
                 <i class="bi bi-eye"></i>
@@ -335,6 +344,10 @@ function actualizarBotonesAccion(fila, pedidoId, nuevoEstado) {
     if (accionesTd.querySelector('.btn-completar')) {
         accionesTd.querySelector('.btn-completar').addEventListener('click', 
             () => cambiarEstadoPedido(pedidoId, 'completado'));
+    }
+    if (accionesTd.querySelector('.btn-entregar')) {
+        accionesTd.querySelector('.btn-entregar').addEventListener('click', 
+            () => cambiarEstadoPedido(pedidoId, 'entregado'));
     }
 }
 
@@ -931,44 +944,49 @@ document.addEventListener('DOMContentLoaded', () => {
     // Función para renderizar la tabla de pedidos
     function renderPedidos(pedidos) {
         tablaPedidos.innerHTML = pedidos.map(pedido => `
-            <tr data-id="${pedido._id}">
-                <td>${pedido.cliente.nombre}</td>
-                <td>
-                    ${pedido.tipoEnvio === 'retiro' ? 'Retiro en local' : 
-                      pedido.cliente.direccion?.localidad || 'Bahía Blanca'}
-                </td>
-                <td>${new Date(pedido.fecha).toLocaleString()}</td>
-                <td>$${pedido.total.toLocaleString('es-AR')}</td>
-                <td>
-                    <span class="badge badge-estado ${getEstadoClass(pedido.estado)}">
-                        ${formatEstado(pedido.estado)}
-                    </span>
-                </td>
-                <td>
-                    <button class="btn btn-sm btn-info btn-detalle me-2" data-id="${pedido._id}">
-                        <i class="bi bi-eye"></i>
+        <tr data-id="${pedido._id}">
+            <td>${pedido.cliente.nombre}</td>
+            <td>
+                ${pedido.tipoEnvio === 'retiro' ? 'Retiro en local' : 
+                  pedido.cliente.direccion?.localidad || 'Bahía Blanca'}
+            </td>
+            <td>${new Date(pedido.fecha).toLocaleString()}</td>
+            <td>$${pedido.total.toLocaleString('es-AR')}</td>
+            <td>
+                <span class="badge badge-estado ${getEstadoClass(pedido.estado)}">
+                    ${formatEstado(pedido.estado)}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-info btn-detalle me-2" data-id="${pedido._id}">
+                    <i class="bi bi-eye"></i>
+                </button>
+                ${pedido.estado === 'revision' ? `
+                    <button class="btn btn-sm btn-success btn-confirmar me-2" data-id="${pedido._id}">
+                        <i class="bi bi-check"></i>
                     </button>
-                    ${pedido.estado === 'revision' ? `
-                        <button class="btn btn-sm btn-success btn-confirmar me-2" data-id="${pedido._id}">
-                            <i class="bi bi-check"></i>
-                        </button>
-                    ` : ''}
-                    ${pedido.estado === 'pendiente' ? `
-                        <button class="btn btn-sm btn-primary btn-completar" data-id="${pedido._id}">
-                            Completar
-                        </button>
-                    ` : ''}
-                    ${pedido.estado === 'completado' && pedido.tipoEnvio === 'otra-localidad' ? `
-                        <button class="btn btn-sm btn-secondary btn-imprimir-remito ms-2" data-id="${pedido._id}">
-                            <i class="bi bi-printer"></i> Remito
-                        </button>
-                    ` : ''}
-                    <button class="btn btn-sm btn-danger btn-eliminar" data-id="${pedido._id}">
-                        <i class="bi bi-trash"></i>
+                ` : ''}
+                ${pedido.estado === 'pendiente' ? `
+                    <button class="btn btn-sm btn-primary btn-completar" data-id="${pedido._id}">
+                        Completar
                     </button>
-                </td>
-            </tr>
-        `).join('');
+                ` : ''}
+                ${pedido.estado === 'completado' ? `
+                    <button class="btn btn-sm btn-success btn-entregar" data-id="${pedido._id}">
+                        <i class="bi bi-check-circle"></i> Entregado
+                    </button>
+                ` : ''}
+                ${pedido.estado === 'completado' && pedido.tipoEnvio === 'otra-localidad' ? `
+                    <button class="btn btn-sm btn-secondary btn-imprimir-remito ms-2" data-id="${pedido._id}">
+                        <i class="bi bi-printer"></i> Remito
+                    </button>
+                ` : ''}
+                <button class="btn btn-sm btn-danger btn-eliminar" data-id="${pedido._id}">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
         
         // Agregar event listeners a los botones
         document.querySelectorAll('.btn-detalle').forEach(btn => {
@@ -1459,41 +1477,46 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Función para cambiar estado del pedido
     window.cambiarEstadoPedido = async (pedidoId, nuevoEstado, recargar = false) => {
-        const confirmMessage = nuevoEstado === 'cancelado' ? 
-            '¿Estás seguro de cancelar este pedido?' :
-            `¿Estás seguro de marcar este pedido como ${formatEstado(nuevoEstado).toLowerCase()}?`;
+        // Mensajes de confirmación según el estado
+        const confirmMessages = {
+            cancelado: '¿Estás seguro de cancelar este pedido?',
+            entregado: '¿Estás seguro de marcar este pedido como entregado?',
+            default: `¿Estás seguro de marcar este pedido como ${formatEstado(nuevoEstado).toLowerCase()}?`
+        };
+        
+        const confirmMessage = confirmMessages[nuevoEstado] || confirmMessages.default;
         
         if (!confirm(confirmMessage)) return;
         
         try {
-
-            let itemsActualizados = [];
             let body = { estado: nuevoEstado };
+            let endpoint = `${window.API_URL}/api/admin/pedidos/${pedidoId}/estado`;
 
+            // Configuración especial para estado 'completado'
             if (nuevoEstado === 'completado') {
+                let itemsActualizados = [];
                 const checkboxes = document.querySelectorAll('.item-completado');
-                itemsActualizados = Array.from(checkboxes).map(checkbox => {
-                    const index = checkbox.id.split('-')[1];
-                    return {
-                        _id: pedidoActual.items[index]._id,
-                        completado: checkbox.checked,
-                        motivoIncompleto: checkbox.checked ? null : 
-                            document.querySelector(`#motivo-container-${index} .motivo-select`).value,
-                        observaciones: checkbox.checked ? null : 
-                            document.querySelector(`#motivo-container-${index} .observaciones`).value
-                    };
-                });
-
-                body.itemsCompletados = itemsActualizados;
+                
+                if (checkboxes.length > 0) {
+                    itemsActualizados = Array.from(checkboxes).map(checkbox => {
+                        const index = checkbox.id.split('-')[1];
+                        return {
+                            _id: pedidoActual.items[index]._id,
+                            completado: checkbox.checked,
+                            motivoIncompleto: checkbox.checked ? null : 
+                                document.querySelector(`#motivo-container-${index} .motivo-select`).value,
+                            observaciones: checkbox.checked ? null : 
+                                document.querySelector(`#motivo-container-${index} .observaciones`).value
+                        };
+                    });
+                    body.itemsCompletados = itemsActualizados;
+                    endpoint = `${window.API_URL}/api/admin/pedidos/${pedidoId}/completar`;
+                }
             }
-
-            const endpoint = nuevoEstado === 'completado' 
-            ? `${window.API_URL}/api/admin/pedidos/${pedidoId}/completar`
-            : `${window.API_URL}/api/admin/pedidos/${pedidoId}/estado`;
 
             const response = await fetch(endpoint, {
                 method: 'PUT',
-                credentials:'include',
+                credentials: 'include',
                 headers: { 
                     'Content-Type': 'application/json',
                     ...getAuthHeader()
@@ -1514,45 +1537,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 cargarPedidos();
                 bootstrap.Modal.getInstance(document.getElementById('detallePedidoModal')).hide();
             } else {
-                // Si se llamó desde la tabla, actualizar la fila
+                // Actualizar la fila en la tabla
                 const fila = document.querySelector(`tr[data-id="${pedidoId}"]`);
                 if (fila) {
+                    // Actualizar badge de estado
                     const estadoBadge = fila.querySelector('.badge-estado');
                     estadoBadge.className = `badge badge-estado ${getEstadoClass(nuevoEstado)}`;
                     estadoBadge.textContent = formatEstado(nuevoEstado);
 
-                    const accionesTd = fila.querySelector('td:last-child');
+                    // Actualizar botones de acción
+                    actualizarBotonesAccion(fila, pedidoId, nuevoEstado);
 
-                    if (nuevoEstado === 'completado') {
+                    // Si es entregado, actualizar el total si es necesario
+                    if (nuevoEstado === 'entregado') {
                         const totalCell = fila.querySelector('td:nth-child(4)');
-                        totalCell.textContent = `$${data.pedido.total.toLocaleString('es-AR')}`;
-                    }
-                    
-                    if (nuevoEstado === 'en_proceso') {
-                        accionesTd.innerHTML = `
-                            <button class="btn btn-sm btn-info btn-detalle me-2" data-id="${pedidoId}">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-primary btn-completar" data-id="${pedidoId}">
-                                Completar
-                            </button>
-                        `;
-                        accionesTd.querySelector('.btn-detalle').addEventListener('click', mostrarDetallePedido);
-                        accionesTd.querySelector('.btn-completar').addEventListener('click', 
-                            () => cambiarEstadoPedido(pedidoId, 'completado'));
-                    } else if (nuevoEstado === 'completado' || nuevoEstado === 'cancelado') {
-                        accionesTd.innerHTML = `
-                            <button class="btn btn-sm btn-info btn-detalle" data-id="${pedidoId}">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        `;
-                        accionesTd.querySelector('.btn-detalle').addEventListener('click', mostrarDetallePedido);
+                        if (data.pedido && data.pedido.total) {
+                            totalCell.textContent = `$${data.pedido.total.toLocaleString('es-AR')}`;
+                        }
                     }
                 }
             }
         } catch (error) {
             console.error('Error al cambiar estado:', error);
-            mostrarAlerta('Error al actualizar estado del pedido', 'danger');
+            mostrarAlerta(error.message || 'Error al actualizar estado del pedido', 'danger');
         }
     };
 
@@ -1593,7 +1600,8 @@ document.addEventListener('DOMContentLoaded', () => {
             pendiente: 'bg-warning',
             en_proceso: 'bg-info',
             completado: 'bg-success',
-            cancelado: 'bg-danger'
+            cancelado: 'bg-danger',
+            entregado: 'bg-primary'
         };
         return classes[estado] || 'bg-secondary';
     }
@@ -1604,7 +1612,8 @@ document.addEventListener('DOMContentLoaded', () => {
             pendiente: 'Pendiente',
             en_proceso: 'En proceso',
             completado: 'Completado',
-            cancelado: 'Cancelado'
+            cancelado: 'Cancelado',
+            entregado: 'Entregado'
         };
         return estados[estado] || estado;
     }
