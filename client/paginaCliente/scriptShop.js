@@ -464,76 +464,109 @@ function displayProducts(productos) {
         return;
     }
     
-    container.innerHTML = productos.map(producto => {
-        const sinStock = producto.stock <= 0;
-        const btnClass = sinStock ? 'btn-disabled' : 'btn-product-card';
-        const btnText = sinStock ? 'Sin stock' : 'Agregar';
+    // Agrupar productos por categoría
+    const productosPorCategoria = {};
+    
+    // Primero ordenar alfabéticamente por categoría
+    const categoriasOrdenadas = [...new Set(productos.map(p => p.categoria))].sort();
+    
+    // Llenar el objeto agrupado
+    categoriasOrdenadas.forEach(categoria => {
+        productosPorCategoria[categoria] = productos.filter(p => p.categoria === categoria);
+    });
+    
+    // Generar HTML para cada categoría
+    let htmlFinal = '';
+
+    for (const categoria in productosPorCategoria) {
+        const nombreCategoria = categoriasDisponibles.find(c => c._id === categoria)?.nombre || categoria;
         
-        // Limitar descripción
-        const maxDescLength = 150; 
-        const descripcion = producto.descripcion ? 
-            (producto.descripcion.length > maxDescLength ? 
-                producto.descripcion.substring(0, maxDescLength) + '...' : 
-                producto.descripcion) : 
-            '';
+        htmlFinal += `
+        <div class="category-section mb-4">
+            <h3 class="category-title bg-light text-dark p-2 rounded">${nombreCategoria}</h3>
+            <div class="row">
+        `;
         
-        return `
-        <div class="col-md-4 product-card" data-product-id="${producto._id}" data-base-price="${producto.precio}" data-product-name="${producto.nombre}" data-unidad-medida="${producto.unidadMedida || 'kg'}" data-stock="${producto.stock || 0}">
-            <div class="card h-100">
-                <div class="front-content">
-                    <img src="${producto.imagen.toString()}" class="img-fluid card-img-top" alt="${producto.nombre}">
-                    <div class="card-body">
-                        <h3 class="card-title">${producto.nombre}</h3>
-                        <h5 class="card-text">$${producto.precio.toFixed(2)}</h5>
-                        <p class="card-text text-muted description">${descripcion}</p>
-                        <label class="btn-add-front">Agregar</label>
+        const productosEnCategoria = productosPorCategoria[categoria]
+            .sort((a, b) => a.nombre.localeCompare(b.nombre));
+        
+        htmlFinal += productosEnCategoria.map(producto => {
+            const sinStock = producto.stock <= 0;
+            const btnClass = sinStock ? 'btn-disabled' : 'btn-product-card';
+            const btnText = sinStock ? 'Sin stock' : 'Agregar';
+            
+            // Limitar descripción
+            const maxDescLength = 150; 
+            const descripcion = producto.descripcion ? 
+                (producto.descripcion.length > maxDescLength ? 
+                    producto.descripcion.substring(0, maxDescLength) + '...' : 
+                    producto.descripcion) : 
+                '';
+            
+            return `
+            <div class="col-md-4 product-card" data-product-id="${producto._id}" data-base-price="${producto.precio}" data-product-name="${producto.nombre}" data-unidad-medida="${producto.unidadMedida || 'kg'}" data-stock="${producto.stock || 0}">
+                <div class="card h-100">
+                    <div class="front-content">
+                        <img src="${producto.imagen.toString()}" class="img-fluid card-img-top" alt="${producto.nombre}">
+                        <div class="card-body">
+                            <h3 class="card-title">${producto.nombre}</h3>
+                            <h5 class="card-text">$${producto.precio.toFixed(2)}</h5>
+                            <p class="card-text text-muted description">${descripcion}</p>
+                            <label class="btn-add-front">Agregar</label>
+                        </div>
                     </div>
-                </div>
-                <!-- Contenido trasero (visible al hacer hover) -->
-                <div class="back-content">
-                    <div class="card-body p-2">
-                        <h2 class="card-title mb-1">${producto.nombre}</h2>
-                        <h4 class="card-text mb-2">$${producto.precio.toFixed(2)}</h4>
-                    </div>
-                    ${producto.unidadMedida === 'kg' ? `
-                    <div class="p-3">
-                        <label for="weight" class="form-label small mb-1">Peso:</label>
-                        <select name="weight" class="form-select form-select-sm weight-select mb-2">
-                            <option value="half-kg">0.5Kg</option>
-                            <option value="one-kg" selected>1Kg</option>
-                            <option value="two-kg">2Kg</option>
-                            <option value="other-kg">Otro</option>
-                        </select>
-                        <input type="number" class="form-control custom-weight-input mt-2" placeholder="Ingrese el peso en kg" style="display: none;">
-                    </div>
-                    ` : `
-                    <div class="p-3">
-                        <label for="amount" class="form-label small mb-1">Cantidad:</label>
-                        <select name="amount" class="form-select form-select-sm amount-select">
-                            <option value="1">1 unidad</option>
-                            <option value="2">2 unidades</option>
-                            <option value="3">3 unidades</option>
-                            <option value="4">4 unidades</option>
-                            <option value="5">5 unidades</option>
-                            <option value="custom">Otra cantidad</option>
-                        </select>
-                        <input type="number" min="1" class="form-control custom-amount-input mt-2" 
-                           placeholder="Ingrese cantidad" style="display: none;">
-                    </div>
-                    `}
-                    <div class="mb-2 p-3 price-display text-end fw-bold"></div>
-                    <div class="fixed-bottom-btn">
-                        <button class="btn btn-danger ${btnClass} rounded-0 w-100" 
-                                ${sinStock ? 'disabled' : ''}>
-                            ${btnText}
-                        </button>
+                    <!-- Contenido trasero (visible al hacer hover) -->
+                    <div class="back-content">
+                        <div class="card-body p-2">
+                            <h2 class="card-title mb-1">${producto.nombre}</h2>
+                            <h4 class="card-text mb-2">$${producto.precio.toFixed(2)}</h4>
+                        </div>
+                        ${producto.unidadMedida === 'kg' ? `
+                        <div class="p-3">
+                            <label for="weight" class="form-label small mb-1">Peso:</label>
+                            <select name="weight" class="form-select form-select-sm weight-select mb-2">
+                                <option value="half-kg">0.5Kg</option>
+                                <option value="one-kg" selected>1Kg</option>
+                                <option value="two-kg">2Kg</option>
+                                <option value="other-kg">Otro</option>
+                            </select>
+                            <input type="number" class="form-control custom-weight-input mt-2" placeholder="Ingrese el peso en kg" style="display: none;">
+                        </div>
+                        ` : `
+                        <div class="p-3">
+                            <label for="amount" class="form-label small mb-1">Cantidad:</label>
+                            <select name="amount" class="form-select form-select-sm amount-select">
+                                <option value="1">1 unidad</option>
+                                <option value="2">2 unidades</option>
+                                <option value="3">3 unidades</option>
+                                <option value="4">4 unidades</option>
+                                <option value="5">5 unidades</option>
+                                <option value="custom">Otra cantidad</option>
+                            </select>
+                            <input type="number" min="1" class="form-control custom-amount-input mt-2" 
+                            placeholder="Ingrese cantidad" style="display: none;">
+                        </div>
+                        `}
+                        <div class="mb-2 p-3 price-display text-end fw-bold"></div>
+                        <div class="fixed-bottom-btn">
+                            <button class="btn btn-danger ${btnClass} rounded-0 w-100" 
+                                    ${sinStock ? 'disabled' : ''}>
+                                ${btnText}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
+            `;
+        }).join('');
+        
+        htmlFinal += `
+            </div>
         </div>
         `;
-    }).join('');
+    }
 
+    container.innerHTML = htmlFinal;
     initializeProductCards();
 }
 

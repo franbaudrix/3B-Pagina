@@ -1416,17 +1416,34 @@ document.addEventListener('DOMContentLoaded', () => {
             // Configuración de estilo
         const fontSizeLarge = 36;
         const fontSizeMedium = 24;
-        const lineHeight = 20;
-        let yPosition = 40; // Posición vertical inicial
+        const lineHeight = 15;
+        let yPosition = 30; // Posición vertical inicial
         
-        // Establecer margen izquierdo para centrado aproximado
-        const leftMargin = 20;
+        /// Información del origen - Título grande
+        doc.setFontSize(fontSizeLarge);
+        doc.setTextColor(0, 0, 0);
+        doc.text('ORIGEN', 105, yPosition, { align: 'center' });
+        yPosition += lineHeight * 1.5;
+
+        doc.setFontSize(fontSizeMedium);
+        doc.text('JAVIER ANTONIO LOREA', 105, yPosition, { align: 'center' });
+        yPosition += lineHeight;
+        doc.text('Brasil 977', 105, yPosition, { align: 'center' });
+        yPosition += lineHeight;
+        doc.text('Bahia Blanca, CP 8000', 105, yPosition, { align: 'center' });
+        yPosition += lineHeight;
+        doc.text('Distribuidora 3B', 105, yPosition, { align: 'center' });
+        yPosition += lineHeight;
+        doc.text('Movil: +5491136268264', 105, yPosition, { align: 'center' });
+        yPosition += lineHeight;
+        doc.text('DNI: 30913507', 105, yPosition, { align: 'center' });
+        yPosition += lineHeight * 2;
         
         // Información del destinatario - Título grande
         doc.setFontSize(fontSizeLarge);
         doc.setTextColor(0, 0, 0);
         doc.text('DESTINATARIO', 105, yPosition, { align: 'center' });
-        yPosition += lineHeight * 2;
+        yPosition += lineHeight * 1.5;
         
         // Datos del cliente - Texto grande
         doc.setFontSize(fontSizeMedium);
@@ -1437,11 +1454,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Dirección (si existe)
         if (pedido.cliente.direccion) {
-            const direccion = `${pedido.cliente.direccion.calle} ${pedido.cliente.direccion.numero || ''}`.toUpperCase();
+            const direccion = `Direccion: ${pedido.cliente.direccion.calle} ${pedido.cliente.direccion.numero || ''}`.toUpperCase();
             doc.text(direccion, 105, yPosition, { align: 'center' });
             yPosition += lineHeight;
             
-            const localidad = `${pedido.cliente.direccion.localidad || ''}, ${pedido.cliente.direccion.provincia || ''}`.toUpperCase();
+            const localidad = `Localidad: ${pedido.cliente.direccion.localidad || ''}, ${pedido.cliente.direccion.provincia || ''}`.toUpperCase();
             doc.text(localidad, 105, yPosition, { align: 'center' });
             yPosition += lineHeight;
             
@@ -1465,7 +1482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Espacio para firma (más abajo)
-        yPosition = 250; // Posición fija cerca del final de la página
+        yPosition = 280; // Posición fija cerca del final de la página
         doc.setFontSize(fontSizeMedium);
         doc.line(50, yPosition, 160, yPosition);
         doc.text('FIRMA', 105, yPosition + 10, { align: 'center' });

@@ -36,6 +36,7 @@ const PedidoSchema = new mongoose.Schema({
   cliente: {
     nombre: { type: String, required: true },
     whatsapp: { type: String, required: true },
+    dni: { type: Number},
     email: { type: String, required: true },
     direccion: {
       calle: { type: String },
