@@ -532,10 +532,11 @@ select:disabled {
 
 .category-title {
     font-size: 1.5rem;
+    color: rgb(0, 0, 0);
     margin-bottom: 1rem;
     padding: 0.5rem 1rem;
-    background-color: #0080ff;
-    border-radius: 0.25rem;
+    background-color: #fbe70b;
+    border-radius: 0.5rem;
 }
 
 @media (max-width: 992px) {
