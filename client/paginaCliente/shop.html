@@ -134,12 +134,12 @@
                             <div class="row">
                                 <div class="col-md-8 mb-3">
                                     <label class="form-label">Calle</label>
-                                    <input type="text" class="form-control" id="calle-bahia">
+                                    <input type="text" class="form-control" id="calle-bahia" required>
                                     <div class="invalid-feedback">Por favor ingrese una calle valida.</div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Altura</label>
-                                    <input type="number" class="form-control" id="numero-bahia">
+                                    <input type="number" class="form-control" id="numero-bahia" required>
                                     <div class="invalid-feedback">Por favor ingrese una altura valida.</div>
                                 </div>
                             </div>
@@ -149,31 +149,36 @@
                         <div id="otra-localidad-fields" class="envio-fields" style="display: none;">
                             <h6 class="mt-4">Dirección de envío</h6>
                             <div class="row">
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-5 mb-3">
                                     <label class="form-label">Localidad</label>
-                                    <input type="text" class="form-control" id="localidad-otra">
+                                    <input type="text" class="form-control" id="localidad-otra" required>
                                     <div class="invalid-feedback">Por favor ingrese una localidad valida.</div>
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <label class="form-label">Provincia</label>
-                                    <input type="text" class="form-control" id="provincia-otra">
+                                    <input type="text" class="form-control" id="provincia-otra" required>
                                     <div class="invalid-feedback">Por favor ingrese una provincia valida.</div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label class="form-label">DNI</label>
+                                    <input type="text" class="form-control" id="dni-otra" required maxlength="8" minlength="7">
+                                    <div class="invalid-feedback">Por favor ingrese un dni valido.</div>
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Código Postal</label>
-                                    <input type="number" class="form-control" id="cp-otra">
+                                    <input type="number" class="form-control" id="cp-otra" required>
                                     <div class="invalid-feedback">Por favor ingrese un codigo postal valido.</div>
                                 </div>
                                 <div class="col-md-5 mb-3">
                                     <label class="form-label">Calle</label>
-                                    <input type="text" class="form-control" id="calle-otra">
+                                    <input type="text" class="form-control" id="calle-otra" required>
                                     <div class="invalid-feedback">Por favor ingrese una calle valida.</div>
                                 </div>
                                 <div class="col-md-3 mb-3">
                                     <label class="form-label">Altura</label>
-                                    <input type="number" class="form-control" id="numero-otra">
+                                    <input type="number" class="form-control" id="numero-otra" required>
                                     <div class="invalid-feedback">Por favor ingrese una altura valida.</div>
                                 </div>
                             </div>

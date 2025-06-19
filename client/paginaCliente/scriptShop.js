@@ -208,6 +208,7 @@ async function enviarPedidoCompleto(clienteData) {
                 numero: clienteData.numero,
                 localidad: clienteData.localidad,
                 provincia: clienteData.provincia,
+                dni: clienteData.dni,
                 codigoPostal: clienteData.codigoPostal
             };
         }
@@ -338,16 +339,51 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 3. Configurar modal de datos del cliente
         // Manejar cambio en tipo de envío
         document.getElementById('tipo-envio').addEventListener('change', function() {
-            // Ocultar todos los campos de envío primero
+            const tipoEnvio = this.value;
+            const form = document.getElementById('client-data-form');
+            
+            // Resetear validación previa
+            form.classList.remove('was-validated');
+            
+            // Ocultar todos los campos de envío
             document.querySelectorAll('.envio-fields').forEach(el => {
                 el.style.display = 'none';
             });
 
-            // Mostrar los campos correspondientes
-            if (this.value === 'bahia-blanca') {
+            // Configurar campos requeridos según tipo de envío
+            if (tipoEnvio === 'bahia-blanca') {
                 document.getElementById('bahia-blanca-fields').style.display = 'block';
-            } else if (this.value === 'otra-localidad') {
+                // Hacer campos requeridos
+                document.getElementById('calle-bahia').required = true;
+                document.getElementById('numero-bahia').required = true;
+                // Quitar requeridos de otra localidad
+                document.getElementById('localidad-otra').required = false;
+                document.getElementById('provincia-otra').required = false;
+                document.getElementById('cp-otra').required = false;
+                document.getElementById('calle-otra').required = false;
+                document.getElementById('numero-otra').required = false;
+            } else if (tipoEnvio === 'otra-localidad') {
                 document.getElementById('otra-localidad-fields').style.display = 'block';
+                // Hacer campos requeridos
+                document.getElementById('localidad-otra').required = true;
+                document.getElementById('provincia-otra').required = true;
+                document.getElementById('dni-otra').required = true;
+                document.getElementById('cp-otra').required = true;
+                document.getElementById('calle-otra').required = true;
+                document.getElementById('numero-otra').required = true;
+                // Quitar requeridos de bahía
+                document.getElementById('calle-bahia').required = false;
+                document.getElementById('numero-bahia').required = false;
+            } else {
+                // Retiro - ningún campo de dirección es requerido
+                document.getElementById('calle-bahia').required = false;
+                document.getElementById('numero-bahia').required = false;
+                document.getElementById('localidad-otra').required = false;
+                document.getElementById('provincia-otra').required = false;
+                document.getElementById('dni-otra').required = false;
+                document.getElementById('cp-otra').required = false;
+                document.getElementById('calle-otra').required = false;
+                document.getElementById('numero-otra').required = false;
             }
         });
 
@@ -355,10 +391,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('confirmar-pedido').addEventListener('click', async function () {
             const form = document.getElementById('client-data-form');
 
+            // Resetear validación previa
+            form.classList.remove('was-validated');
+
             // Forzar validación HTML5 del navegador
             if (!form.checkValidity()) {
                 form.classList.add('was-validated');
-                return; // Detener si hay campos inválidos
+                
+                // Hacer scroll al primer campo inválido
+                const firstInvalid = form.querySelector(':invalid');
+                if (firstInvalid) {
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+                
+                return;
             }
 
             const tipoEnvio = document.getElementById('tipo-envio').value;

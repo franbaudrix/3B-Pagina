@@ -1258,6 +1258,13 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             const resumenEntrega = document.getElementById('resumen-entrega');
+
+            // Calcular el total de bultos y el desglose por tipo
+            const totalBultos = pedido.bultos.reduce((total, bulto) => total + bulto.cantidad, 0);
+            const detalleBultos = pedido.bultos.map(bulto => 
+            `${bulto.cantidad} ${bulto.tipo}${bulto.cantidad > 1 ? 's' : ''}`
+            ).join(', ');
+
             resumenEntrega.innerHTML = `
                 <h5>Resumen de Entrega</h5>
                 <p><strong>Completado por:</strong> ${pedido.completadoPor ? pedido.completadoPor.name : 'No completado aún'}</p>
@@ -1271,6 +1278,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     ? new Date(pedido.fechaCompletado).toLocaleString()
                     : 'No completado aún'
                 }</p>
+                <p><strong>Total de bultos:</strong> ${totalBultos}</p>
+                <p><strong>Detalle de bultos:</strong> ${detalleBultos || 'No especificado'}</p>
                 <p><strong>Observaciones generales:</strong> ${pedido.observaciones || 'Ninguna'}</p>
             `;
 
@@ -1404,6 +1413,9 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (!response.ok) throw new Error('Error al cargar pedido');
             const pedido = await response.json();
+
+            // Calcular total de bultos
+            const totalBultos = pedido.bultos.reduce((total, bulto) => total + bulto.cantidad, 0);
             
             // Crear PDF
             const { jsPDF } = window.jspdf;
@@ -1414,86 +1426,80 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             // Configuración de estilo
-        const fontSizeLarge = 36;
-        const fontSizeMedium = 24;
-        const lineHeight = 15;
-        let yPosition = 30; // Posición vertical inicial
-        
-        /// Información del origen - Título grande
-        doc.setFontSize(fontSizeLarge);
-        doc.setTextColor(0, 0, 0);
-        doc.text('ORIGEN', 105, yPosition, { align: 'center' });
-        yPosition += lineHeight * 1.5;
+            const fontSizeLarge = 36;
+            const fontSizeMedium = 24;
+            const lineHeight = 15;
+            let yPosition = 30; // Posición vertical inicial
+            
+            /// Información del origen - Título grande
+            doc.setFontSize(fontSizeLarge);
+            doc.setTextColor(0, 0, 0);
+            doc.text('ORIGEN', 105, yPosition, { align: 'center' });
+            yPosition += lineHeight * 1.5;
 
-        doc.setFontSize(fontSizeMedium);
-        doc.text('JAVIER ANTONIO LOREA', 105, yPosition, { align: 'center' });
-        yPosition += lineHeight;
-        doc.text('Brasil 977', 105, yPosition, { align: 'center' });
-        yPosition += lineHeight;
-        doc.text('Bahia Blanca, CP 8000', 105, yPosition, { align: 'center' });
-        yPosition += lineHeight;
-        doc.text('Distribuidora 3B', 105, yPosition, { align: 'center' });
-        yPosition += lineHeight;
-        doc.text('Movil: +5491136268264', 105, yPosition, { align: 'center' });
-        yPosition += lineHeight;
-        doc.text('DNI: 30913507', 105, yPosition, { align: 'center' });
-        yPosition += lineHeight * 2;
-        
-        // Información del destinatario - Título grande
-        doc.setFontSize(fontSizeLarge);
-        doc.setTextColor(0, 0, 0);
-        doc.text('DESTINATARIO', 105, yPosition, { align: 'center' });
-        yPosition += lineHeight * 1.5;
-        
-        // Datos del cliente - Texto grande
-        doc.setFontSize(fontSizeMedium);
-        
-        // Nombre
-        doc.text(pedido.cliente.nombre.toUpperCase(), 105, yPosition, { align: 'center' });
-        yPosition += lineHeight;
-        
-        // Dirección (si existe)
-        if (pedido.cliente.direccion) {
-            const direccion = `Direccion: ${pedido.cliente.direccion.calle} ${pedido.cliente.direccion.numero || ''}`.toUpperCase();
-            doc.text(direccion, 105, yPosition, { align: 'center' });
-            yPosition += lineHeight;
-            
-            const localidad = `Localidad: ${pedido.cliente.direccion.localidad || ''}, ${pedido.cliente.direccion.provincia || ''}`.toUpperCase();
-            doc.text(localidad, 105, yPosition, { align: 'center' });
-            yPosition += lineHeight;
-            
-            if (pedido.cliente.direccion.codigoPostal) {
-                doc.text(`CP: ${pedido.cliente.direccion.codigoPostal}`, 105, yPosition, { align: 'center' });
-                yPosition += lineHeight;
-            }
-        }
-        
-        // Teléfono
-        doc.text(`TEL: ${pedido.cliente.whatsapp}`, 105, yPosition, { align: 'center' });
-        yPosition += lineHeight * 2;
-        
-        // Espacio para observaciones (si existen)
-        if (pedido.observaciones) {
             doc.setFontSize(fontSizeMedium);
-            doc.text('OBS:', 105, yPosition, { align: 'center' });
+            doc.text('JAVIER ANTONIO LOREA', 105, yPosition, { align: 'center' });
             yPosition += lineHeight;
-            doc.text(pedido.observaciones.toUpperCase(), 105, yPosition, { align: 'center' });
+            doc.text('Brasil 977', 105, yPosition, { align: 'center' });
+            yPosition += lineHeight;
+            doc.text('Bahia Blanca, CP 8000', 105, yPosition, { align: 'center' });
+            yPosition += lineHeight;
+            doc.text('Distribuidora 3B', 105, yPosition, { align: 'center' });
+            yPosition += lineHeight;
+            doc.text('Movil: +5491136268264', 105, yPosition, { align: 'center' });
+            yPosition += lineHeight;
+            doc.text('DNI: 30913507', 105, yPosition, { align: 'center' });
             yPosition += lineHeight * 2;
+            
+            // Información del destinatario - Título grande
+            doc.setFontSize(fontSizeLarge);
+            doc.setTextColor(0, 0, 0);
+            doc.text('DESTINATARIO', 105, yPosition, { align: 'center' });
+            yPosition += lineHeight * 1.5;
+            
+            // Datos del cliente - Texto grande
+            doc.setFontSize(fontSizeMedium);
+            
+            // Nombre
+            doc.text(pedido.cliente.nombre.toUpperCase(), 105, yPosition, { align: 'center' });
+            yPosition += lineHeight;
+            
+            // Dirección (si existe)
+            if (pedido.cliente.direccion) {
+                const direccion = `Direccion: ${pedido.cliente.direccion.calle} ${pedido.cliente.direccion.numero || ''}`.toUpperCase();
+                doc.text(direccion, 105, yPosition, { align: 'center' });
+                yPosition += lineHeight;
+                
+                const localidad = `Localidad: ${pedido.cliente.direccion.localidad || ''}, ${pedido.cliente.direccion.provincia || ''}`.toUpperCase();
+                doc.text(localidad, 105, yPosition, { align: 'center' });
+                yPosition += lineHeight;
+                
+                if (pedido.cliente.direccion.codigoPostal) {
+                    doc.text(`CP: ${pedido.cliente.direccion.codigoPostal}`, 105, yPosition, { align: 'center' });
+                    yPosition += lineHeight;
+                }
+            }
+            
+            // Teléfono
+            doc.text(`TEL: ${pedido.cliente.whatsapp}`, 105, yPosition, { align: 'center' });
+            yPosition += lineHeight;
+            
+            doc.text(`BULTOS: ${totalBultos}`, 105, yPosition, { align: 'center' });
+            yPosition += lineHeight * 2;
+
+            // Espacio para firma (más abajo)
+            yPosition = 280; // Posición fija cerca del final de la página
+            doc.setFontSize(fontSizeMedium);
+            doc.line(50, yPosition, 160, yPosition);
+            doc.text('FIRMA', 105, yPosition + 10, { align: 'center' });
+            
+            // Guardar PDF
+            doc.save(`Datos_Envio_${pedido.cliente.nombre.replace(/\s+/g, '_')}.pdf`);
+        
+        } catch (error) {
+            console.error('Error al generar remito:', error);
+            mostrarAlerta('Error al generar el remito en PDF', 'danger');
         }
-        
-        // Espacio para firma (más abajo)
-        yPosition = 280; // Posición fija cerca del final de la página
-        doc.setFontSize(fontSizeMedium);
-        doc.line(50, yPosition, 160, yPosition);
-        doc.text('FIRMA', 105, yPosition + 10, { align: 'center' });
-        
-        // Guardar PDF
-        doc.save(`Datos_Envio_${pedido.cliente.nombre.replace(/\s+/g, '_')}.pdf`);
-        
-    } catch (error) {
-        console.error('Error al generar remito:', error);
-        mostrarAlerta('Error al generar el remito en PDF', 'danger');
-    }
     }
     
     // Función para cambiar estado del pedido
