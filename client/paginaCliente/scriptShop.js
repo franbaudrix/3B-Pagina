@@ -359,6 +359,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Quitar requeridos de otra localidad
                 document.getElementById('localidad-otra').required = false;
                 document.getElementById('provincia-otra').required = false;
+                document.getElementById('dni-otra').required = false;
                 document.getElementById('cp-otra').required = false;
                 document.getElementById('calle-otra').required = false;
                 document.getElementById('numero-otra').required = false;
@@ -428,6 +429,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             } else if (tipoEnvio === 'otra-localidad') {
                 clienteData.localidad = document.getElementById('localidad-otra').value;
                 clienteData.provincia = document.getElementById('provincia-otra').value;
+                clienteData.dni = document.getElementById('dni-otra').value;
                 clienteData.codigoPostal = document.getElementById('cp-otra').value;
                 clienteData.calle = document.getElementById('calle-otra').value;
                 clienteData.numero = document.getElementById('numero-otra').value;
