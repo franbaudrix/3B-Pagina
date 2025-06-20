@@ -208,7 +208,6 @@ async function enviarPedidoCompleto(clienteData) {
                 numero: clienteData.numero,
                 localidad: clienteData.localidad,
                 provincia: clienteData.provincia,
-                dni: clienteData.dni,
                 codigoPostal: clienteData.codigoPostal
             };
         }
@@ -221,6 +220,7 @@ async function enviarPedidoCompleto(clienteData) {
                 nombre: clienteData.nombre,
                 whatsapp: clienteData.whatsapp,
                 email: clienteData.email,
+                dni: clienteData.dni,
                 direccion: direccion
             },
             observaciones: clienteData.observaciones
