@@ -614,6 +614,14 @@ select:disabled {
 }
 
 @media (max-width: 768px) {
+    #productos-container {
+        row-gap: 1.5rem !important; 
+    }
+    
+    .product-card {
+        margin-bottom: 1.5rem !important; 
+    }
+
     .product-card .card-img-top {
         height: 180px;
     }

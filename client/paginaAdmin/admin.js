@@ -972,13 +972,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </button>
                 ` : ''}
                 ${pedido.estado === 'completado' ? `
-                    <button class="btn btn-sm btn-success btn-entregar" data-id="${pedido._id}">
-                        <i class="bi bi-check-circle"></i> Entregado
-                    </button>
-                ` : ''}
-                ${pedido.estado === 'completado' && pedido.tipoEnvio === 'otra-localidad' ? `
-                    <button class="btn btn-sm btn-secondary btn-imprimir-remito ms-2" data-id="${pedido._id}">
-                        <i class="bi bi-printer"></i> Remito
+                    <button class="btn btn-sm btn-warning text-white btn-entregar" data-id="${pedido._id}">
+                        <i class="bi bi-question-circle"></i> Entregado
                     </button>
                 ` : ''}
                 <button class="btn btn-sm btn-danger btn-eliminar" data-id="${pedido._id}">
@@ -1397,9 +1392,50 @@ document.addEventListener('DOMContentLoaded', () => {
         
         return mensaje;
     }
-
+    // Función para mostrar el modal de opciones de remito
+    function showRemitoOptions(pedidoId) {
+        // Resetear valores
+        document.getElementById('transportista-input').value = '';
+        document.getElementById('contrareembolso-switch').checked = false;
+        document.getElementById('monto-contrareembolso').value = '';
+        document.getElementById('monto-container').style.display = 'none';
+        
+        // Mostrar modal
+        const modal = new bootstrap.Modal(document.getElementById('remitoOptionsModal'));
+        modal.show();
+        
+        // Event listener para el switch
+        document.getElementById('contrareembolso-switch').addEventListener('change', function() {
+            document.getElementById('monto-container').style.display = this.checked ? 'block' : 'none';
+            if (this.checked) {
+                document.getElementById('monto-contrareembolso').required = true;
+            } else {
+                document.getElementById('monto-contrareembolso').required = false;
+            }
+        });
+        
+        // Event listener para el botón de generar
+        document.getElementById('btn-generar-remito').onclick = async () => {
+            const transportista = document.getElementById('transportista-input').value.trim();
+            const esContrareembolso = document.getElementById('contrareembolso-switch').checked;
+            const monto = esContrareembolso ? parseFloat(document.getElementById('monto-contrareembolso').value) : 0;
+            
+            if (!transportista) {
+                mostrarAlerta('Por favor ingrese la empresa transportista', 'warning');
+                return;
+            }
+            
+            if (esContrareembolso && (isNaN(monto) || monto <= 0)) {
+                mostrarAlerta('Por favor ingrese un monto válido para el contrareembolso', 'warning');
+                return;
+            }
+            
+            modal.hide();
+            await generarRemitoPDF({ currentTarget: { dataset: { id: pedidoId } } }, transportista, esContrareembolso, monto);
+        };
+    }
     // Función para generar el remito en PDF
-    async function generarRemitoPDF(e) {
+    async function generarRemitoPDF(e, transportista = '', esContrareembolso = false, montoContrareembolso = 0) {
         const pedidoId = e.currentTarget.dataset.id;
         
         try {
@@ -1426,10 +1462,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             // Configuración de estilo
-            const fontSizeLarge = 36;
-            const fontSizeMedium = 24;
-            const lineHeight = 15;
-            let yPosition = 30; // Posición vertical inicial
+            const fontSizeLarge = 32;
+            const fontSizeMedium = 20;
+            const lineHeight = 12;
+            let yPosition = 25; // Posición vertical inicial
             
             /// Información del origen - Título grande
             doc.setFontSize(fontSizeLarge);
@@ -1440,13 +1476,13 @@ document.addEventListener('DOMContentLoaded', () => {
             doc.setFontSize(fontSizeMedium);
             doc.text('JAVIER ANTONIO LOREA', 105, yPosition, { align: 'center' });
             yPosition += lineHeight;
-            doc.text('Brasil 977', 105, yPosition, { align: 'center' });
+            doc.text('BRASIL 977', 105, yPosition, { align: 'center' });
             yPosition += lineHeight;
-            doc.text('Bahia Blanca, CP 8000', 105, yPosition, { align: 'center' });
+            doc.text('BAHIA BLANCA, CP 8000', 105, yPosition, { align: 'center' });
             yPosition += lineHeight;
-            doc.text('Distribuidora 3B', 105, yPosition, { align: 'center' });
+            doc.text('DISTRIBUIDORA 3B', 105, yPosition, { align: 'center' });
             yPosition += lineHeight;
-            doc.text('Movil: +5491136268264', 105, yPosition, { align: 'center' });
+            doc.text('MOVIL: +5491136268264', 105, yPosition, { align: 'center' });
             yPosition += lineHeight;
             doc.text('DNI: 30913507', 105, yPosition, { align: 'center' });
             yPosition += lineHeight * 2;
@@ -1483,12 +1519,24 @@ document.addEventListener('DOMContentLoaded', () => {
             // Teléfono
             doc.text(`TEL: ${pedido.cliente.whatsapp}`, 105, yPosition, { align: 'center' });
             yPosition += lineHeight;
+
+            doc.text(`DNI: ${pedido.cliente.dni}`, 105, yPosition, { align: 'center' });
+            yPosition += lineHeight;
             
             doc.text(`BULTOS: ${totalBultos}`, 105, yPosition, { align: 'center' });
-            yPosition += lineHeight * 2;
+            yPosition += lineHeight;
 
-            // Espacio para firma (más abajo)
-            yPosition = 280; // Posición fija cerca del final de la página
+            // Transportista
+            doc.text(`TRANSPORTISTA: ${transportista.toUpperCase()}`, 105, yPosition, { align: 'center' });
+            yPosition += lineHeight;
+            
+            // Contrareembolso si aplica
+            if (esContrareembolso) {
+                doc.text(`CONTRA REEMBOLSO: $${montoContrareembolso.toLocaleString('es-AR')}`, 105, yPosition, { align: 'center' });
+                yPosition += lineHeight;
+            }
+
+            yPosition = 280; 
             doc.setFontSize(fontSizeMedium);
             doc.line(50, yPosition, 160, yPosition);
             doc.text('FIRMA', 105, yPosition + 10, { align: 'center' });
@@ -1650,17 +1698,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.eliminarPedido = eliminarPedido;
 
     window.generarRemitoPDFFromModal = async (pedidoId) => {
-        try {
-            // Simulamos un click en el botón para reutilizar la función existente
-            const event = { currentTarget: { dataset: { id: pedidoId } } };
-            await generarRemitoPDF(event);
-            
-            // Cerrar el modal después de generar el PDF
-            bootstrap.Modal.getInstance(document.getElementById('detallePedidoModal')).hide();
-        } catch (error) {
-            console.error('Error al generar remito desde modal:', error);
-            mostrarAlerta('Error al generar el remito', 'danger');
-        }
+        showRemitoOptions(pedidoId);
     };
 
     document.getElementById('usuarios-tab').addEventListener('shown.bs.tab', cargarUsuarios);

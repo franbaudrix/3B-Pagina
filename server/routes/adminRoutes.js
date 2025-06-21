@@ -14,7 +14,8 @@ router.use(admin);
 // Configuración de rutas API
 router.get('/producto', async (req, res) => { // Nueva ruta GET todos
   try {
-    const productos = await Producto.find();
+    const productos = await Producto.find().lean();
+    console.log('Número de productos encontrados:', productos.length);
     res.json(productos);
   } catch (error) {
     res.status(500).json({ error: "Error al obtener productos" });
