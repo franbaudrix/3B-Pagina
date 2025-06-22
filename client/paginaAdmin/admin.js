@@ -219,11 +219,13 @@ function updateSubcategoryFilter() {
 
 // Función para filtrar productos
 function filterProducts() {
+    console.log("Filtrando productos... Total antes de filtrar:", allProducts.length);
+
     const categoriaId = document.getElementById('categoria-filter').value;
     const subcategoria = document.getElementById('subcategoria-filter').value;
     const searchTerm = document.getElementById('search-input').value.toLowerCase();
     
-    let filtered = allProducts;
+    let filtered = [...allProducts];
     
     // Aplicar filtros
     if (categoriaId) {
@@ -251,6 +253,8 @@ function getCategoryName(categoryId) {
 
 // Función para renderizar productos en tabla
 function renderProductos(productos) {
+    console.log("Renderizando productos:", productos.length);
+
     const listaProductos = document.getElementById('lista-productos');
     
     // Ordenar por nombre de categoría y luego por nombre de producto
@@ -681,8 +685,9 @@ document.addEventListener('DOMContentLoaded', () => {
             mostrarAlerta(editingId ? 'Producto actualizado correctamente' : 'Producto creado correctamente', 'success');
             form.reset();
             editingId = null;
-            await cargarProductos();
             await loadCategories(); // Recargar categorías y subcategorías
+
+            await cargarProductos();
         } catch (error) {
             console.error('Error:', error);
             mostrarAlerta(error.message, 'danger');
@@ -784,7 +789,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Cargar productos desde la API
     async function cargarProductos() {
         try {
-            const response = await fetch(`${window.API_URL}/api/producto`, {
+            console.log("Productos cargados:", allProducts.length, allProducts);
+            const response = await fetch(`${window.API_URL}/api/admin/producto`, {
                 credentials:'include',
                 headers: { 
                     'Content-Type': 'application/json',
@@ -795,6 +801,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Error al cargar productos');
             
             allProducts = await response.json();
+            console.log("Productos recibidos del servidor:", allProducts.length, allProducts);
+
+            if (categoriasDisponibles.length === 0) {
+                await loadCategories();
+            }
+
             filterProducts(); // Esto mostrará los productos con los filtros actuales
         } catch (error) {
             console.error('Error:', error);

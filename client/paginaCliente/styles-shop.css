@@ -522,8 +522,13 @@ select:disabled {
     font-weight: bold;
 }
 
+#productos-container {
+    row-gap: 1.5rem !important; 
+}
+
 .product-card {
     position: relative;
+    margin-bottom: 1.5rem !important; 
 }
 
 .category-section {
